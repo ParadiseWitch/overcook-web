@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>胡闹厨房 2D - 完美逻辑版</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/style.css">
+  <title>Phaser - Template</title>
+</head>
+
+<body>
+  <div id="app">
+    <div id="game-container"></div>
+    <!-- <div id="game-wrapper"></div> -->
+
+    <!-- 图例系统 -->
+    <div id="legend-container">
+      <!-- 环境 -->
+      <div class="legend-item"><img class="icon" src="" id="icon-counter">空柜台</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-crate">食材箱 (番茄)</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-cut">切菜板</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-pot">煮锅</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-sink">洗碗池</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-delivery">上菜口</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-trash">垃圾桶</div>
+
+      <!-- 角色 -->
+      <div class="legend-item"><img class="icon" src="" id="icon-player1">角色1</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-player2">角色2</div>
+
+      <!-- 物品 -->
+      <div class="legend-item"><img class="icon" src="" id="icon-tomato">生番茄</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-tomato-cut">切好的番茄</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-plate">干净盘子</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-plate-dirty">脏盘子</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-soup">成品番茄汤</div>
+      <div class="legend-item"><img class="icon" src="" id="icon-soup-pot">锅中的汤</div>
+    </div>
+
+    <div id="controls">
+      <span style="color:#4da6ff">P1: WASD移动 | E 互动 | R 切/洗 | 空格 投掷 | Shift 冲刺</span> &nbsp;|&nbsp;
+      <span style="color:#ff4d44">P2: 箭头移动 | O 互动 | P 切/洗 | L 投掷 | Enter 冲刺</span>
+    </div>
+  </div>
+
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
