@@ -1,3 +1,4 @@
+import * as Phaser from 'phaser';
 import { DASH_TIME, DEPTH, LEVEL_MAP, SPEED_DASH, SPEED_WALK, TILE_SIZE, WORLD_H, WORLD_W } from "../config";
 
 interface PlayerKeys {
@@ -11,6 +12,12 @@ interface PlayerKeys {
   dash: Phaser.Input.Keyboard.Key;
 }
 
+const COMBINATIONS: Record<string, Record<string, string>> = {
+  'item_plate': { // container
+    'item_tomato_cut': 'item_plate_tomato_cut', // ingredient: result
+  }
+};
+
 export class GameScene extends Phaser.Scene {
   players: Phaser.Physics.Arcade.Sprite[];
   stations: Phaser.Physics.Arcade.StaticGroup;
@@ -23,6 +30,7 @@ export class GameScene extends Phaser.Scene {
     heldItem: Phaser.Physics.Arcade.Sprite | null;
     facing: Phaser.Math.Vector2;
     dash: { active: boolean; timer: number; cooldown: number };
+    dashEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
   }>;
   // Store custom station properties
   stationData: Map<Phaser.GameObjects.GameObject, {
@@ -38,6 +46,7 @@ export class GameScene extends Phaser.Scene {
     isFlying: boolean;
     heldBy: Phaser.Physics.Arcade.Sprite | null;
     thrower?: Phaser.Physics.Arcade.Sprite;
+    homeStation?: Phaser.GameObjects.GameObject;
   }>;
   constructor() {
     super('GameScene');
@@ -66,7 +75,7 @@ export class GameScene extends Phaser.Scene {
     for (let y = 0; y < WORLD_H; y++) {
       for (let x = 0; x < WORLD_W; x++) {
         if (LEVEL_MAP[y][x] !== 'X') {
-            this.add.image(x * TILE_SIZE + 24, y * TILE_SIZE + 24, 'floor').setDepth(DEPTH.FLOOR);
+          this.add.image(x * TILE_SIZE + 24, y * TILE_SIZE + 24, 'floor').setDepth(DEPTH.FLOOR);
         }
       }
     }
@@ -87,6 +96,7 @@ export class GameScene extends Phaser.Scene {
         switch (char) {
           case 'X': key = 'station_wall'; type = 'wall'; break;
           case '.': key = 'station_counter'; type = 'counter'; break;
+          case 'd': key = 'station_counter'; type = 'dirty_spawn'; break;
           case 'a': key = 'station_counter'; type = 'counter'; initItem = 'item_plate'; break;
           case 'B': key = 'station_crate'; type = 'crate'; break;
           case 'C': key = 'station_cut'; type = 'cut'; break;
@@ -111,7 +121,7 @@ export class GameScene extends Phaser.Scene {
 
         // 初始化盘子
         if (initItem) {
-          const item = this.spawnItemWorld(initItem, px, py);
+          const item = this.spawnItemWorld(initItem, px, py, stationObj);
           const stationData = this.stationData.get(stationObj);
           if (stationData) {
             stationData.item = item;
@@ -164,12 +174,22 @@ export class GameScene extends Phaser.Scene {
 
     // Store player data separately
     if (!this.input.keyboard) return;
+
+    const dashEmitter = this.add.particles(3, 3, 'particle_smoke');
+    dashEmitter.setConfig({
+      speed: 100,
+      scale: { start: 0.5, end: 0 },
+              blendMode: 'ADD',
+              lifespan: 300    });
+    dashEmitter.startFollow(p);
+
     this.playerData.set(p, {
       id: id,
       keys: this.input.keyboard.addKeys(keyMap) as PlayerKeys,
       heldItem: null,
       facing: new Phaser.Math.Vector2(1, 0),
-      dash: { active: false, timer: 0, cooldown: 0 }
+      dash: { active: false, timer: 0, cooldown: 0 },
+      dashEmitter: dashEmitter
     });
 
     this.players.push(p);
@@ -254,21 +274,22 @@ export class GameScene extends Phaser.Scene {
         const sType = stationData.type;
         const hasItem = stationData.item;
 
+        // Special case for delivery
+        if (sType === 'delivery' && item.texture.key === 'item_soup') {
+          this.deliverItemToStation(item, station);
+          return; // Delivery handled
+        }
+
         // If destination can accept the item
         if (!hasItem) {
           // These stations accept any item
-          if (['counter', 'cut', 'sink', 'trash', 'delivery'].includes(sType)) {
+          if (['counter', 'cut', 'sink', 'trash'].includes(sType)) { // Removed 'delivery'
             this.placeItemOnStation(item, station);
           }
           // These stations accept only specific items
           else if (sType === 'pot' && item.texture.key === 'item_tomato_cut') {
             this.placeItemOnStation(item, station);
           }
-        }
-        // If station has an item and it's a delivery station with soup
-        else if (sType === 'delivery' && item.texture.key === 'item_soup') {
-          // This will be handled by the deliver interaction
-          this.deliverItemToStation(item, station);
         }
         // If item doesn't belong here, bounce off slightly
         else {
@@ -320,7 +341,10 @@ export class GameScene extends Phaser.Scene {
     // 2. 冲刺状态
     if (pData.dash.active) {
       pData.dash.timer -= delta;
-      if (pData.dash.timer <= 0) pData.dash.active = false;
+      if (pData.dash.timer <= 0) {
+        pData.dash.active = false;
+        pData.dashEmitter.stop();
+      }
       // 冲刺时保持当前速度向量
       if (p.body) {
         p.body.velocity.normalize().scale(SPEED_DASH);
@@ -352,12 +376,27 @@ export class GameScene extends Phaser.Scene {
     }
 
     // 触发冲刺
-    if (Phaser.Input.Keyboard.JustDown(pData.keys.dash) && pData.dash.cooldown <= 0 && (dx || dy)) {
-      pData.dash.active = true;
-      pData.dash.timer = DASH_TIME;
-      pData.dash.cooldown = 1000;
-      if (p.body instanceof Phaser.Physics.Arcade.Body) {
-        p.body.setVelocity(dx * SPEED_DASH, dy * SPEED_DASH);
+    if (Phaser.Input.Keyboard.JustDown(pData.keys.dash) && pData.dash.cooldown <= 0) {
+      let dash_dx = dx;
+      let dash_dy = dy;
+
+      // If not moving, use facing direction
+      if (dash_dx === 0 && dash_dy === 0) {
+        dash_dx = pData.facing.x;
+        dash_dy = pData.facing.y;
+      }
+
+      // Normalize and apply dash speed
+      const dashVec = new Phaser.Math.Vector2(dash_dx, dash_dy).normalize();
+      if (dashVec.length() > 0) {
+        pData.dash.active = true;
+        pData.dash.timer = DASH_TIME;
+        pData.dash.cooldown = 300;
+        pData.dashEmitter.start();
+        if (p.body instanceof Phaser.Physics.Arcade.Body) {
+          dashVec.scale(SPEED_DASH);
+          p.body.setVelocity(dashVec.x, dashVec.y);
+        }
       }
     }
 
@@ -365,8 +404,21 @@ export class GameScene extends Phaser.Scene {
     const target = this.getInteractTarget(p);
 
     if (Phaser.Input.Keyboard.JustDown(pData.keys.pick)) {
-      if (target.station) this.interactStation(p, target.station);
-      else if (target.item) this.pickupItem(p, target.item);
+      if (pData.heldItem) {
+        // Holding item: try to place it on a station, or on the floor
+        if (target.station) {
+          this.interactStation(p, target.station);
+        } else {
+          this.placeItemOnFloor(p); // New function
+        }
+      } else {
+        // Empty handed: try to pick up from station or floor
+        if (target.station) {
+          this.interactStation(p, target.station); // interactStation handles pickup from station
+        } else if (target.item) {
+          this.pickupItem(p, target.item);
+        }
+      }
     }
 
     if (Phaser.Input.Keyboard.JustDown(pData.keys.throw) && pData.heldItem) {
@@ -382,6 +434,30 @@ export class GameScene extends Phaser.Scene {
       pData.heldItem.x = p.x;
       pData.heldItem.y = p.y;
       pData.heldItem.setDepth(DEPTH.PLAYER + 1); // 拿在人上面
+    }
+  }
+
+  placeItemOnFloor(p: Phaser.Physics.Arcade.Sprite) {
+    const pData = this.playerData.get(p);
+    if (!pData || !pData.heldItem) return;
+
+    const item = pData.heldItem;
+    const itemData = this.itemData.get(item);
+    if (!itemData) return;
+
+    // Position it in front of the player
+    item.x = p.x + pData.facing.x * 32;
+    item.y = p.y + pData.facing.y * 32;
+
+    pData.heldItem = null;
+    itemData.heldBy = null;
+    if (item.body) {
+      item.body.enable = true;
+    }
+
+    // Make sure it doesn't fly away
+    if (item.body instanceof Phaser.Physics.Arcade.Body) {
+      item.body.setVelocity(0, 0);
     }
   }
 
@@ -435,6 +511,11 @@ export class GameScene extends Phaser.Scene {
     // === 1. 手里是空的 ===
     if (!pItem) {
       if (sItem) {
+        // If it's a pot with ready soup, can't pick up without a plate.
+        if (type === 'pot' && sData.progress >= 100) {
+          return; // Do nothing if empty-handed
+        }
+
         // 拿起桌上的
         this.pickupItem(p, sItem);
         sData.item = null;
@@ -459,6 +540,24 @@ export class GameScene extends Phaser.Scene {
       if (!sItem) {
         // 特殊检查
         if (type === 'trash') {
+          this.add.particles(3, 3, 'particle_smoke').emitParticleAt(s.x, s.y, 10);
+
+          const itemData = this.itemData.get(pItem);
+          // Check if it's a plate and has a home station
+          if (itemData && itemData.homeStation && (pItem.texture.key === 'item_plate' || pItem.texture.key === 'item_plate_dirty' || pItem.texture.key === 'item_soup' || pItem.texture.key === 'item_plate_tomato_cut')) {
+            const homeStation = itemData.homeStation;
+            const homeStationSprite = homeStation as Phaser.Physics.Arcade.Sprite;
+
+            this.time.delayedCall(5000, () => {
+              const homeStationData = this.stationData.get(homeStation);
+              if (homeStationData && !homeStationData.item) {
+                const newItem = this.spawnItemWorld('item_plate', homeStationSprite.x, homeStationSprite.y, homeStation);
+                homeStationData.item = newItem;
+              }
+            });
+          }
+
+          this.itemData.delete(pItem);
           pItem.destroy();
           pData.heldItem = null;
           return;
@@ -484,16 +583,32 @@ export class GameScene extends Phaser.Scene {
 
         // 盘子 + 锅里的汤 -> 盛汤
         if (pKey === 'item_plate' && type === 'pot' && sData.progress >= 100) {
+          this.itemData.delete(pItem);
           pItem.destroy();
           this.spawnItem(p, 'item_soup'); // 玩家变成拿汤
+          if (sItem) {
+            this.itemData.delete(sItem);
+            sItem.destroy();
+          }
           sData.item = null; // 锅空了
           sData.progress = 0;
           if (sData.soupSprite) sData.soupSprite.setVisible(false);
         }
-        // 切好的番茄 + 盘子 -> 装盘 (可选功能，让盘子能装食材)
-        else if (pKey === 'item_tomato_cut' && sKey === 'item_plate') {
-          // 简单处理：这里不做复杂的盘子组合，
-          // 严格遵循 Tomato -> Cut -> Pot -> Plate -> Serve 流程
+        // Player holds ingredient, station has container
+        else if (COMBINATIONS[sKey] && COMBINATIONS[sKey][pKey]) {
+          const result = COMBINATIONS[sKey][pKey];
+          this.itemData.delete(pItem);
+          pItem.destroy();
+          pData.heldItem = null;
+          sItem.setTexture(result);
+        }
+        // Player holds container, station has ingredient
+        else if (COMBINATIONS[pKey] && COMBINATIONS[pKey][sKey]) {
+          const result = COMBINATIONS[pKey][sKey];
+          this.itemData.delete(sItem);
+          sItem.destroy();
+          sData.item = null;
+          pItem.setTexture(result);
         }
       }
     }
@@ -649,12 +764,12 @@ export class GameScene extends Phaser.Scene {
     this.pickupItem(p, item);
   }
 
-  spawnItemWorld(key: string, x: number, y: number): Phaser.Physics.Arcade.Sprite {
+  spawnItemWorld(key: string, x: number, y: number, homeStation?: Phaser.GameObjects.GameObject): Phaser.Physics.Arcade.Sprite {
     const item = this.physics.add.sprite(x, y, key);
     this.items.add(item);
 
     // Set appropriate body size based on item type
-    if (key === 'item_plate' || key === 'item_soup' || key === 'item_plate_dirty') {
+    if (key === 'item_plate' || key === 'item_soup' || key === 'item_plate_dirty' || key === 'item_plate_tomato_cut') {
       if (item.body && item.body instanceof Phaser.Physics.Arcade.Body) {
         item.body.setCircle(20, -4, -4); // Larger circle for bigger plates
       }
@@ -667,7 +782,8 @@ export class GameScene extends Phaser.Scene {
     // Set initial item data
     this.itemData.set(item, {
       isFlying: false,
-      heldBy: null
+      heldBy: null,
+      homeStation: homeStation
     });
 
     return item;
@@ -765,38 +881,28 @@ export class GameScene extends Phaser.Scene {
   deliver(p: Phaser.Physics.Arcade.Sprite) {
     // Get player data
     const pData = this.playerData.get(p);
-    if (!pData) return; // Safety check
+    if (!pData || !pData.heldItem) return;
 
     const item = pData.heldItem;
-    if (!item || item.texture.key !== 'item_soup') return; // Only accept soup for delivery
+    if (item.texture.key !== 'item_soup') return;
 
-    // Get item data to remove it from map
-    const itemData = this.itemData.get(item);
-    if (itemData) {
-      // Update heldBy if the item was being held by someone
-      if (itemData.heldBy) {
-        const holderData = this.playerData.get(itemData.heldBy);
-        if (holderData) {
-          holderData.heldItem = null;
-        }
-      }
-    }
-
-    item.destroy();
-    pData.heldItem = null;
-
-    // Remove item data
+    pData.heldItem = null; // Unset first
     this.itemData.delete(item);
 
-    // Score based on delivery timing (in real Overcooked, there can be bonuses for quick delivery)
-    this.score += 100; // Increased score for serving
+    // Make it invisible and schedule for destruction
+    item.setVisible(false);
+    if (item.body) item.body.enable = false;
+    this.time.delayedCall(100, () => item.destroy());
+
+
+    this.score += 60; // Increased score for serving
     const scoreText = this.children.getByName('scoreText');
     if (scoreText && 'setText' in scoreText && typeof (scoreText as any).setText === 'function') {
       (scoreText as Phaser.GameObjects.Text).setText('得分: ' + this.score);
     }
 
     // Visual feedback for successful delivery
-    const deliveryText = this.add.text(p.x, p.y - 30, '+100', { fontSize: '20px', color: '#ffff00' })
+    const deliveryText = this.add.text(p.x, p.y - 30, '+60', { fontSize: '20px', color: '#ffff00' })
       .setOrigin(0.5).setDepth(DEPTH.UI);
     this.tweens.add({
       targets: deliveryText,
@@ -806,27 +912,27 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => deliveryText.destroy()
     });
 
-    // Generate dirty plate: appears at delivery area after a delay
+    // Generate dirty plate: appears at a designated spot after a delay
     this.time.delayedCall(3000, () => {
-      // Find delivery stations by checking our station data
+      // Find dirty plate spawn stations by checking our station data
       const allStations = this.stations.getChildren();
-      const deliveryStations = allStations.filter(s => {
+      const dirtySpawnStations = allStations.filter(s => {
         const sData = this.stationData.get(s);
-        return sData && sData.type === 'delivery';
+        return sData && sData.type === 'dirty_spawn';
       });
 
-      if (deliveryStations.length > 0) {
-        // Use the first delivery station found
-        const deliveryStation = deliveryStations[0] as Phaser.Physics.Arcade.Sprite;
+      if (dirtySpawnStations.length > 0) {
+        // Use the first dirty spawn station found
+        const dirtySpawnStation = dirtySpawnStations[0] as Phaser.Physics.Arcade.Sprite;
 
         // Now get the station data to check if it has an item
-        const deliveryStationData = this.stationData.get(deliveryStation as Phaser.GameObjects.GameObject);
-        if (deliveryStationData && !deliveryStationData.item) {
-          const dirty = this.spawnItemWorld('item_plate_dirty', deliveryStation.x, deliveryStation.y);
-          deliveryStationData.item = dirty;
+        const dirtySpawnStationData = this.stationData.get(dirtySpawnStation as Phaser.GameObjects.GameObject);
+        if (dirtySpawnStationData && !dirtySpawnStationData.item) {
+          const dirty = this.spawnItemWorld('item_plate_dirty', dirtySpawnStation.x, dirtySpawnStation.y);
+          dirtySpawnStationData.item = dirty;
         } else {
-          // If the delivery station is occupied, spawn on an adjacent empty counter
-          this.spawnDirtyPlateNearDelivery(deliveryStation);
+          // If the dirty spawn station is occupied, spawn on an adjacent empty counter
+          this.spawnDirtyPlateNearDelivery(dirtySpawnStation);
         }
       }
     });
@@ -888,14 +994,14 @@ export class GameScene extends Phaser.Scene {
   deliverItemToStation(item: Phaser.Physics.Arcade.Sprite, station: Phaser.Physics.Arcade.Sprite) {
     if (item.texture.key === 'item_soup') {
       // Complete the delivery
-      this.score += 100;
+      this.score += 60;
       const scoreText = this.children.getByName('scoreText');
       if (scoreText && 'setText' in scoreText && typeof (scoreText as any).setText === 'function') {
         (scoreText as Phaser.GameObjects.Text).setText('得分: ' + this.score);
       }
 
       // Visual feedback
-      const deliveryText = this.add.text(station.x, station.y - 30, '+100', { fontSize: '20px', color: '#ffff00' })
+      const deliveryText = this.add.text(station.x, station.y - 30, '+60', { fontSize: '20px', color: '#ffff00' })
         .setOrigin(0.5).setDepth(DEPTH.UI);
       this.tweens.add({
         targets: deliveryText,
