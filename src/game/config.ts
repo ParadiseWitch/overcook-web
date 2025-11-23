@@ -12,7 +12,7 @@ export const LEVEL_MAP = [
   "X . .       . . X",
   "X .           . X",
   "X               X",
-  "B     a...a   K.X",
+  "B   1 a...a 2 KdX",
   "X               X",
   "X C           C X",
   "X .           . X",

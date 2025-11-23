@@ -13,7 +13,11 @@ const config: Types.Core.GameConfig = {
   height: TILE_SIZE * WORLD_H,
   parent: 'game-container',
   backgroundColor: '#028af8',
-  physics: { default: 'arcade', arcade: { debug: false } },
+  physics: {
+    default: 'arcade', arcade: {
+      debug: true
+    }
+  },
   scale: {
     mode: Scale.FIT,
     autoCenter: Scale.CENTER_BOTH

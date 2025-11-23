@@ -18,9 +18,9 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xffffff);
     g.beginPath();
     // Centered isosceles triangle (center is at 16,16 for 32x32 texture)
-    g.moveTo(26, 16); // Tip pointing right
-    g.lineTo(6, 6);   // Bottom left
-    g.lineTo(6, 26);  // Bottom right
+    g.moveTo(30, 15); // Tip pointing right
+    g.lineTo(3, 0);   // Bottom left
+    g.lineTo(3, 30);  // Bottom right
     g.fill();
     g.generateTexture('player', 32, 32);
 
@@ -50,6 +50,12 @@ export class BootScene extends Phaser.Scene {
     });
     drawBlock('station_trash', 0x111111);
     drawBlock('station_wall', 0x222222);
+
+    g.clear();
+    g.fillStyle(0x8f85a3); g.fillRect(0, 0, 48, 48); // 边框
+    g.fillStyle(0x6f6a9f); g.fillCircle(24, 24, 22);   // 桌面
+    g.fillStyle(0x8f85a3); g.fillCircle(24, 24, 14); // 炉头
+    g.generateTexture("station_dirty_spawn", 48, 48);
 
     // 上菜口
     drawBlock('station_delivery', 0x333333, (g) => { // 黄色箭头
@@ -108,6 +114,12 @@ export class BootScene extends Phaser.Scene {
     drawItem('item_soup_pot', (g) => {
       g.fillStyle(0xD2691E); g.fillCircle(16, 16, 14);
     });
+
+    // dash smoke 
+    g.clear();
+    g.fillStyle(0xffffff);
+    g.fillCircle(8, 8, 8);
+    g.generateTexture('particle_smoke', 16, 16);
   }
 
   // 将生成的纹理导出给DOM图例使用
@@ -120,6 +132,7 @@ export class BootScene extends Phaser.Scene {
       'icon-sink': 'station_sink',
       'icon-delivery': 'station_delivery',
       'icon-trash': 'station_trash',
+      'icon-dirty-spawn': 'station_dirty_spawn',
       'icon-tomato': 'item_tomato',
       'icon-tomato-cut': 'item_tomato_cut',
       'icon-plate': 'item_plate',
