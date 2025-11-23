@@ -110,6 +110,20 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xFF4500); g.fillCircle(20, 20, 7);  // 汤心
     g.generateTexture('item_soup', 40, 40);
 
+    // Plate with cut tomato
+    g.clear();
+    // Draw plate first
+    g.fillStyle(0xffffff); g.fillCircle(20, 20, 19);
+    g.fillStyle(0xeeeeee); g.fillCircle(20, 20, 16);
+    // Draw cut tomato on top
+    g.fillStyle(0xB22222);
+    // Adjust coordinates to be centered on the 40x40 plate texture
+    g.fillRect(8 + 4, 8 + 4, 8, 8);
+    g.fillRect(18 + 4, 10 + 4, 6, 6);
+    g.fillRect(10 + 4, 20 + 4, 6, 6);
+    g.fillRect(20 + 4, 20 + 4, 7, 7);
+    g.generateTexture('item_plate_tomato_cut', 40, 40);
+
     // 锅里的汤 (纯液体)
     drawItem('item_soup_pot', (g) => {
       g.fillStyle(0xD2691E); g.fillCircle(16, 16, 14);
