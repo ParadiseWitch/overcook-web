@@ -58,8 +58,8 @@ export class StationManager {
         // 根据地图字符创建不同类型的工作站
         switch (char) {
           case 'X':
-            // 墙壁只是精灵，在原始逻辑中不可交互
-            this.scene.stations.create(px, py, 'station_wall').setDepth(DEPTH.STATION);
+            // 虚无，悬崖
+            this.scene.stations.create(px, py, 'station_nothing').setDepth(DEPTH.STATION);
             continue;
           case '.': station = new CounterStation(this.scene, px, py, 'station_counter'); break;
           case 'a':

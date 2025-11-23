@@ -49,12 +49,14 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x224488); g.fillRect(8, 8, 32, 32);
     });
     drawBlock('station_trash', 0x111111);
-    drawBlock('station_wall', 0x222222);
+    g.clear();
+    g.fillStyle(0x222222); g.fillRect(0, 0, 48, 48);
+    g.generateTexture("station_nothing", 48, 48);
 
     g.clear();
-    g.fillStyle(0x8f85a3); g.fillRect(0, 0, 48, 48); // 边框
-    g.fillStyle(0x6f6a9f); g.fillCircle(24, 24, 22);   // 桌面
-    g.fillStyle(0x8f85a3); g.fillCircle(24, 24, 14); // 炉头
+    g.fillStyle(0x8f85a3); g.fillRect(2, 2, 44, 44);
+    g.fillStyle(0x6f6a9f); g.fillCircle(24, 24, 20);
+    g.fillStyle(0x8f85a3); g.fillCircle(24, 24, 14);
     g.generateTexture("station_dirty_spawn", 48, 48);
 
     // 上菜口
