@@ -179,8 +179,9 @@ export class GameScene extends Phaser.Scene {
     dashEmitter.setConfig({
       speed: 100,
       scale: { start: 0.5, end: 0 },
-              blendMode: 'ADD',
-              lifespan: 300    });
+      blendMode: 'ADD',
+      lifespan: 300
+    });
     dashEmitter.startFollow(p);
 
     this.playerData.set(p, {
