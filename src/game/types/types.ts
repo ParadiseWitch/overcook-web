@@ -1,4 +1,4 @@
-export interface PlayerKeys {
+export interface PlayerKeyMap {
   up: Phaser.Input.Keyboard.Key; // 向上键
   down: Phaser.Input.Keyboard.Key; // 向下键
   left: Phaser.Input.Keyboard.Key; // 向左键

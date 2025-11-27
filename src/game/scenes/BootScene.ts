@@ -57,7 +57,7 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x8f85a3); g.fillRect(2, 2, 44, 44);
     g.fillStyle(0x6f6a9f); g.fillCircle(24, 24, 20);
     g.fillStyle(0x8f85a3); g.fillCircle(24, 24, 14);
-    g.generateTexture("station_dirty_spawn", 48, 48);
+    g.generateTexture("station_dirty_plate", 48, 48);
 
     // 上菜口
     drawBlock('station_delivery', 0x333333, (g) => { // 黄色箭头
@@ -148,7 +148,7 @@ export class BootScene extends Phaser.Scene {
       'icon-sink': 'station_sink',
       'icon-delivery': 'station_delivery',
       'icon-trash': 'station_trash',
-      'icon-dirty-spawn': 'station_dirty_spawn',
+      'icon-dirty-spawn': 'station_dirty_plate',
       'icon-tomato': 'item_tomato',
       'icon-tomato-cut': 'item_tomato_cut',
       'icon-plate': 'item_plate',

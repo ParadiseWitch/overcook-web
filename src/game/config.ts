@@ -25,6 +25,7 @@ export const DEPTH = {
   STATION: 10,
   ITEM: 20,
   PLAYER: 30,
+  UI_TIP: 50,
   UI: 100
 };
 

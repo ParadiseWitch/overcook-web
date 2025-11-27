@@ -1,0 +1,42 @@
+import { Station } from './Station';
+import { Player } from '../objects/Player';
+import { Ingredient } from '../objects/Ingredient';
+import itemManager from '../manager/ItemManager';
+
+/**
+ * 食材箱
+ */
+export class IngredientStation<C extends new (...args: any[]) => Ingredient> extends Station {
+  ingredientType: C;
+  // 箱子中生成的食材类型
+  constructor(scene: Phaser.Scene, x: number, y: number, ingredientType: C, key: string = 'station_crate',) {
+    super(scene, x, y, key);
+    this.ingredientType = ingredientType;
+  }
+
+  interact(player: Player) {
+    // 玩家手中有物品但是工作站没有
+    if (player.heldItem && !this.item) {
+      if (this.canPlaceItem) {
+        this.placeItem(player.heldItem);
+        player.heldItem = null;
+      }
+      return;
+    }
+    // 玩家空手但是工作站有
+    if (!player.heldItem && this.item) {
+      player.pickup(this.item);
+      this.item = null;
+      return;
+    }
+    // 玩家空手切工作站为空，直接返回
+    if (!player.heldItem && !this.item) {
+      const newIngredient = new this.ingredientType(this.scene, this.x, this.y);
+      player.pickup(newIngredient);
+      itemManager.items.push(newIngredient); // 添加到ItemManager的物品列表
+      return newIngredient; // 玩家拾取新食材
+
+    }
+  }
+}
+

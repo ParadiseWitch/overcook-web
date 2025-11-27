@@ -1,13 +1,24 @@
-import type { GameScene } from '../scenes/GameScene';
 import { Item } from './Item';
 
-export type PlateState = 'clean' | 'dirty' | 'with_tomato_cut' | 'with_soup'; // 盘子状态
-
+export type PlateStatus = 'empty' | 'dirty' | 'combinable' | 'full';
 export class Plate extends Item {
-  public plateState: PlateState; // 盘子的当前状态
+  public status: PlateStatus;
 
-  constructor(scene: GameScene, x: number, y: number, texture: string, state: PlateState) {
+  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, status: PlateStatus = 'empty') {
     super(scene, x, y, texture);
-    this.plateState = state;
+    this.status = status;
+    this.setCircle(20, -4, -4); // 盘子类物品使用更大的圆形碰撞体
+  }
+
+  update(delta: number): void {
+    switch (this.status) {
+      case 'empty':
+        // 设置纹理
+        break;
+      case 'combinable':
+      case 'dirty':
+      default:
+        break;
+    }
   }
 }

@@ -1,20 +1,44 @@
-import type { GameScene } from '../scenes/GameScene';
 import { Station } from './Station';
-import { Player } from '../objects/Player';
-import { Item } from '../objects/Item';
+import { DEPTH } from '../config';
 
 export class DeliveryStation extends Station {
-  constructor(scene: GameScene, x: number, y: number, key: string) {
-    super(scene, x, y, key, 'delivery'); // 出餐口工作站
+  score: number = 0;
+  constructor(scene: Phaser.Scene, x: number, y: number) {
+    super(scene, x, y, 'station_delivery'); // 出餐口工作站
   }
 
-  interact(player: Player, heldItem: Item | null): Item | null {
-    if (heldItem && heldItem.texture.key === 'item_soup') {
-      // 交付逻辑将由 DeliveryManager 处理
-      // 这保留了 GameScene 中 deliver 方法的原始逻辑
-      this.scene.deliveryManager.deliver(player);
+  update(delta: number): void {
+    super.update(delta);
+    if (!this.item || this.item.texture.key !== 'item_soup') return; // 只有汤可以交付
+    this.deliver();
+  }
+
+  deliver() {
+    if (!this.item || this.item.texture.key !== 'item_soup') return; // 只有汤可以交付
+
+    this.item.destroy(); // 销毁汤物品
+    this.item = null;
+
+    this.score += 100; // 增加得分
+    const scoreText = this.scene.children.getByName('scoreText') as Phaser.GameObjects.Text;
+    if (scoreText) {
+      scoreText.setText('得分: ' + this.score); // 更新得分显示
     }
-    // 返回玩家手中持有的物品，因为 deliver() 方法会处理清空手部物品的逻辑
-    return player.heldItem;
+
+    // 显示得分提示文本
+    const deliveryText = this.scene.add.text(this.x, this.y - 30, '+100', { fontSize: '20px', color: '#ffff00' })
+      .setOrigin(0.5).setDepth(DEPTH.UI);
+    this.scene.tweens.add({
+      targets: deliveryText,
+      y: this.y - 60,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => deliveryText.destroy() // 动画结束后销毁文本
+    });
+
+    // 延迟3秒后在出餐口生成脏盘子
+    this.scene.time.delayedCall(3000, () => {
+      this.scene.events.emit('add-dirty-plate');
+    });
   }
 }
