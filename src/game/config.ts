@@ -6,17 +6,17 @@ export const SPEED_WALK = 180;
 export const SPEED_DASH = 750;
 export const DASH_TIME = 250;
 export const LEVEL_MAP = [
-  "XXTXXXXXXXXDXXTXX",
+  "XXTXXXXXDXXXXTXXX",
   "X               X",
-  "X . ..S   S..   X",
-  "X . .       .   X",
-  "X .             X",
+  "X   ..S   S..   X",
+  "X               X",
+  "X               X",
   "X               X",
   "B   1 a...a 2 KdX",
   "X               X",
   "X C           C X",
-  "X .           . X",
-  "X . ..B   B.. . X",
+  "X B           B X",
+  "X   C.B   B.C   X",
   "X               X",
   "XXXXXXXXXXXXXXXXX"
 ];
