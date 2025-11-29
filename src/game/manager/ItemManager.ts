@@ -1,28 +1,9 @@
 import * as Phaser from 'phaser';
-import { Player } from '../objects/Player';
 import { Item } from '../objects/Item';
 import { Plate } from '../objects/Plate';
-import { Ingredient } from '../objects/Ingredient';
 
 
 const items: Item[] = []
-function spawnItemAsHeld(scene: Phaser.Scene, player: Player, key: string): Item {
-  let item: Item;
-  // 此逻辑基于 CrateStation 的交互
-  if (key === 'item_tomato') {
-    item = new Ingredient(scene, player.x, player.y, key, 'unprocessed');
-  } else if (key === 'item_soup') {
-    item = new Plate(scene, player.x, player.y, key, 'with_soup');
-  }
-  else {
-    // 默认通用物品或处理错误
-    item = new Item(scene, player.x, player.y, key);
-  }
-  items.push(item);
-  player.pickup(item); // 玩家拾取物品
-  return item;
-}
-
 
 /**
  * @method spawnItemWorld
@@ -36,7 +17,7 @@ function spawnItemAsHeld(scene: Phaser.Scene, player: Player, key: string): Item
 function spawnItemWorld(scene: Phaser.Scene, key: string, x: number, y: number, homeStation?: Phaser.GameObjects.GameObject): Item {
   let item: Item;
   if (key === 'item_plate') {
-    item = new Plate(scene, x, y, key, 'clean');
+    item = new Plate(scene, x, y, key, 'empty');
   } else if (key === 'item_plate_dirty') {
     item = new Plate(scene, x, y, key, 'dirty');
   }
@@ -50,6 +31,5 @@ function spawnItemWorld(scene: Phaser.Scene, key: string, x: number, y: number, 
 
 export default {
   items,
-  spawnItemAsHeld,
   spawnItemWorld
 };
