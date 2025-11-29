@@ -1,5 +1,4 @@
 import { Station } from './Station';
-import { Player } from '../objects/Player';
 
 export class TrashStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -14,28 +13,22 @@ export class TrashStation extends Station {
 
   updateWhenWorking(delta: number): void {
     if (!this.item) return;
-    this.item.rotation += delta * 0.01;
-    this.item.scale = Math.max(this.item.scale - delta * 0.001, 0);
-    console.log(this.item.scale)
-    this.scene.time.delayedCall(1000, () => {
-      this.item?.destroy();
-      this.item = null;
-      this.workStatus = 'done';
-    })
+    this.scene.tweens.add({
+      targets: this.item,
+      rotation: "+=10",
+      scale: "0",
+      // alpha: 0,
+      duration: 1000,
+      onComplete: () => {
+        this.item?.destroy();
+        this.item = null;
+        this.workStatus = 'done';
+      }
+    });
   }
 
   updateWhenDone() {
     this.workStatus = 'idle';
   }
 
-  // placeItem(item: Item): void {
-  //   if (this.item) return;
-  //   this.item = item;
-  //   this.item.rotation = this.scene.game.getTime();
-  //   this.item.scale = 1;
-  //   this.scene.time.delayedCall(500, () => {
-  //     this.item?.destroy();
-  //     this.item = null;
-  //   })
-  // }
 }
