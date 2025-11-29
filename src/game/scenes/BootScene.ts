@@ -38,9 +38,10 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x5c2e0b); g.fillRect(5, 10, 38, 5);
       g.fillRect(5, 33, 38, 5);
     });
-    drawBlock('station_cut', 0xFFFFFF, (g) => { // 白色切菜板
-      g.fillStyle(0xcccccc); g.fillRect(4, 4, 40, 40);
-      g.fillStyle(0xeeeeee); g.fillRect(8, 8, 32, 32);
+    drawBlock('station_cut', 0x666666, (g) => { // 白色切菜板
+      g.fillStyle(0xeeeeee); g.fillRoundedRect(4, 8, 40, 32, 4);
+      g.fillStyle(0x999999); g.fillRoundedRect(8, 12, 4, 24, 2);
+      g.fillStyle(0x999999); g.fillRoundedRect(36, 12, 4, 24, 2);
     });
     drawBlock('station_pot', 0x2E8B57, (g) => { // 绿色炉灶
       g.fillStyle(0x111111); g.fillCircle(24, 24, 16); // 炉头
