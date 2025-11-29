@@ -19,6 +19,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public dashTimer: number = 0; // 冲刺持续时间计时器
   public dashCooldown: number = 0; // 冲刺冷却时间
   public dashEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
+  public lastCanBeInteractObj: Station | Item;
 
   constructor(scene: Phaser.Scene, id: number, x: number, y: number, color: number, keyMap: { [key: string]: string }) {
     super(scene, x, y, 'player');
@@ -122,6 +123,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (dx || dy) {
       this.facing.set(dx, dy).normalize(); // 更新朝向向量并归一化
       this.rotation = this.facing.angle(); // 根据朝向向量设置玩家精灵的旋转角度
+    }
+
+    // 检测交互对象高亮
+    if (this.speed > 0) {
+      if (this.lastCanBeInteractObj instanceof Station) {
+        (this.lastCanBeInteractObj.getChildren()[0] as Phaser.Physics.Arcade.Sprite)?.clearTint()
+      } else if (this.lastCanBeInteractObj instanceof Item) {
+        this.lastCanBeInteractObj.clearTint();
+      }
+      const target = this.getInteractTarget();
+      if (target) {
+        target.setTint(0x9955ff);
+        this.lastCanBeInteractObj = target;
+      }
     }
 
     // 设置移动速度
