@@ -6,12 +6,12 @@ export class TrashStation extends Station {
   }
 
 
-  updateWhenIdle(delta: number): void {
+  updateWhenIdle(_delta: number): void {
     if (!this.item) return;
     this.workStatus = 'working';
   }
 
-  updateWhenWorking(delta: number): void {
+  updateWhenWorking(_delta: number): void {
     if (!this.item) return;
     this.scene.tweens.add({
       targets: this.item,

@@ -10,7 +10,7 @@ export class Plate extends Item {
     this.setCircle(20, -4, -4); // 盘子类物品使用更大的圆形碰撞体
   }
 
-  update(delta: number): void {
+  update(_delta: number): void {
     switch (this.status) {
       case 'empty':
         // 设置纹理

@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
-import { Item } from '../item/Item';
 import { DEPTH } from '../config';
+import { Item } from '../item/Item';
 import { Player } from '../player/Player';
 
 // export type WorkStatus = 'idle' | 'working' | 'done';
@@ -130,18 +130,18 @@ export class Station extends Phaser.Physics.Arcade.StaticGroup {
 
   }
 
-  updateWhenIdle(delta: number) {
+  updateWhenIdle(_delta: number) {
   }
 
-  updateWhenWorking(delta: number) {
+  updateWhenWorking(_delta: number) {
   }
 
-  updateWhenDone(delta: number) {
+  updateWhenDone(_delta: number) {
   }
 
 
   // 在工作站进行“工作”的方法，由子类重写以实现特定逻辑
-  work(player: Player) {
+  work(_player: Player) {
     // 通用工作站不做任何事情
   }
 

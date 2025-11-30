@@ -1,28 +1,24 @@
 import * as Phaser from 'phaser';
-import { LEVEL_MAP, TILE_SIZE, WORLD_H, WORLD_W, DEPTH } from '../config';
+import { DEPTH, LEVEL_MAP, TILE_SIZE, WORLD_H, WORLD_W } from '../config';
 
 // 导入所有工作站类型
-import { Station } from '../stations/Station';
+import { Tomato } from '../item/Ingredient/Tomato';
+import { Player } from '../player/Player';
 import { CounterStation } from '../stations/CounterStation';
-import { IngredientStation } from '../stations/IngredientStation';
 import { CutStation } from '../stations/CuttingStation';
+import { DeliveryStation } from '../stations/DeliveryStation';
+import { DirtyPlateStation } from '../stations/DirtyPlateStation';
+import { IngredientStation } from '../stations/IngredientStation';
 import { PotStation } from '../stations/PotStation';
 import { SinkStation } from '../stations/SinkStation';
-import { DeliveryStation } from '../stations/DeliveryStation';
+import { Station } from '../stations/Station';
 import { TrashStation } from '../stations/TrashStation';
-import { DirtyPlateStation } from '../stations/DirtyPlateStation';
-import { Player } from '../player/Player';
-import playerManager from './PlayerManager';
-import itemManager from './ItemManager';
-import { Tomato } from '../item/Ingredient/Tomato';
+import { genItemInWorld } from './ItemManager';
+import { createPlayer } from './PlayerManager';
 
 
-const stations: Station[] = []
-let stationGroup: Phaser.Physics.Arcade.StaticGroup | null; // 静态工作站组
+export const ALL_STATIONS: Station[] = []
 
-const init = (scene: Phaser.Scene) => {
-  stationGroup = scene.physics.add.staticGroup({ classType: Phaser.Physics.Arcade.Sprite })
-}
 
 const createStation = (scene: Phaser.Scene, char: string, px: number, py: number) => {
   let station: Station | null = null;
@@ -60,17 +56,17 @@ const createStation = (scene: Phaser.Scene, char: string, px: number, py: number
   }
 
   if (station) {
-    stations.push(station); // 将工作站添加到列表中
+    ALL_STATIONS.push(station); // 将工作站添加到列表中
     if (initItemKey) {
       // 原始逻辑中，会设置物品的 homeStation 为工作站的精灵。
-      const item = itemManager.spawnItemWorld(scene, initItemKey, px, py, station.getSprite());
+      const item = genItemInWorld(scene, initItemKey, px, py, station.getSprite());
       station.placeItem(item); // 将物品放置在工作站上
     }
   }
 }
 
 // 根据 LEVEL_MAP 创建游戏地图和工作站
-const createMap = (scene: Phaser.Scene) => {
+export const createMap = (scene: Phaser.Scene) => {
   // 1. 地板
   for (let y = 0; y < WORLD_H; y++) {
     for (let x = 0; x < WORLD_W; x++) {
@@ -95,14 +91,14 @@ const createMap = (scene: Phaser.Scene) => {
           up: 'W', down: 'S', left: 'A', right: 'D', pick: 'E', work: 'R', throw: 'SPACE', dash: 'SHIFT'
         });
 
-        playerManager.createPlayer(p1)
+        createPlayer(p1)
         continue;
       }
       if (char === '2') {
         const p2 = new Player(scene, 0, px, py, 0xff4444, {
           up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT', pick: 'O', work: 'P', throw: 'L', dash: 'ENTER'
         });
-        playerManager.createPlayer(p2);
+        createPlayer(p2);
         continue;
       }
 
@@ -111,33 +107,20 @@ const createMap = (scene: Phaser.Scene) => {
   }
 }
 
-const getAllStations = () => {
-  return stations;
-}
 
-
-const updateStations = (delta: number) => {
-  stations.forEach(s => s.update(delta));
+export const updateStations = (delta: number) => {
+  ALL_STATIONS.forEach(s => s.update(delta));
 }
 
 
 // 根据坐标获取工作站
-const getStationAt: (x: number, y: number) => Station | undefined = (x, y) => {
-  return stations.find(s => s.x === x && s.y === y);
+export const getStationAt: (x: number, y: number) => Station | undefined = (x, y) => {
+  return ALL_STATIONS.find(s => s.x === x && s.y === y);
 }
 
 
 // 根据类型获取工作站列表
-const getStationsByType: (type: string) => Station[] = (type: string) => {
-  return stations.filter(s => s.type === type);
+export const getStationsByType: (type: string) => Station[] = (type: string) => {
+  return ALL_STATIONS.filter(s => s.type === type);
 }
 
-export default {
-  stations,
-  init,
-  createMap,
-  getAllStations,
-  updateStations,
-  getStationAt,
-  getStationsByType,
-}

@@ -1,14 +1,13 @@
 import * as Phaser from 'phaser';
-import { TILE_SIZE, WORLD_H, WORLD_W, DEPTH } from "../config";
+import { DEPTH, TILE_SIZE, WORLD_H, WORLD_W } from "../config";
 
 // 导入新类
-import { Player } from '../player/Player';
 import { Item } from '../item/Item';
-import { Station } from '../stations/Station';
+import { Player } from '../player/Player';
 
 // 导入管理器
-import playerManager from "../manager/PlayerManager";
-import stationManager from "../manager/StationManager";
+import { updatePlayers } from '../manager/PlayerManager';
+import { createMap, updateStations } from '../manager/StationManager';
 import { handleCollision, handleThrow } from '../physics/CollisionHandler';
 
 export class GameScene extends Phaser.Scene {
@@ -36,7 +35,7 @@ export class GameScene extends Phaser.Scene {
     // 初始化管理器
 
     // 创建游戏世界
-    stationManager.createMap(this); // 创建地图和工作站
+    createMap(this); // 创建地图和工作站
     // 设置碰撞检测
     handleCollision(this);
     handleThrow(this);
@@ -48,8 +47,8 @@ export class GameScene extends Phaser.Scene {
 
   update(_time: number, delta: number) {
     // 更新玩家状态
-    playerManager.updatePlayers(delta);
+    updatePlayers(delta);
     // 更新工作站状态
-    stationManager.updateStations(delta)
+    updateStations(delta)
   }
 }

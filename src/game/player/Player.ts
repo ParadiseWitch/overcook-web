@@ -1,10 +1,10 @@
 import * as Phaser from 'phaser';
 import { DASH_TIME, DEPTH, SPEED_DASH, SPEED_WALK } from '../config';
-import { PlayerKeyMap } from '../types/types';
 import { Item } from '../item/Item';
+import { ALL_STATIONS } from '../manager/StationManager';
 import { Station } from '../stations/Station';
-import stationManager from "../manager/StationManager";
-import itemManager from "../manager/ItemManager";
+import { PlayerKeyMap } from '../types/types';
+import { ALL_ITEMS } from '../manager/ItemManager';
 
 
 export type Direction = { x: number, y: number };
@@ -193,8 +193,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // })
 
     // 获取所有工作站
-    const stations = stationManager.getAllStations();
-    for (const s of stations) {
+    // const stations = stations;
+    for (const s of ALL_STATIONS) {
       if (Phaser.Math.Distance.Between(s.x, s.y, lookX, lookY) <= radius) { // 如果观察点在工作站范围内
         return s;
       }
@@ -202,7 +202,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // 检测地面物品
     // 遍历所有item
-    for (const item of itemManager.items) {
+    for (const item of ALL_ITEMS) {
       // 物品未被持有、未在飞行，且在观察点在item范围内
       if (!item.heldBy /* && !item.isFlying */ && Phaser.Math.Distance.Between(item.x, item.y, lookX, lookY) <= radius) {
         return item;

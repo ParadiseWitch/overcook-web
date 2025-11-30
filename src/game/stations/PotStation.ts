@@ -1,8 +1,8 @@
-import { Station } from './Station';
-import { Player } from '../player/Player';
 import { Item } from '../item/Item';
 import { Plate } from '../item/container/Plate';
-import ItemManager from '../manager/ItemManager';
+import { ALL_ITEMS } from '../manager/ItemManager';
+import { Player } from '../player/Player';
+import { Station } from './Station';
 
 /**
  * 锅工作站类，处理煮汤逻辑
@@ -26,7 +26,7 @@ export class PotStation extends Station {
       }
 
       const soup = new Plate(this.scene, player.x, player.y, 'item_soup', 'full'); // 创建一份汤
-      ItemManager.items.push(soup); // 将汤添加到ItemManager的物品列表
+      ALL_ITEMS.push(soup); // 将汤添加到ItemManager的物品列表
       player.replaceHeldItem(soup); // 玩家拾取汤
       return; // 返回汤物品
     }
@@ -42,13 +42,13 @@ export class PotStation extends Station {
   }
 
 
-  updateWhenIdle(delta: number): void {
+  updateWhenIdle(_delta: number): void {
     if (!this.item) return;
     // 开始煮汤
     this.workStatus = 'working';
   }
 
-  updateWhenWorking(delta: number): void {
+  updateWhenWorking(_delta: number): void {
 
   }
 

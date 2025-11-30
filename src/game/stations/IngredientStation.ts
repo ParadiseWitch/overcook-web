@@ -1,7 +1,7 @@
-import { Station } from './Station';
-import { Player } from '../player/Player';
 import { Ingredient } from '../item/Ingredient/Ingredient';
-import itemManager from '../manager/ItemManager';
+import { ALL_ITEMS } from '../manager/ItemManager';
+import { Player } from '../player/Player';
+import { Station } from './Station';
 
 /**
  * 食材箱
@@ -33,7 +33,7 @@ export class IngredientStation<C extends new (...args: any[]) => Ingredient> ext
     if (!player.heldItem && !this.item) {
       const newIngredient = new this.ingredientType(this.scene, this.x, this.y);
       player.pickup(newIngredient);
-      itemManager.items.push(newIngredient); // 添加到ItemManager的物品列表
+      ALL_ITEMS.push(newIngredient); // 添加到ItemManager的物品列表
       return newIngredient; // 玩家拾取新食材
 
     }

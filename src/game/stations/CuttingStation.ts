@@ -7,7 +7,7 @@ export class CutStation extends Station {
     this.workSpeed = 0.15; // 切菜速度
   }
 
-  updateWhenWorking(delta: number): void {
+  updateWhenWorking(_delta: number): void {
     if (!this.item) return;
     this.item.x = this.x + (Math.random() - 0.5) * 2;
   }

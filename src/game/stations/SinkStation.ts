@@ -1,6 +1,6 @@
-import { Station } from './Station';
 import { DEPTH } from '../config';
 import { Plate } from '../item/container/Plate';
+import { Station } from './Station';
 
 export class SinkStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -15,7 +15,7 @@ export class SinkStation extends Station {
     this.workStatus = 'working';
   }
 
-  updateWhenWorking(delta: number): void {
+  updateWhenWorking(_delta: number): void {
     if (!this.item) return;
     // 视觉效果：模拟清洗时盘子晃动
     this.item.x = this.x + Math.sin(this.scene.game.getTime() * 0.01) * 1.5;

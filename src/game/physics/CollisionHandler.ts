@@ -1,19 +1,19 @@
 import * as Phaser from 'phaser';
-import { Player } from '../player/Player';
 import { Item } from '../item/Item';
+import { ALL_ITEMS } from '../manager/ItemManager';
+import { ALL_PLAYERS } from '../manager/PlayerManager';
+import { ALL_STATIONS } from '../manager/StationManager';
+import { Player } from '../player/Player';
 import { Station } from '../stations/Station';
-import PlayerManager from '../manager/PlayerManager';
-import StationManager from '../manager/StationManager';
-import ItemManager from '../manager/ItemManager';
 
 
 export const handleCollision = (scene: Phaser.Scene) => {
   // 玩家与工作站的碰撞
-  scene.physics.add.collider(PlayerManager.players, StationManager.stations);
+  scene.physics.add.collider(ALL_PLAYERS, ALL_STATIONS);
 
-  PlayerManager.players.forEach(player1 => {
+  ALL_PLAYERS.forEach(player1 => {
     // 玩家与玩家的碰撞 (处理玩家之间的互动，例如冲刺碰撞)
-    PlayerManager.players.forEach(player2 => {
+    ALL_PLAYERS.forEach(player2 => {
       // 跳过同一个玩家
       if (player1 === player2) return;
       scene.physics.add.collider(player1, player2, (p1Obj, p2Obj) => {
@@ -53,7 +53,7 @@ export const handleCollision = (scene: Phaser.Scene) => {
 
 export const handleThrow = (scene: Phaser.Scene) => {
   // 投掷物品与工作站的重叠检测 (处理投掷物品吸附到工作站)
-  scene.physics.add.overlap(ItemManager.items, StationManager.stations, (itemObj, stationSprite) => {
+  scene.physics.add.overlap(ALL_ITEMS, ALL_STATIONS, (itemObj, stationSprite) => {
     const item = itemObj as Item;
     const station = (stationSprite as Phaser.GameObjects.Sprite).getData('station') as Station; // 获取Station实例
 
