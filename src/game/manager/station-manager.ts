@@ -2,19 +2,19 @@ import * as Phaser from 'phaser';
 import { DEPTH, LEVEL_MAP, TILE_SIZE, WORLD_H, WORLD_W } from '../config';
 
 // 导入所有工作站类型
-import { Tomato } from '../item/Ingredient/Tomato';
-import { Player } from '../player/Player';
-import { CounterStation } from '../stations/CounterStation';
-import { CutStation } from '../stations/CuttingStation';
-import { DeliveryStation } from '../stations/DeliveryStation';
-import { DirtyPlateStation } from '../stations/DirtyPlateStation';
-import { IngredientStation } from '../stations/IngredientStation';
-import { PotStation } from '../stations/PotStation';
-import { SinkStation } from '../stations/SinkStation';
-import { Station } from '../stations/Station';
-import { TrashStation } from '../stations/TrashStation';
-import { genItemInWorld } from './ItemManager';
-import { createPlayer } from './PlayerManager';
+import { Tomato } from '../item/ingredient/tomato';
+import { Player } from '../player/player';
+import { CounterStation } from '../stations/counter-station';
+import { CutStation } from '../stations/cutting-station';
+import { DeliveryStation } from '../stations/delivery-station';
+import { DirtyPlateStation } from '../stations/dirty-plate-station';
+import { IngredientStation } from '../stations/ingredient-station';
+import { PotStation } from '../stations/pot-station';
+import { SinkStation } from '../stations/sink-station';
+import { Station } from '../stations/station';
+import { TrashStation } from '../stations/trash-station';
+import { genItemInWorld } from './item-manager';
+import { createPlayer } from './player-manager';
 
 
 export const ALL_STATIONS: Station[] = []

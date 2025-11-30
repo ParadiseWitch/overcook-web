@@ -1,4 +1,4 @@
-import { Item } from '../Item';
+import { Item } from '../item';
 
 export type IngredientState = 'unprocessed' | 'cut' | 'boil' | 'pan-fry' | 'deep-fry'; // 食材状态：未加工、已切、已煮、煎炒、油炸
 

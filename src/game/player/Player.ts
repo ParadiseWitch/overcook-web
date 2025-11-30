@@ -1,10 +1,10 @@
 import * as Phaser from 'phaser';
 import { DASH_TIME, DEPTH, SPEED_DASH, SPEED_WALK } from '../config';
-import { Item } from '../item/Item';
-import { ALL_STATIONS } from '../manager/StationManager';
-import { Station } from '../stations/Station';
+import { Item } from '../item/item';
+import { ALL_ITEMS } from '../manager/item-manager';
+import { ALL_STATIONS } from '../manager/station-manager';
+import { Station } from '../stations/station';
 import { PlayerKeyMap } from '../types/types';
-import { ALL_ITEMS } from '../manager/ItemManager';
 
 
 export type Direction = { x: number, y: number };

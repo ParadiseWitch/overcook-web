@@ -1,7 +1,7 @@
-import { Ingredient } from '../item/Ingredient/Ingredient';
-import { ALL_ITEMS } from '../manager/ItemManager';
-import { Player } from '../player/Player';
-import { Station } from './Station';
+import { Ingredient } from '../item/ingredient/ingredient';
+import { ALL_ITEMS } from '../manager/item-manager';
+import { Player } from '../player/player';
+import { Station } from './station';
 
 /**
  * 食材箱

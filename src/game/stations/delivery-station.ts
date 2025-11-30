@@ -1,5 +1,5 @@
-import { Station } from './Station';
 import { DEPTH } from '../config';
+import { Station } from './station';
 
 export class DeliveryStation extends Station {
   score: number = 0;

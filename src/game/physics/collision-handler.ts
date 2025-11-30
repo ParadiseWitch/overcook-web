@@ -1,10 +1,10 @@
 import * as Phaser from 'phaser';
-import { Item } from '../item/Item';
-import { ALL_ITEMS } from '../manager/ItemManager';
-import { ALL_PLAYERS } from '../manager/PlayerManager';
-import { ALL_STATIONS } from '../manager/StationManager';
-import { Player } from '../player/Player';
-import { Station } from '../stations/Station';
+import { Item } from '../item/item';
+import { ALL_ITEMS } from '../manager/item-manager';
+import { ALL_PLAYERS } from '../manager/player-manager';
+import { ALL_STATIONS } from '../manager/station-manager';
+import { Player } from '../player/player';
+import { Station } from '../stations/station';
 
 
 export const handleCollision = (scene: Phaser.Scene) => {

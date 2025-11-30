@@ -1,4 +1,4 @@
-import { Player } from '../player/Player';
+import { Player } from '../player/player';
 
 export const ALL_PLAYERS: Player[] = []; // 玩家列表
 

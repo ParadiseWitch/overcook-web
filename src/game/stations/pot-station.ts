@@ -1,8 +1,8 @@
-import { Item } from '../item/Item';
-import { Plate } from '../item/container/Plate';
-import { ALL_ITEMS } from '../manager/ItemManager';
-import { Player } from '../player/Player';
-import { Station } from './Station';
+import { Plate } from '../item/container/plate';
+import { Item } from '../item/item';
+import { ALL_ITEMS } from '../manager/item-manager';
+import { Player } from '../player/player';
+import { Station } from './station';
 
 /**
  * 锅工作站类，处理煮汤逻辑

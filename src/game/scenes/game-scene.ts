@@ -2,13 +2,13 @@ import * as Phaser from 'phaser';
 import { DEPTH, TILE_SIZE, WORLD_H, WORLD_W } from "../config";
 
 // 导入新类
-import { Item } from '../item/Item';
-import { Player } from '../player/Player';
+import { Item } from '../item/item';
+import { Player } from '../player/player';
 
 // 导入管理器
-import { updatePlayers } from '../manager/PlayerManager';
-import { createMap, updateStations } from '../manager/StationManager';
-import { handleCollision, handleThrow } from '../physics/CollisionHandler';
+import { updatePlayers } from '../manager/player-manager';
+import { createMap, updateStations } from '../manager/station-manager';
+import { handleCollision, handleThrow } from '../physics/collision-handler';
 
 export class GameScene extends Phaser.Scene {
   // 组

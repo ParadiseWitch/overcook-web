@@ -1,5 +1,5 @@
-import { Station } from './Station';
 import { DEPTH } from '../config';
+import { Station } from './station';
 
 export class CutStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {

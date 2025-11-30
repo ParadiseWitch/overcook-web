@@ -1,7 +1,7 @@
 import { AUTO, Game, Scale, Types } from 'phaser';
 import { TILE_SIZE, WORLD_H, WORLD_W } from './config';
-import { BootScene } from './scenes/BootScene';
-import { GameScene } from './scenes/GameScene';
+import { BootScene } from './scenes/boot-scene';
+import { GameScene } from './scenes/game-scene';
 
 
 
