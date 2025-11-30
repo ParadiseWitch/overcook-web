@@ -1,6 +1,6 @@
 import { Station } from './Station';
 import { DEPTH } from '../config';
-import { Plate } from '../objects/Plate';
+import { Plate } from '../item/container/Plate';
 
 export class SinkStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {

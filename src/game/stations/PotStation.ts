@@ -1,7 +1,7 @@
 import { Station } from './Station';
-import { Player } from '../objects/Player';
-import { Item } from '../objects/Item';
-import { Plate } from '../objects/Plate';
+import { Player } from '../player/Player';
+import { Item } from '../item/Item';
+import { Plate } from '../item/container/Plate';
 import ItemManager from '../manager/ItemManager';
 
 /**

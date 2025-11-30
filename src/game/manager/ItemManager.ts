@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
-import { Item } from '../objects/Item';
-import { Plate } from '../objects/Plate';
+import { Item } from '../item/Item';
+import { Plate } from '../item/container/Plate';
 
 
 const items: Item[] = []

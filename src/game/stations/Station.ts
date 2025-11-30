@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
-import { Item } from '../objects/Item';
-import { Player } from '../objects/Player';
+import { Item } from '../item/Item';
 import { DEPTH } from '../config';
+import { Player } from '../player/Player';
 
 // export type WorkStatus = 'idle' | 'working' | 'done';
 

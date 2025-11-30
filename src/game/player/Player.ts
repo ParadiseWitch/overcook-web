@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { DASH_TIME, DEPTH, SPEED_DASH, SPEED_WALK } from '../config';
 import { PlayerKeyMap } from '../types/types';
-import { Item } from './Item';
+import { Item } from '../item/Item';
 import { Station } from '../stations/Station';
 import stationManager from "../manager/StationManager";
 import itemManager from "../manager/ItemManager";

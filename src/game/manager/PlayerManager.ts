@@ -1,4 +1,4 @@
-import { Player } from '../objects/Player';
+import { Player } from '../player/Player';
 
 const players: Player[] = []; // 玩家列表
 

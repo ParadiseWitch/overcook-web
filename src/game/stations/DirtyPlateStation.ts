@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { Station } from './Station';
-import { Plate } from '../objects/Plate';
+import { Plate } from '../item/container/Plate';
 import ItemManager from '../manager/ItemManager';
 
 export class DirtyPlateStation extends Station {

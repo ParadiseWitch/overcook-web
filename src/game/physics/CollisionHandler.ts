@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
-import { Player } from '../objects/Player';
-import { Item } from '../objects/Item';
+import { Player } from '../player/Player';
+import { Item } from '../item/Item';
 import { Station } from '../stations/Station';
 import PlayerManager from '../manager/PlayerManager';
 import StationManager from '../manager/StationManager';

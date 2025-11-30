@@ -11,10 +11,10 @@ import { SinkStation } from '../stations/SinkStation';
 import { DeliveryStation } from '../stations/DeliveryStation';
 import { TrashStation } from '../stations/TrashStation';
 import { DirtyPlateStation } from '../stations/DirtyPlateStation';
-import { Player } from '../objects/Player';
+import { Player } from '../player/Player';
 import playerManager from './PlayerManager';
 import itemManager from './ItemManager';
-import { Tomato } from '../objects/Tomato';
+import { Tomato } from '../item/Ingredient/Tomato';
 
 
 const stations: Station[] = []

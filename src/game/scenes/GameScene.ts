@@ -2,8 +2,8 @@ import * as Phaser from 'phaser';
 import { TILE_SIZE, WORLD_H, WORLD_W, DEPTH } from "../config";
 
 // 导入新类
-import { Player } from '../objects/Player';
-import { Item } from '../objects/Item';
+import { Player } from '../player/Player';
+import { Item } from '../item/Item';
 import { Station } from '../stations/Station';
 
 // 导入管理器

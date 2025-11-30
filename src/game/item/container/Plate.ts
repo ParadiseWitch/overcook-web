@@ -1,4 +1,4 @@
-import { Item } from './Item';
+import { Item } from '../Item';
 
 export type PlateStatus = 'empty' | 'dirty' | 'combinable' | 'full';
 export class Plate extends Item {
