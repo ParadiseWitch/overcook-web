@@ -1,4 +1,5 @@
 import { DEPTH } from '../config';
+import { Plate } from '../item/container/plate';
 import { Station } from './station';
 
 export class DeliveryStation extends Station {
@@ -9,13 +10,14 @@ export class DeliveryStation extends Station {
 
   update(delta: number): void {
     super.update(delta);
-    if (!this.item || this.item.texture.key !== 'item_soup') return; // 只有汤可以交付
+    if (!this.item || !(this.item instanceof Plate) || this.item.ingredients.length <= 0) return;
     this.deliver();
   }
 
   deliver() {
-    if (!this.item || this.item.texture.key !== 'item_soup') return; // 只有汤可以交付
-
+    if (!this.item || !(this.item instanceof Plate) || this.item.ingredients.length <= 0) return;
+    if (this.item.ingredients[0].lastCookState() != 'boil') return;
+    this.item.clearIngredients();
     this.item.destroy(); // 销毁汤物品
     this.item = null;
 

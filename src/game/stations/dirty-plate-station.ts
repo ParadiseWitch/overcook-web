@@ -18,7 +18,7 @@ export class DirtyPlateStation extends Station {
    */
   public genDirtyPlate(): void {
     if (!this.item) {
-      const dirtyPlate = new Plate(this.scene, this.x, this.y, 'item_plate_dirty', 'dirty');
+      const dirtyPlate = new Plate(this.scene, this.x, this.y, 'dirty');
       ALL_ITEMS.push(dirtyPlate); // 从ItemManager中删除，以防重复管理
       this.placeItem(dirtyPlate);
       dirtyPlate.homeStation = this.sprite; // 将此工作站的精灵设置为其家

@@ -1,6 +1,6 @@
 import { Plate } from '../item/container/plate';
-import { Item } from '../item/item';
-import { ALL_ITEMS } from '../manager/item-manager';
+import { Pot } from '../item/container/pot';
+import { Ingredient } from '../item/ingredient/ingredient';
 import { Player } from '../player/player';
 import { Station } from './station';
 
@@ -15,53 +15,64 @@ export class PotStation extends Station {
 
   interact(player: Player) {
     const heldItem = player.heldItem;
-    // 情况1：玩家手持盘子且锅中有煮好的汤
-    if (heldItem instanceof Plate && this.progress >= 100) {
-      heldItem.destroy(); // 销毁空盘子
-
-      if (this.item) {
-        this.item.destroy(); // 销毁锅中煮好的食材
-        this.item = null;
+    // 情况1：玩家手持盘子且锅中有煮好的食材
+    if (heldItem instanceof Plate && this.workStatus == 'done') {
+      const plate = heldItem;
+      // plate.destroy(); // 销毁空盘子
+      if (this.item instanceof Pot && this.item.ingredients.length >= 0) {
+        // this.item.destroy(); // 销毁锅中煮好的食材
+        const pot = this.item;
+        pot.transferTo(plate);
         this.workStatus = 'idle';
       }
-
-      const soup = new Plate(this.scene, player.x, player.y, 'item_soup', 'full'); // 创建一份汤
-      ALL_ITEMS.push(soup); // 将汤添加到ItemManager的物品列表
-      player.replaceHeldItem(soup); // 玩家拾取汤
-      return; // 返回汤物品
+      return;
     }
 
-    // 情况2：玩家手持切好的番茄且锅为空
-    if (heldItem && heldItem.texture.key === 'item_tomato_cut' && !this.item) {
-      this.placeItem(heldItem); // 将番茄放入锅中
-      player.heldItem = null; // 玩家手中物品清空
-      return; // 物品已被放置
+    // 情况2：玩家手持切好的食材且锅为空
+    if (heldItem instanceof Ingredient && heldItem.cookStates.length == 1 && heldItem.cookStates[0] == 'cut' && this.workStatus == 'idle') {
+      const ingredient = heldItem;
+      if (this.item instanceof Pot) {
+        const pot = this.item;
+        pot.addIngredient(ingredient)
+        player.heldItem = null;
+        this.workStatus = 'working';
+        return;
+      }
     }
 
+    // player空手或者station空
+    if (!player.heldItem || !this.item) {
+      super.interact(player);
+    }
     // 其他情况，无交互
   }
 
 
   updateWhenIdle(_delta: number): void {
     if (!this.item) return;
-    // 开始煮汤
-    this.workStatus = 'working';
+    if (!(this.item instanceof Pot)) return;
   }
 
   updateWhenWorking(_delta: number): void {
-
+    if (!this.item) return;
+    this.item.x = this.x + Math.sin(this.scene.game.getTime() * 0.01) * 1.5;
   }
 
   updateWhenDone() {
     if (!this.item) return;
-    this.item.setTexture('item_soup_pot');
+    if (!(this.item instanceof Pot)) return;
+    const pot = this.item;
+    // this.item.setTexture('item_soup_pot');
+    const ingredient = pot.ingredients[0];
+    ingredient.addCookstate('boil');
   }
 
-  placeItem(item: Item): void {
-    // 只有处理好的食材可以放置
-    if (item.texture.key !== 'item_tomato_cut') {
-      return;
-    }
-    super.placeItem(item);
-  }
+  // placeItem(item: Item): void {
+  //   // 只有处理好的食材可以放置
+  //   if (item.texture.key !== 'item_tomato_cut') {
+  //     return;
+  //   }
+  //   super.placeItem(item);
+  // }
 }
+

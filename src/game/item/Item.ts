@@ -23,10 +23,12 @@ export class Item extends Phaser.Physics.Arcade.Sprite {
   update(delta: number): void {
     // 如果物品处于飞行状态，则更新其位置
     if (this.isFlying) {
-      if (!this.body?.velocity) return;
-      const velocity: Phaser.Math.Vector2 = this.body?.velocity;
-      this.x = velocity.x * delta + this.x;
-      this.y = velocity.y * delta + this.y;
+      console.log(this.body?.velocity);
+      if (!this.body?.velocity || (this.body?.velocity.x == 0 && this.body?.velocity.y == 0)) {
+        this.isFlying = false;
+        this.thrower = null;
+        return;
+      };
     }
   }
 }

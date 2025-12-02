@@ -1,24 +1,15 @@
-import { Item } from '../item';
+import { Container, ContainerStatus } from './container';
 
-export type PlateStatus = 'empty' | 'dirty' | 'combinable' | 'full';
-export class Plate extends Item {
-  public status: PlateStatus;
+export class Plate extends Container {
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, status: PlateStatus = 'empty') {
-    super(scene, x, y, texture);
-    this.status = status;
-    this.setCircle(20, -4, -4); // 盘子类物品使用更大的圆形碰撞体
-  }
-
-  update(_delta: number): void {
-    switch (this.status) {
-      case 'empty':
-        // 设置纹理
-        break;
-      case 'combinable':
-      case 'dirty':
-      default:
-        break;
+  constructor(scene: Phaser.Scene, x: number, y: number, status: ContainerStatus = 'empty') {
+    let texture = 'item_plate';
+    if (status == 'dirty') {
+      texture = 'item_plate_dirty'
     }
+    super(scene, x, y, texture, status);
+    // 盘子类物品使用更大的圆形碰撞体
+    this.setCircle(20, -4, -4); 
   }
+
 }

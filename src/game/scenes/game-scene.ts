@@ -6,8 +6,10 @@ import { Item } from '../item/item';
 import { Player } from '../player/player';
 
 // 导入管理器
+import { updateItems } from '../manager/item-manager';
+import { createMap } from '../manager/map-manager';
 import { updatePlayers } from '../manager/player-manager';
-import { createMap, updateStations } from '../manager/station-manager';
+import { updateStations } from '../manager/station-manager';
 import { handleCollision, handleThrow } from '../physics/collision-handler';
 
 export class GameScene extends Phaser.Scene {
@@ -49,6 +51,8 @@ export class GameScene extends Phaser.Scene {
     // 更新玩家状态
     updatePlayers(delta);
     // 更新工作站状态
-    updateStations(delta)
+    updateStations(delta);
+    // 更新item
+    updateItems(delta);
   }
 }

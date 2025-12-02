@@ -9,7 +9,7 @@ export class SinkStation extends Station {
   }
 
   work() {
-    if (!this.item || !(this.item instanceof Plate) || this.item.status != 'dirty') {
+    if (!this.item || !(this.item instanceof Plate) || this.item.status !== 'dirty') {
       return; // 只有脏盘子才能清洗
     }
     this.workStatus = 'working';
@@ -23,12 +23,14 @@ export class SinkStation extends Station {
 
 
   updateWhenDone() {
-    if (this.item == null) throw new Error("工作站无物体");
+    if (!this.item || !(this.item instanceof Plate)) throw new Error("工作站无物体");
 
     this.progress = 0; // 重置进度
     this.hideBar();
 
-    this.item.setTexture('item_plate'); // 切换为干净盘子纹理
+    // 更新容器状态
+    this.item.status = 'empty';
+    this.item.clearIngredients();
     this.item.x = this.x; // 重置物品位置
     this.item.y = this.y;
 

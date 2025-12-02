@@ -44,7 +44,9 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x999999); g.fillRoundedRect(36, 12, 4, 24, 2);
     });
     drawBlock('station_pot', 0x2E8B57, (g) => { // 绿色炉灶
-      g.fillStyle(0x111111); g.fillCircle(24, 24, 16); // 炉头
+      g.fillStyle(0x111111); g.fillCircle(24, 24, 9);
+      this.drawDashedCircle(g, 24, 24, 11, 10, 3, 0.1, 0.43); // 炉头
+      this.drawDashedCircle(g, 24, 24, 13, 2, 3, 0.8, -0.3); // 炉头
     });
     drawBlock('station_sink', 0x4682B4, (g) => { // 蓝色水池
       g.fillStyle(0x224488); g.fillRect(8, 8, 32, 32);
@@ -91,6 +93,13 @@ export class BootScene extends Phaser.Scene {
       g.fillRect(8, 8, 8, 8); g.fillRect(18, 10, 6, 6);
       g.fillRect(10, 20, 6, 6); g.fillRect(20, 20, 7, 7);
     });
+
+    // 空锅 
+    g.clear();
+    g.fillStyle(0x111111); g.fillCircle(20, 20, 16);
+    g.fillStyle(0x222222); g.fillCircle(20, 20, 13);
+    g.fillStyle(0x111111); g.fillRoundedRect(18, 33, 4, 7, 2);
+    g.generateTexture('item_pot', 40, 40);
 
     // 干净盘子 (larger than ingredients - 40x40 texture)
     g.clear();
@@ -145,13 +154,14 @@ export class BootScene extends Phaser.Scene {
       'icon-counter': 'station_counter',
       'icon-crate': 'station_crate',
       'icon-cut': 'station_cut',
-      'icon-pot': 'station_pot',
+      'icon-pot-station': 'station_pot',
       'icon-sink': 'station_sink',
       'icon-delivery': 'station_delivery',
       'icon-trash': 'station_trash',
       'icon-dirty-spawn': 'station_dirty_plate',
       'icon-tomato': 'item_tomato',
       'icon-tomato-cut': 'item_tomato_cut',
+      'icon-pot': 'item_pot',
       'icon-plate': 'item_plate',
       'icon-plate-dirty': 'item_plate_dirty',
       'icon-soup': 'item_soup',
@@ -198,4 +208,27 @@ export class BootScene extends Phaser.Scene {
 
     return canvas.toDataURL();
   }
+
+  drawDashedCircle(
+    g: Phaser.GameObjects.Graphics,
+    cx: number, cy: number,
+    radius: number,
+    width: number = 10,
+    dashNum: number = 5,
+    dashLenRatio = 0.5,
+    offset: number = 0,
+    color: number = 0x111111,
+  ) {
+    g.lineStyle(width, color, 1);
+    const radPerSeg = (Math.PI * 2) / dashNum;
+    for (let i = 0; i < dashNum; i++) {
+      const start = i * radPerSeg + offset;
+      const end = start + dashLenRatio * radPerSeg;
+      g.beginPath();
+      g.arc(cx, cy, radius, start, end);
+      g.strokePath();    // 单独描边，不会连笔
+    }
+
+  }
+
 }

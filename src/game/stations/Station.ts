@@ -77,6 +77,7 @@ export class Station extends Phaser.Physics.Arcade.StaticGroup {
       return;
     }
   }
+
   // 将物品放置在工作站上
   placeItem(item: Item) {
     if (this.item) return; // 工作站已有物品

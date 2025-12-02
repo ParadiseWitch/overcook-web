@@ -1,4 +1,5 @@
 import { DEPTH } from '../config';
+import { Ingredient } from '../item/ingredient/ingredient';
 import { Station } from './station';
 
 export class CutStation extends Station {
@@ -15,8 +16,10 @@ export class CutStation extends Station {
   updateWhenDone(): void {
     if (this.workStatus != 'done') return;
     if (!this.item) return;
+    if (!(this.item instanceof Ingredient)) return;
+    if (this.item.cookStates.length > 0) return;
 
-    this.item.setTexture('item_tomato_cut'); // 切换为切好的番茄纹理
+    this.item.addCookstate("cut");
     this.item.x = this.x; // 重置物品位置
     this.item.y = this.y;
 
@@ -30,14 +33,14 @@ export class CutStation extends Station {
       duration: 800,
       onComplete: () => cutText.destroy() // 动画结束后销毁文字
     });
-
     this.workStatus = 'idle';
   }
 
   work() {
-    if (!this.item || this.item.texture.key !== 'item_tomato') {
-      return; // 只有未切的番茄才能切
-    }
+    // 只有未烹饪的食材可以切
+    if (!this.item) return;
+    if (!(this.item instanceof Ingredient)) return;
+    if (this.item.cookStates.length > 0) return;
     this.workStatus = 'working';
   }
 }

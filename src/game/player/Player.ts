@@ -57,6 +57,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   replaceHeldItem(newItem: Item) {
+    this.heldItem?.destroy();
     this.heldItem = newItem;
     newItem.heldBy = this;
     newItem.isFlying = false;
@@ -251,17 +252,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       item.body.enable = true; // 启用物理碰撞
       const vec = this.facing.clone().scale(500); // 根据玩家朝向计算投掷速度
       (item.body as Phaser.Physics.Arcade.Body).setVelocity(vec.x, vec.y);
-      (item.body as Phaser.Physics.Arcade.Body).setDrag(300); // 设置空气阻力
+      (item.body as Phaser.Physics.Arcade.Body).setDrag(500); // 设置空气阻力
     }
-    scene.time.delayedCall(1000, () => { // 1秒后重置飞行状态
-      item.isFlying = false;
-    });
   }
 
   work() {
     const target = this.getInteractTarget(); // 获取玩家当前交互目标
     if (target instanceof Station) {
-      target.work(this); // 调用工作站的 work 方法，假设每帧16ms
+      // 空手才能在工作区work
+      if (this.heldItem) return;
+      target.work(this);
     }
   }
 }

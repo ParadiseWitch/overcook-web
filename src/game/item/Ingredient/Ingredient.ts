@@ -1,12 +1,23 @@
 import { Item } from '../item';
 
-export type IngredientState = 'unprocessed' | 'cut' | 'boil' | 'pan-fry' | 'deep-fry'; // 食材状态：未加工、已切、已煮、煎炒、油炸
+export type CookState = 'cut' | 'boil' | 'pan-fry' | 'deep-fry'; // 食材状态：已切、已煮、煎炒、油炸
 
 export class Ingredient extends Item {
-  public ingredientState: IngredientState; // 食材的当前状态
+  // 食材的烹饪状态
+  public cookStates: CookState[];
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, state: IngredientState) {
+  constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
-    this.ingredientState = state;
+    this.cookStates = [];
+  }
+
+  addCookstate(cookState: CookState) {
+    this.cookStates.push(cookState)
+  }
+
+
+  lastCookState(): CookState {
+    const len = this.cookStates.length;
+    return this.cookStates[len - 1 < 0 ? 0 : len - 1];
   }
 }
