@@ -23,7 +23,7 @@ export class SinkStation extends Station {
 
 
   updateWhenDone() {
-    if (!this.item || !(this.item instanceof Plate)) throw new Error("工作站无物体");
+    if (!this.item || !(this.item instanceof Plate)) return;
 
     this.progress = 0; // 重置进度
     this.hideBar();
