@@ -22,7 +22,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public dashEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
   public lastCanBeInteractObj: Station | Item;
 
-  constructor(scene: Phaser.Scene, id: number, x: number, y: number, color: number, keyMap: { [key: string]: string }, gamepad: Phaser.Input.Gamepad.Gamepad | null = null) {
+  constructor(scene: Phaser.Scene, id: number, x: number, y: number, color: number, keyMap: { [key: string]: string }) {
     super(scene, x, y, 'player');
 
     scene.add.existing(this);
@@ -49,6 +49,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
     this.dashEmitter.startFollow(this);
     this.dashEmitter.stop();
+  }
+
+  init() {
+    // todo
   }
 
   // 拾取物品逻辑，与原始GameScene中的逻辑保持一致。
