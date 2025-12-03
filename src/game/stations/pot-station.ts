@@ -2,7 +2,7 @@ import { Plate } from '../item/container/plate';
 import { Pot } from '../item/container/pot';
 import { Ingredient } from '../item/ingredient/ingredient';
 import { Player } from '../player';
-import { Station } from './sstation';
+import { Station } from './station';
 
 /**
  * 锅工作站类，处理煮汤逻辑

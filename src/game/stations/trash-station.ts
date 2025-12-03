@@ -1,4 +1,4 @@
-import { Station } from './sstation';
+import { Station } from './station';
 
 export class TrashStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {

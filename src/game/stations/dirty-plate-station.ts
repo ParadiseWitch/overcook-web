@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { Plate } from '../item/container/plate';
 import { ALL_ITEMS } from '../manager/item-manager';
-import { Station } from './sstation';
+import { Station } from './station';
 
 export class DirtyPlateStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) { // 使用柜台纹理

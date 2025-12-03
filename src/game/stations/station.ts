@@ -10,7 +10,7 @@ export class Station extends Phaser.Physics.Arcade.StaticGroup {
   public x: number; // 工作站的X坐标
   public y: number; // 工作站的Y坐标
   public canPlaceItem: boolean = true; // 能否放置物品
-  public workStatus: 'idle' | 'working' | 'done' | 'not_use' = 'idle'; // 工作状态
+  public workStatus: 'idle' | 'working' | 'done' | 'danger' | 'fire' = 'idle'; // 工作状态
   public workSpeed: number = 0.15; // 工作速度
   public sprite: Phaser.Physics.Arcade.Sprite; // 工作站的物理精灵
   public hasBar: boolean = false; // 是否有进度条
@@ -125,6 +125,12 @@ export class Station extends Phaser.Physics.Arcade.StaticGroup {
       case 'done':
         this.updateWhenDone(delta);
         break;
+      case 'danger':
+        this.updateWhenDanger(delta);
+        break;
+      case 'done':
+        this.updateWhenFire(delta);
+        break;
       default:
         break;
     }
@@ -138,6 +144,12 @@ export class Station extends Phaser.Physics.Arcade.StaticGroup {
   }
 
   updateWhenDone(_delta: number) {
+  }
+
+  updateWhenDanger(_delta: number) {
+  }
+
+  updateWhenFire(_delta: number) {
   }
 
 

@@ -11,7 +11,7 @@ import { DirtyPlateStation } from '../stations/dirty-plate-station';
 import { IngredientStation } from '../stations/ingredient-station';
 import { PotStation } from '../stations/pot-station';
 import { SinkStation } from '../stations/sink-station';
-import { Station } from '../stations/sstation';
+import { Station } from '../stations/station';
 import { TrashStation } from '../stations/trash-station';
 import { ALL_ITEMS } from './item-manager';
 
