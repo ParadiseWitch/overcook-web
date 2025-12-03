@@ -1,4 +1,4 @@
-import { Item } from '../item/item';
+import { Item } from '../item';
 
 
 export const ALL_ITEMS: Item[] = [];

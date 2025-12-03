@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { DEPTH } from '../config';
-import { Item } from '../item/item';
-import { Player } from '../player/player';
+import { Item } from '../item';
+import { Player } from '../player';
 
 // export type WorkStatus = 'idle' | 'working' | 'done';
 

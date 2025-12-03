@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { DASH_TIME, DEPTH, SPEED_DASH, SPEED_WALK } from '../config';
-import { Item } from '../item/item';
+import { Item } from '../item';
 import { ALL_ITEMS } from '../manager/item-manager';
 import { ALL_STATIONS } from '../manager/station-manager';
 import { Station } from '../stations/station';

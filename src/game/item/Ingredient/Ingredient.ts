@@ -1,4 +1,4 @@
-import { Item } from '../item';
+import { Item } from '..';
 
 export type CookState = 'cut' | 'boil' | 'pan-fry' | 'deep-fry'; // 食材状态：已切、已煮、煎炒、油炸
 

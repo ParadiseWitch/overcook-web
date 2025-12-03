@@ -1,6 +1,6 @@
 import { Ingredient } from '../item/ingredient/ingredient';
 import { ALL_ITEMS } from '../manager/item-manager';
-import { Player } from '../player/player';
+import { Player } from '../player';
 import { Station } from './station';
 
 /**

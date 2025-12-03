@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { DEPTH } from '../config';
-import { Player } from '../player/player';
+import { Player } from '../player';
 
 export class Item extends Phaser.Physics.Arcade.Sprite {
   public isFlying: boolean = false; // 物品是否处于飞行状态

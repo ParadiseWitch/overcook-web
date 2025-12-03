@@ -1,7 +1,7 @@
 import { Plate } from '../item/container/plate';
 import { Pot } from '../item/container/pot';
 import { Ingredient } from '../item/ingredient/ingredient';
-import { Player } from '../player/player';
+import { Player } from '../player';
 import { Station } from './station';
 
 /**

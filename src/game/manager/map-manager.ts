@@ -1,5 +1,5 @@
 import { DEPTH, LEVEL_MAP, TILE_SIZE, WORLD_H, WORLD_W } from "../config";
-import { Player } from "../player/player";
+import { Player } from "../player";
 import { createPlayer } from "./player-manager";
 import { createStation } from "./station-manager";
 

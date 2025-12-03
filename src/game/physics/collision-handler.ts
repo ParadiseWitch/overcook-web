@@ -1,9 +1,9 @@
 import * as Phaser from 'phaser';
-import { Item } from '../item/item';
+import { Item } from '../item';
 import { ALL_ITEMS } from '../manager/item-manager';
 import { ALL_PLAYERS } from '../manager/player-manager';
 import { ALL_STATIONS } from '../manager/station-manager';
-import { Player } from '../player/player';
+import { Player } from '../player';
 import { Station } from '../stations/station';
 
 
