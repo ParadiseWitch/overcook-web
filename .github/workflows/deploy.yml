@@ -24,6 +24,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git refresh file casing
+        run: |
+          git config core.ignorecase false
+          git mv -f src src || true
+
       - name: Fix Git case sensitivity temporarily
         run: git config core.ignorecase true
 
