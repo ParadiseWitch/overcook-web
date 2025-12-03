@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Clean
-        run: git clean -fdx
+        run: rm -rf dist
 
   build:
     needs: clean
