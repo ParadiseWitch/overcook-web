@@ -10,27 +10,11 @@ permissions:
   id-token: write
 
 jobs:
-  clean:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Clean
-        run: rm -rf dist
-
   build:
-    needs: clean
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Force Git refresh file casing
-        run: |
-          git config core.ignorecase false
-          git mv -f src src || true
-
-      - name: Fix Git case sensitivity temporarily
-        run: git config core.ignorecase true
 
       - name: Setup Node
         uses: actions/setup-node@v4
