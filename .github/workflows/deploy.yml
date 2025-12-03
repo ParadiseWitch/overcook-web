@@ -18,6 +18,7 @@ jobs:
         run: git clean -fdx
 
   build:
+    needs: clean
     runs-on: ubuntu-latest
 
     steps:
