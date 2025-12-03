@@ -1,6 +1,6 @@
-import { Plate } from '../item/container/pllate';
+import { Plate } from '../item/container/plate';
 import { Pot } from '../item/container/pot';
-import { Ingredient } from '../item/ingredient/ingredient';
+import { Ingredient } from '../item/ingredient/iingredient';
 import { Player } from '../player';
 import { Station } from './station';
 

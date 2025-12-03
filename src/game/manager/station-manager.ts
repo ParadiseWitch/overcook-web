@@ -1,9 +1,9 @@
 import * as Phaser from 'phaser';
 
 // 导入所有工作站类型
-import { Plate } from '../item/container/pllate';
+import { Plate } from '../item/container/plate';
 import { Pot } from '../item/container/pot';
-import { Tomato } from '../item/ingredient/tomato';
+import { Tomato } from '../item/ingredient/toomato';
 import { CounterStation } from '../stations/counter-station';
 import { CutStation } from '../stations/cut-station';
 import { DeliveryStation } from '../stations/delivery-station';

@@ -1,5 +1,5 @@
 import { DEPTH } from '../config';
-import { Plate } from '../item/container/pllate';
+import { Plate } from '../item/container/plate';
 import { Station } from './station';
 
 export class SinkStation extends Station {

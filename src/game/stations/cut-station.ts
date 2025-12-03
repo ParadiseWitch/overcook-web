@@ -1,5 +1,5 @@
 import { DEPTH } from '../config';
-import { Ingredient } from '../item/ingredient/ingredient';
+import { Ingredient } from '../item/ingredient/iingredient';
 import { Station } from './station';
 
 export class CutStation extends Station {
