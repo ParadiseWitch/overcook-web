@@ -3,7 +3,7 @@ import * as Phaser from 'phaser';
 // 导入所有工作站类型
 import { Plate } from '../item/container/plate';
 import { Pot } from '../item/container/pot';
-import { Tomato } from '../item/ingredient/toomato';
+import { Tomato } from '../item/ingredient/tomato';
 import { CounterStation } from '../stations/counter-station';
 import { CutStation } from '../stations/cut-station';
 import { DeliveryStation } from '../stations/delivery-station';
@@ -11,7 +11,7 @@ import { DirtyPlateStation } from '../stations/dirty-plate-station';
 import { IngredientStation } from '../stations/ingredient-station';
 import { PotStation } from '../stations/pot-station';
 import { SinkStation } from '../stations/sink-station';
-import { Station } from '../stations/station';
+import { Station } from '../stations/sstation';
 import { TrashStation } from '../stations/trash-station';
 import { ALL_ITEMS } from './item-manager';
 

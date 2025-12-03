@@ -1,4 +1,4 @@
-import { Ingredient } from "../ingredient/iingredient";
+import { Ingredient } from "../ingredient/ingredient";
 import { Container, ContainerStatus } from "./container";
 
 

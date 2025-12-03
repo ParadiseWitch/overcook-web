@@ -1,6 +1,6 @@
 import { Item } from "..";
 import { Player } from "../../player";
-import { Ingredient } from "../ingredient/iingredient";
+import { Ingredient } from "../ingredient/ingredient";
 
 
 export type ContainerStatus = 'empty' | 'dirty' | 'combinable' | 'full';

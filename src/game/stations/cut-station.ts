@@ -1,6 +1,6 @@
 import { DEPTH } from '../config';
-import { Ingredient } from '../item/ingredient/iingredient';
-import { Station } from './station';
+import { Ingredient } from '../item/ingredient/ingredient';
+import { Station } from './sstation';
 
 export class CutStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {

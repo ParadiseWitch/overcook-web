@@ -4,7 +4,7 @@ import { ALL_ITEMS } from '../manager/item-manager';
 import { ALL_PLAYERS } from '../manager/player-manager';
 import { ALL_STATIONS } from '../manager/station-manager';
 import { Player } from '../player';
-import { Station } from '../stations/station';
+import { Station } from '../stations/sstation';
 
 
 export const handleCollision = (scene: Phaser.Scene) => {

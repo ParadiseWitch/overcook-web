@@ -1,6 +1,6 @@
 import { DEPTH } from '../config';
 import { Plate } from '../item/container/plate';
-import { Station } from './station';
+import { Station } from './sstation';
 
 export class DeliveryStation extends Station {
   score: number = 0;

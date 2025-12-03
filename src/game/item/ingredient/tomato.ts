@@ -1,4 +1,4 @@
-import { CookState, Ingredient } from "./iingredient";
+import { CookState, Ingredient } from "./ingredient";
 
 export class Tomato extends Ingredient {
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string = 'item_tomato') {
