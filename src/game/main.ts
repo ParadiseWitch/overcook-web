@@ -28,7 +28,8 @@ const config: Types.Core.GameConfig = {
   scene: [BootScene, GameScene],
   input: {
     keyboard: true,
-    mouse: true
+    mouse: true,
+    gamepad: true
   }
 };
 

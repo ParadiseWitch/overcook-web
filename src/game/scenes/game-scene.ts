@@ -8,7 +8,7 @@ import { Player } from '../player/player';
 // 导入管理器
 import { updateItems } from '../manager/item-manager';
 import { createMap } from '../manager/map-manager';
-import { updatePlayers } from '../manager/player-manager';
+import { ALL_PLAYERS, updatePlayers } from '../manager/player-manager';
 import { updateStations } from '../manager/station-manager';
 import { handleCollision, handleThrow } from '../physics/collision-handler';
 
@@ -44,6 +44,24 @@ export class GameScene extends Phaser.Scene {
     // 初始化UI
     this.score = 0;
     this.add.text(20, 20, '得分: 0', { fontSize: '32px', fontStyle: 'bold' }).setDepth(DEPTH.UI).setName('scoreText');
+
+    // 绑定手柄到玩家2（第一个连接的手柄 -> 第二个玩家）
+    if (this.input.gamepad) {
+      // 已经连接的手柄（例如在加载前就插好的）
+      this.input.gamepad.gamepads.forEach((pad) => {
+        if (!pad) return;
+        if (ALL_PLAYERS.length > 1 && !ALL_PLAYERS[1].gamepad) {
+          ALL_PLAYERS[1].setGamepad(pad);
+        }
+      });
+
+      // 之后新连接的手柄
+      this.input.gamepad.on('connected', (pad: Phaser.Input.Gamepad.Gamepad) => {
+        if (ALL_PLAYERS.length > 1 && !ALL_PLAYERS[1].gamepad) {
+          ALL_PLAYERS[1].setGamepad(pad);
+        }
+      });
+    }
   }
 
 

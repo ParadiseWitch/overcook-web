@@ -12,6 +12,7 @@ export type Direction = { x: number, y: number };
 export class Player extends Phaser.Physics.Arcade.Sprite {
   public id: number; // 玩家ID
   public keyMap: PlayerKeyMap; // 玩家按键
+  public gamepad: Phaser.Input.Gamepad.Gamepad | null = null; // 玩家手柄
   public heldItem: Item | null = null; // 玩家手中持有的物品
   public facing: Phaser.Math.Vector2; // 玩家朝向
   public speed: number = SPEED_WALK; // 玩家速度
@@ -21,7 +22,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public dashEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
   public lastCanBeInteractObj: Station | Item;
 
-  constructor(scene: Phaser.Scene, id: number, x: number, y: number, color: number, keyMap: { [key: string]: string }) {
+  constructor(scene: Phaser.Scene, id: number, x: number, y: number, color: number, keyMap: { [key: string]: string }, gamepad: Phaser.Input.Gamepad.Gamepad | null = null) {
     super(scene, x, y, 'player');
 
     scene.add.existing(this);
@@ -116,9 +117,36 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     else if (this.keyMap.down.isDown) dy = 1;
     if (this.keyMap.left.isDown) dx = -1;
     else if (this.keyMap.right.isDown) dx = 1;
+    // 手柄方向（左摇杆 / 十字键），会覆盖键盘方向
+    if (this.gamepad) {
+      const pad = this.gamepad;
+      // 摇杆
+      const axisH = pad.axes.length > 0 ? pad.axes[0].getValue() : 0;
+      const axisV = pad.axes.length > 1 ? pad.axes[1].getValue() : 0;
+      const deadZone = 0.2;
+      let padDx = 0;
+      let padDy = 0;
+      if (Math.abs(axisH) > deadZone) padDx = axisH;
+      if (Math.abs(axisV) > deadZone) padDy = axisV;
+
+      // 十字键（有些手柄用 dpad）
+      if (pad.left) padDx = -1;
+      else if (pad.right) padDx = 1;
+      if (pad.up) padDy = -1;
+      else if (pad.down) padDy = 1;
+
+      if (padDx !== 0 || padDy !== 0) {
+        dx = padDx;
+        dy = padDy;
+      }
+    }
+
+
     if (dx == 0 && dy == 0) this.speed = 0;
     else this.speed = this.isDashing ? SPEED_DASH : SPEED_WALK;
     // const direction: Direction = { x: dx, y: dy };
+
+    console.log(dx, dy)
 
     // 旋转 (更新玩家朝向)
     if (dx || dy) {
@@ -263,5 +291,35 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.heldItem) return;
       target.work(this);
     }
+  }
+
+  setGamepad(gamepad: Phaser.Input.Gamepad.Gamepad) {
+    this.gamepad = gamepad;
+    if (this.gamepad) {
+      this.gamepad.on('down', (buttonIndex: number, value: any, button: any) => {
+        console.log(`Player ${this.id} Gamepad button down:`, buttonIndex, ',', value, ',', button);
+        if (buttonIndex === 0) {
+          console.log("A 按钮被按下");
+          this.interact();
+        }
+        if (buttonIndex === 1) {
+          console.log("B 按钮被按下");
+          this.work();
+        }
+        // if (buttonIndex === 2) {
+        //   console.log("X 按钮被按下");
+        //   this.throw(this.scene);
+        // }
+        if (buttonIndex === 3) {
+          console.log("Y 按钮被按下");
+          this.throw(this.scene);
+        }
+        if (buttonIndex === 4) {
+          console.log("LB 按钮被按下");
+          this.dash();
+        }
+      })
+    }
+
   }
 }
