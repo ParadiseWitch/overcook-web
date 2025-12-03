@@ -2,7 +2,9 @@
 
 ## 项目简介
 
-一个基于 [Phaser 3](https://phaser.io/) 的web版本《胡闹厨房》(Overcooked) 游戏。目前代码比较凌乱
+一个基于 [Phaser 3](https://phaser.io/) 的web版本《胡闹厨房》(Overcooked) 游戏。目前代码比较凌乱。
+
+链接：https://paradisewitch.github.io/overcook-web
 
 
 ## 角色控制
