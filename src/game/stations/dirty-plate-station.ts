@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { Plate } from '../item/container/plate';
+import { Plate } from '../item/container/pllate';
 import { ALL_ITEMS } from '../manager/item-manager';
 import { Station } from './station';
 

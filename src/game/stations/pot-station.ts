@@ -1,4 +1,4 @@
-import { Plate } from '../item/container/plate';
+import { Plate } from '../item/container/pllate';
 import { Pot } from '../item/container/pot';
 import { Ingredient } from '../item/ingredient/ingredient';
 import { Player } from '../player';
