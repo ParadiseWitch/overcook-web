@@ -58,7 +58,8 @@ export const createStation = (scene: Phaser.Scene, char: string, px: number, py:
       break;
     case 'T': station = new TrashStation(scene, px, py); break;
     default:
-      new Station(scene, px, py, 'station_nothing');
+      // new Station(scene, px, py, 'station_nothing');
+      break;
   }
 
   if (station) {

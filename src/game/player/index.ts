@@ -62,8 +62,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   replaceHeldItem(newItem: Item) {
+    // 旧物体销毁
     this.heldItem?.destroy();
     this.heldItem = newItem;
+    // 如果物体在工作台上，断开双向链接
+    if (newItem.station) {
+      newItem.station.item = null;
+      newItem.station = null;
+    }
     newItem.heldBy = this;
     newItem.isFlying = false;
 
@@ -150,7 +156,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     else this.speed = this.isDashing ? SPEED_DASH : SPEED_WALK;
     // const direction: Direction = { x: dx, y: dy };
 
-    console.log(dx, dy)
 
     // 旋转 (更新玩家朝向)
     if (dx || dy) {

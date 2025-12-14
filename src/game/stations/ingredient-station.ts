@@ -15,27 +15,13 @@ export class IngredientStation<C extends new (...args: any[]) => Ingredient> ext
   }
 
   interact(player: Player) {
-    // 玩家手中有物品但是工作站没有
-    if (player.heldItem && !this.item) {
-      if (this.canPlaceItem) {
-        this.placeItem(player.heldItem);
-        player.heldItem = null;
-      }
-      return;
-    }
-    // 玩家空手但是工作站有
-    if (!player.heldItem && this.item) {
-      player.pickup(this.item);
-      this.item = null;
-      return;
-    }
-    // 玩家空手切工作站为空，直接返回
+    super.interact(player);
+    // 玩家空手,工作站为空，取食材
     if (!player.heldItem && !this.item) {
       const newIngredient = new this.ingredientType(this.scene, this.x, this.y);
       player.pickup(newIngredient);
       ALL_ITEMS.push(newIngredient); // 添加到ItemManager的物品列表
       return newIngredient; // 玩家拾取新食材
-
     }
   }
 }

@@ -5,9 +5,10 @@ import { Ingredient } from "../ingredient/ingredient";
 
 export type ContainerStatus = 'empty' | 'dirty' | 'combinable' | 'full';
 
-export class Container extends Item {
+export abstract class Container extends Item {
   status: ContainerStatus;
-  ingredients: Ingredient[];
+  public ingredients: Ingredient[];
+  private maxIngredients: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string, status: ContainerStatus = 'empty') {
     super(scene, x, y, texture);
@@ -15,11 +16,15 @@ export class Container extends Item {
     this.ingredients = [];
   }
 
-  isEmpty() {
+  public isEmpty() {
     return this.ingredients.length <= 0;
   }
 
-  update(_delta: number): void {
+  public isFull() {
+    return this.ingredients.length >= this.maxIngredients;
+  }
+
+  public update(_delta: number): void {
     this.ingredients.forEach(ingredient => {
       ingredient.x = this.x;
       ingredient.y = this.y;
@@ -36,32 +41,50 @@ export class Container extends Item {
     }
   }
 
-  interact(player: Player) {
+  protected abstract interactWithIngredient(_ingredient: Ingredient): void;
+
+  protected abstract interactWithContainer(_container: Container): void;
+
+  public interact(player: Player) {
     const heldItem = player.heldItem;
     if (!heldItem) {
       player.pickup(this);
-    } else if (heldItem instanceof Ingredient) {
-      this.addIngredient(heldItem);
-      player.heldItem = null;
-    } else if (heldItem instanceof Container) {
-      if (heldItem.isEmpty() && !this.isEmpty()) {
-        this.transferTo(heldItem);
-      } else if (!heldItem.isEmpty() && this.isEmpty()) {
-        heldItem.transferTo(this);
-      }
+      return;
+    }
+    if (heldItem instanceof Ingredient) {
+      this.interactWithIngredient(heldItem);
+      // const addSucc = this.addIngredient(heldItem);
+      // if (addSucc)
+      //   player.heldItem = null;
+      return;
+    }
+    if (heldItem instanceof Container) {
+      this.interactWithContainer(heldItem);
+      return;
     }
   }
 
-  addIngredientCondition(ingredient: Ingredient): boolean {
-    return true;
-  }
+  abstract addIngredientCondition(_ingredient: Ingredient): boolean;
 
-  addIngredient(ingredient: Ingredient) {
-    if (!this.addIngredientCondition(ingredient)) return;
+  /**
+   * 添加食材
+   * @param ingredient 
+   * @returns 
+   */
+  public addIngredient(ingredient: Ingredient): boolean {
+    // 如果容器已满，不再添加食材
+    if (this.isFull()) return false;
+    // 如果不满足添加食材条件，不允许添加食材
+    if (!this.addIngredientCondition(ingredient)) return false;
 
-    // 将食材放入容器内部
-    ingredient.heldBy = null;
+    // 如果食材原来被角色持有，角色放手
+    if (ingredient.heldBy) {
+      ingredient.heldBy.heldItem = null;
+      ingredient.heldBy = null;
+    }
+    // 锅里的鸭子才不会飞呢
     ingredient.isFlying = false;
+    // 将食材放入容器内部
     ingredient.x = this.x;
     ingredient.y = this.y;
 
@@ -71,15 +94,16 @@ export class Container extends Item {
     }
 
     this.ingredients.push(ingredient);
+    return true;
   }
 
-  clearIngredients() {
+  public clearIngredients() {
     this.ingredients.forEach(e => e.destroy());
     this.ingredients = [];
     this.setTexture('item_plate'); // 切换为干净盘子纹理
   }
 
-  transferTo(container: Container) {
+  public transferTo(container: Container) {
     this.ingredients.forEach(ingredient => {
       container.addIngredient(ingredient);
     });

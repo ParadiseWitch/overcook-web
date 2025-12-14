@@ -5,11 +5,11 @@ import { Player } from '../player';
 
 // export type WorkStatus = 'idle' | 'working' | 'done';
 
-export class Station extends Phaser.Physics.Arcade.StaticGroup {
+export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
   public textureKey: string; // 游戏场景实例
   public x: number; // 工作站的X坐标
   public y: number; // 工作站的Y坐标
-  public canPlaceItem: boolean = true; // 能否放置物品
+  private canPlaceItem: boolean = true; // 能否放置物品
   public workStatus: 'idle' | 'working' | 'done' | 'danger' | 'fire' = 'idle'; // 工作状态
   public workSpeed: number = 0.15; // 工作速度
   public sprite: Phaser.Physics.Arcade.Sprite; // 工作站的物理精灵
@@ -20,16 +20,17 @@ export class Station extends Phaser.Physics.Arcade.StaticGroup {
   public barBg?: Phaser.GameObjects.Rectangle; // 进度条背景
   public bar?: Phaser.GameObjects.Rectangle; // 进度条填充
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, hasBar: boolean = false) {
+  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, canPlaceItem: boolean = true, hasBar: boolean = false) {
     super(scene.physics.world, scene);
     this.x = x;
     this.y = y;
-    this.canPlaceItem = true;
+    // FIXME
     this.textureKey = texture;
     this.sprite = this.create(x, y, texture); // 创建物理精灵并添加到场景的静态组
     this.sprite.setData('station', this); // 将当前Station实例存储到精灵数据中
     this.sprite.setDepth(DEPTH.STATION); // 设置层级
 
+    this.canPlaceItem = canPlaceItem;
     // 如果是可工作的工作站，则创建进度条
     if (hasBar) {
       this.barBg = this.scene.add.rectangle(x, y - 30, 40, 6, 0x000000).setDepth(DEPTH.UI).setVisible(false);
@@ -59,29 +60,36 @@ export class Station extends Phaser.Physics.Arcade.StaticGroup {
     return this.sprite.getBounds();
   }
 
+  // TODO 子类 {@link IngredientStation} 和 {@link @PotStation} 的 方法 interact 方法封装
   interact(player: Player) {
-    // 玩家空手切工作站为空，直接返回
-    if (!player.heldItem && !this.item) return;
-    // 玩家手中有物品但是工作站没有
-    if (player.heldItem && !this.item) {
-      if (this.canPlaceItem) {
-        this.placeItem(player.heldItem);
-        player.heldItem = null;
-      }
+    // 工作台为空,玩家空手 -> 无
+    if (!player.heldItem && !this.item) return; // TODO 食材箱 这里逻辑不一致
+
+    // 工作站空,玩家不空手 -> 放
+    if (!this.item && player.heldItem) {
+      this.placeItem(player.heldItem);
+      player.heldItem = null;
       return;
     }
-    // 玩家空手但是工作站有
-    if (!player.heldItem && this.item) {
-      player.pickup(this.item);
-      this.item = null;
+
+    // 工作台不为空
+    if (this.item) {
+      this.item.interact(player); // TODO 灶 取放食材时要设置工作状态
       return;
     }
   }
 
   // 将物品放置在工作站上
-  placeItem(item: Item) {
-    if (this.item) return; // 工作站已有物品
+  public placeItem(item: Item) {
+    // 工作站不能放物品，直接返回
+    if (!this.canPlaceItem) return;
+    // 工作站已放置物品，直接返回
+    if (this.item) return;
+    // 物品已经被放置在某个工作台，直接返回
+    if (item.station) return;
+
     this.item = item;
+    item.station = this;
     item.heldBy = null; // 物品不再被持有
     item.isFlying = false; // 物品不再飞行
     if (item.body) {
@@ -128,7 +136,7 @@ export class Station extends Phaser.Physics.Arcade.StaticGroup {
       case 'danger':
         this.updateWhenDanger(delta);
         break;
-      case 'done':
+      case 'fire':
         this.updateWhenFire(delta);
         break;
       default:

@@ -4,7 +4,7 @@ import { Station } from './station';
 
 export class SinkStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'station_sink', true); // 水槽工作站
+    super(scene, x, y, 'station_sink', true, true); // 水槽工作站
     this.workSpeed = 0.12; // 清洗速度
   }
 
