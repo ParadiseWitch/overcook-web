@@ -1,5 +1,7 @@
 import * as Phaser from 'phaser';
 import { Item } from '../item';
+import { Container } from '../item/container/container';
+import { Ingredient } from '../item/ingredient/ingredient';
 import { ALL_ITEMS } from '../manager/item-manager';
 import { ALL_PLAYERS } from '../manager/player-manager';
 import { ALL_STATIONS } from '../manager/station-manager';
@@ -67,13 +69,16 @@ export const handleThrow = (scene: Phaser.Scene) => {
       // 如果工作站上没有物品，尝试放置
       if (!station.item) {
         station.placeItem(item);
-      } else { // 如果工作站有物品，则投掷物品弹开
-        if (item.body) {
-          (item.body as Phaser.Physics.Arcade.Body).setVelocity(item.body.velocity.x * -0.3, item.body.velocity.y * -0.3); // 反弹并减速
-          const dx = item.x - station.x;
-          const dy = item.y - station.y;
-          (item.body as Phaser.Physics.Arcade.Body).setVelocity(item.body.velocity.x + dx * 0.2, item.body.velocity.y + dy * 0.2); // 稍微推离工作站
-        }
+        return;
+      }
+      //  如果投掷的是食材且工作台上有容器且可以添加这个食材, 那么添加食材到容器
+      if (item instanceof Ingredient && station.item instanceof Container && !station.item.isFull() && station.item.addIngredientCondition(item)) {
+        station.item.addIngredient(item);
+        return;
+      }
+      // 其他情况，则投掷物品弹开
+      if (item.body) {
+        (item.body as Phaser.Physics.Arcade.Body).setVelocity(item.body.velocity.x * -0.5, item.body.velocity.y * -0.5); // 反弹并减速
       }
     }
   });

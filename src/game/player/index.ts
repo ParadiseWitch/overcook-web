@@ -189,7 +189,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keyMap.throw) && this.heldItem) { // 处理投掷输入
-      this.throw(this.scene);
+      this.throw();
     }
 
     // 处理工作输入
@@ -278,7 +278,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    * @param scene
    * @returns
    */
-  throw(scene: Phaser.Scene) {
+  throw() {
     if (!this.heldItem) return;
     const item = this.heldItem;
     this.heldItem = null; // 玩家手中物品清空
@@ -321,7 +321,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // }
         if (buttonIndex === 3) {
           console.log("Y 按钮被按下");
-          this.throw(this.scene);
+          this.throw();
         }
         if (buttonIndex === 4) {
           console.log("LB 按钮被按下");

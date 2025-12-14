@@ -24,7 +24,6 @@ export abstract class Item extends Phaser.Physics.Arcade.Sprite {
   update(delta: number): void {
     // 如果物品处于飞行状态，则更新其位置
     if (this.isFlying) {
-      console.log(this.body?.velocity);
       if (!this.body?.velocity || (this.body?.velocity.x == 0 && this.body?.velocity.y == 0)) {
         this.isFlying = false;
         this.thrower = null;
