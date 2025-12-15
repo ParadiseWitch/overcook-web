@@ -1,5 +1,4 @@
 import { Item } from "..";
-import { Player } from "../../player";
 import { Ingredient } from "../ingredient/ingredient";
 
 
@@ -9,11 +8,13 @@ export abstract class Container extends Item {
   status: ContainerStatus;
   public ingredients: Ingredient[];
   private maxIngredients: number;
+  public canTransfer: boolean;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string, status: ContainerStatus = 'empty') {
     super(scene, x, y, texture);
     this.status = status;
     this.ingredients = [];
+    this.canTransfer = true;
   }
 
   public isEmpty() {
@@ -28,6 +29,7 @@ export abstract class Container extends Item {
     this.ingredients.forEach(ingredient => {
       ingredient.x = this.x;
       ingredient.y = this.y;
+      ingredient.depth = this.depth + 1;
     })
 
     switch (this.status) {
@@ -41,30 +43,7 @@ export abstract class Container extends Item {
     }
   }
 
-  protected abstract interactWithIngredient(_ingredient: Ingredient): void;
-
-  protected abstract interactWithContainer(_container: Container): void;
-
-  public interact(player: Player) {
-    const heldItem = player.heldItem;
-    if (!heldItem) {
-      player.pickup(this);
-      return;
-    }
-    if (heldItem instanceof Ingredient) {
-      this.interactWithIngredient(heldItem);
-      // const addSucc = this.addIngredient(heldItem);
-      // if (addSucc)
-      //   player.heldItem = null;
-      return;
-    }
-    if (heldItem instanceof Container) {
-      this.interactWithContainer(heldItem);
-      return;
-    }
-  }
-
-  abstract addIngredientCondition(_ingredient: Ingredient): boolean;
+  abstract canAddIngredient(_ingredient: Ingredient): boolean;
 
   /**
    * 添加食材
@@ -75,7 +54,7 @@ export abstract class Container extends Item {
     // 如果容器已满，不再添加食材
     if (this.isFull()) return false;
     // 如果不满足添加食材条件，不允许添加食材
-    if (!this.addIngredientCondition(ingredient)) return false;
+    if (!this.canAddIngredient(ingredient)) return false;
 
     // 如果食材原来被角色持有，角色放手
     if (ingredient.heldBy) {
@@ -100,13 +79,17 @@ export abstract class Container extends Item {
   public clearIngredients() {
     this.ingredients.forEach(e => e.destroy());
     this.ingredients = [];
-    this.setTexture('item_plate'); // 切换为干净盘子纹理
+    // this.setTexture('item_plate'); // 切换为干净盘子纹理
   }
 
-  public transferTo(container: Container) {
-    this.ingredients.forEach(ingredient => {
-      container.addIngredient(ingredient);
-    });
+  transferTo(container: Container): void {
+    if (this.isEmpty() || !this.canTransfer) return;
+    if (container.isFull()) return;
+    // 锅在working的时候不能transferTo
+    // 是否每个食材都能添加到目标容器
+    const canAdd = this.ingredients.every(i => container.canAddIngredient(i));
+    if (!canAdd) return;
+    this.ingredients.forEach(i => container.addIngredient(i));
     this.ingredients = [];
   }
 

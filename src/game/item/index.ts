@@ -19,8 +19,6 @@ export abstract class Item extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
   }
 
-  abstract interact(player: Player): void;
-
   update(delta: number): void {
     // 如果物品处于飞行状态，则更新其位置
     if (this.isFlying) {

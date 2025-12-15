@@ -77,6 +77,17 @@ export const updateStations = (delta: number) => {
   ALL_STATIONS.forEach(s => s.update(delta));
 }
 
+/**
+ * 从 ALL_STATIONS 数组中移除工作站
+ * @param station 要移除的工作站
+ */
+export function removeStation(station: Station) {
+  const index = ALL_STATIONS.indexOf(station);
+  if (index > -1) {
+    ALL_STATIONS.splice(index, 1);
+  }
+}
+
 
 // 根据坐标获取工作站
 export const getStationAt: (x: number, y: number) => Station | undefined = (x, y) => {

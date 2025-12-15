@@ -1,6 +1,9 @@
 import * as Phaser from 'phaser';
 import { DASH_TIME, DEPTH, SPEED_DASH, SPEED_WALK } from '../config';
+import { interact } from '../helper/interact-helper';
 import { Item } from '../item';
+import { Container } from '../item/container/container';
+import { Ingredient } from '../item/ingredient/ingredient';
 import { ALL_ITEMS } from '../manager/item-manager';
 import { ALL_STATIONS } from '../manager/station-manager';
 import { Station } from '../stations/station';
@@ -243,6 +246,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     for (const item of ALL_ITEMS) {
       // 物品未被持有、未在飞行，且在观察点在item范围内
       if (!item.heldBy /* && !item.isFlying */ && Phaser.Math.Distance.Between(item.x, item.y, lookX, lookY) <= radius) {
+        // 如果这个物品是食材，并且它属于某个容器，跳过它，返回容器
+        if (item instanceof Ingredient) {
+          // 检查是否有容器包含这个食材
+          for (const otherItem of ALL_ITEMS) {
+            if (otherItem instanceof Container) {
+              if (otherItem.ingredients.includes(item)) {
+                return otherItem; // 返回容器而不是食材
+              }
+            }
+          }
+        }
         return item;
       }
     }
@@ -254,21 +268,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   interact() {
     const target = this.getInteractTarget(); // 获取玩家当前交互目标
-    console.log("交互：", target)
-    if (target == null && !this.heldItem) {
-      //没有可以交互对象且空手，直接返回
-      return;
-    }
-    // 放下物品到地面
-    if (target == null && this.heldItem) {
-      this.putDownToFloor();
-    }
-    if (target instanceof Station) {
-      target.interact(this);
-    }
-    if (target instanceof Item) {
-      target.interact(this);
-    }
+    interact(this, target);
   }
 
 

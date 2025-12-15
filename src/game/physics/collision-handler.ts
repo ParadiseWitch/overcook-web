@@ -72,7 +72,7 @@ export const handleThrow = (scene: Phaser.Scene) => {
         return;
       }
       //  如果投掷的是食材且工作台上有容器且可以添加这个食材, 那么添加食材到容器
-      if (item instanceof Ingredient && station.item instanceof Container && !station.item.isFull() && station.item.addIngredientCondition(item)) {
+      if (item instanceof Ingredient && station.item instanceof Container && !station.item.isFull() && station.item.canAddIngredient(item)) {
         station.item.addIngredient(item);
         return;
       }

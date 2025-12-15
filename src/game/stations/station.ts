@@ -60,25 +60,6 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
     return this.sprite.getBounds();
   }
 
-  // TODO 子类 {@link IngredientStation} 和 {@link @PotStation} 的 方法 interact 方法封装
-  interact(player: Player) {
-    // 工作台为空,玩家空手 -> 无
-    if (!player.heldItem && !this.item) return; // TODO 食材箱 这里逻辑不一致
-
-    // 工作站空,玩家不空手 -> 放
-    if (!this.item && player.heldItem) {
-      this.placeItem(player.heldItem);
-      player.heldItem = null;
-      return;
-    }
-
-    // 工作台不为空
-    if (this.item) {
-      this.item.interact(player); // TODO 灶 取放食材时要设置工作状态
-      return;
-    }
-  }
-
   // 将物品放置在工作站上
   public placeItem(item: Item) {
     // 工作站不能放物品，直接返回

@@ -30,7 +30,7 @@ export class SinkStation extends Station {
 
     // 更新容器状态
     this.item.status = 'empty';
-    this.item.clearIngredients();
+    this.item.setEmptyTexture();
     this.item.x = this.x; // 重置物品位置
     this.item.y = this.y;
 

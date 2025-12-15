@@ -5,7 +5,6 @@ import { Container, ContainerStatus } from './container';
  * 盘子
  */
 export class Plate extends Container {
-
   constructor(scene: Phaser.Scene, x: number, y: number, status: ContainerStatus = 'empty') {
     let texture = 'item_plate';
     if (status == 'dirty') {
@@ -17,27 +16,14 @@ export class Plate extends Container {
   }
 
 
-  addIngredientCondition(ingredient: Ingredient): boolean {
+  setEmptyTexture(): void {
+    this.setTexture('item_plate'); // 切换为干净盘子纹理
+  }
+
+  canAddIngredient(ingredient: Ingredient): boolean {
     // 只能放处理过的食材
     if (ingredient.cookStates.length == 0) return false;
     return true;
-  }
-
-  interactWithIngredient(ingredient: Ingredient): void {
-    this.addIngredient(ingredient)
-  }
-
-  interactWithContainer(container: Container): void {
-    // 盘子空，其余容器不为空 -> 倒入盘子
-    if (this.isEmpty() && !container.isEmpty()) {
-      container.transferTo(this);
-      return;
-    }
-    // 盘子不空，其余容器空 -> 倒入其余容器
-    if (!this.isEmpty() && container.isEmpty()) {
-      this.transferTo(container);
-      return;
-    }
   }
 
 }
