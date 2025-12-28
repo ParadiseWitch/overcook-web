@@ -294,6 +294,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   work() {
+    const target = this.getInteractTarget(); // 获取玩家当前交互目标
     if (target instanceof Station) {
       // 空手才能在工作区work
       if (this.heldItem) return;
