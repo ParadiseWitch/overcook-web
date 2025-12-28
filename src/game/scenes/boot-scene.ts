@@ -146,6 +146,11 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xffffff);
     g.fillCircle(8, 8, 8);
     g.generateTexture('particle_smoke', 16, 16);
+
+    g.clear();
+    g.fillStyle(0xffffff);
+    g.fillCircle(8, 8, 8);
+    g.generateTexture('flame', 16, 16);
   }
 
   // 将生成的纹理导出给DOM图例使用

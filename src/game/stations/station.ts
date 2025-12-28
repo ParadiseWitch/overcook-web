@@ -1,9 +1,8 @@
 import * as Phaser from 'phaser';
 import { DEPTH } from '../config';
 import { Item } from '../item';
-import { Player } from '../player';
 import { Container } from '../item/container/container';
-import { log } from 'console';
+import { Player } from '../player';
 
 
 export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
@@ -43,7 +42,6 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
 
   getProgress(): number {
     if (!this.item) return 0;
-    console.log(this.item);
     return this.item.getProgress()
   }
 
@@ -135,9 +133,7 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
           break;
         }
         const progress = this.getProgress();
-        console.log(progress);
         if (progress >= 100) {
-          console.log('done', this.workStatus);
           this.setProgress(100);
           this.workStatus = 'done';
           return;

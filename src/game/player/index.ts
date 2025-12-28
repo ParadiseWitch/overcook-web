@@ -8,7 +8,6 @@ import { ALL_ITEMS } from '../manager/item-manager';
 import { ALL_STATIONS } from '../manager/station-manager';
 import { Station } from '../stations/station';
 import { PlayerKeyMap } from '../types/types';
-import { networkInterfaces } from 'os';
 
 
 export type Direction = { x: number, y: number };
@@ -257,6 +256,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
               }
             }
           }
+          return item;
         }
       }
     }
@@ -268,11 +268,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   interact() {
     const target = this.getInteractTarget(); // 获取玩家当前交互目标
-    console.log(target);
-    if (target instanceof Container) {
-      console.log(target.heldBy);
-    }
-
     interact(this, target);
   }
 
@@ -299,7 +294,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   work() {
-    const target = this.getInteractTarget(); // 获取玩家当前交互目标
     if (target instanceof Station) {
       // 空手才能在工作区work
       if (this.heldItem) return;
