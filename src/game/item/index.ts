@@ -10,6 +10,9 @@ export abstract class Item extends Phaser.Physics.Arcade.Sprite {
   public station?: Station | null = null;
   public homeStation?: Station | null = null; // 物品的“家”工作站，用于重生等
 
+  abstract getProgress(): number;
+  abstract setProgress(value: number): void;
+
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
     scene.add.existing(this);

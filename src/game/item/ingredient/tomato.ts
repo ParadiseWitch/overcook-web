@@ -6,7 +6,7 @@ export class Tomato extends Ingredient {
   }
 
   addCookstate(cookState: CookState) {
-    this.cookStates.push(cookState)
+    super.addCookstate(cookState);
     if (cookState == 'cut') {
       // 切换为切好的番茄纹理
       this.setTexture('item_tomato_cut');

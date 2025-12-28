@@ -9,16 +9,30 @@ export class CutStation extends Station {
   }
 
   updateWhenWorking(_delta: number): void {
-    if (!this.item) return;
+    if (!this.item) {
+      this.workStatus = 'idle';
+      return;
+    }
+
+    this.canPick = false;
     this.item.x = this.x + (Math.random() - 0.5) * 2;
   }
 
   updateWhenDone(): void {
-    if (this.workStatus != 'done') return;
-    if (!this.item) return;
-    if (!(this.item instanceof Ingredient)) return;
-    if (this.item.cookStates.length > 0) return;
+    if (!this.item) {
+      this.workStatus = 'idle';
+      return;
+    }
+    if (!(this.item instanceof Ingredient)) {
+      this.workStatus = 'idle';
+      return;
+    }
+    if (this.item.cookStates.length > 0) {
+      this.workStatus = 'idle';
+      return;
+    }
 
+    this.canPick = true;
     this.item.addCookstate("cut");
     this.item.x = this.x; // 重置物品位置
     this.item.y = this.y;

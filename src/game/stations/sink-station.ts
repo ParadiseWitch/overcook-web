@@ -3,9 +3,18 @@ import { Plate } from '../item/container/plate';
 import { Station } from './station';
 
 export class SinkStation extends Station {
+  private _progress: number = 0;
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'station_sink', true, true); // 水槽工作站
     this.workSpeed = 0.12; // 清洗速度
+  }
+
+  getProgress(): number {
+    return this._progress;
+  }
+
+  setProgress(value: number): void {
+    this._progress = value;
   }
 
   work() {
@@ -23,10 +32,8 @@ export class SinkStation extends Station {
 
 
   updateWhenDone() {
-    if (!this.item || !(this.item instanceof Plate)) return;
-
-    this.progress = 0; // 重置进度
-    this.hideBar();
+    if (!this.item) return;
+    if (!(this.item instanceof Plate)) return;
 
     // 更新容器状态
     this.item.status = 'empty';

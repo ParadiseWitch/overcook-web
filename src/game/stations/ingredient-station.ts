@@ -16,7 +16,7 @@ export class IngredientStation<C extends new (...args: any[]) => Ingredient> ext
 
   genIngredientForPlayer(player: Player) {
     const newIngredient = new this.ingredientType(this.scene, this.x, this.y);
-    player.pickup(newIngredient);
+    player.pick(newIngredient);
     ALL_ITEMS.push(newIngredient); // 添加到ItemManager的物品列表
     return newIngredient; // 玩家拾取新食材
   }

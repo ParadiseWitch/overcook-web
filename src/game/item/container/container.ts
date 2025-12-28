@@ -1,20 +1,61 @@
 import { Item } from "..";
+import { DEPTH } from "../../config";
 import { Ingredient } from "../ingredient/ingredient";
 
 
 export type ContainerStatus = 'empty' | 'dirty' | 'combinable' | 'full';
 
 export abstract class Container extends Item {
-  status: ContainerStatus;
-  public ingredients: Ingredient[];
   private maxIngredients: number;
+  private barBg?: Phaser.GameObjects.Rectangle; // 进度条背景
+  private bar?: Phaser.GameObjects.Rectangle; // 进度条填充
+
+  public status: ContainerStatus;
+  public ingredients: Ingredient[];
   public canTransfer: boolean;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, status: ContainerStatus = 'empty') {
+  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, status: ContainerStatus = 'empty', hasBar: boolean = true) {
     super(scene, x, y, texture);
     this.status = status;
     this.ingredients = [];
     this.canTransfer = true;
+    if (hasBar) {
+      this.barBg = this.scene.add.rectangle(x, y - 30, 40, 6, 0x000000).setDepth(DEPTH.UI).setVisible(false);
+      this.bar = this.scene.add.rectangle(x - 20, y - 30, 0, 4, 0x00ff00).setDepth(DEPTH.UI + 1).setOrigin(0, 0.5).setVisible(false);
+    }
+  }
+
+  abstract canAddIngredient(_ingredient: Ingredient): boolean;
+
+  public getProgress(): number {
+    if (this.isEmpty()) return 0;
+    const sum = this.ingredients.reduce((prev, i) => prev + i.getProgress(), 0);
+    return sum / this.ingredients.length;
+  }
+
+  public setProgress(value: number) {
+    if (this.isEmpty()) return;
+    const delta = (value - this.getProgress()) * this.ingredients.length;
+    this.ingredients.reduce((remaining, ingredient) => {
+      const current = ingredient.getProgress();
+      const space = 100 - current;
+      const allocated = Math.min(remaining, space);
+      ingredient.setProgress(current + allocated);
+      return remaining - allocated;
+    }, delta);
+  }
+
+  public showBar() {
+    this.barBg?.setVisible(true);
+    if (this.bar) {
+      this.bar.setVisible(true);
+      this.bar.width = (this.getProgress() / 100) * 40;
+    }
+  }
+
+  public hideBar() {
+    this.barBg?.setVisible(false);
+    this.bar?.setVisible(false);
   }
 
   public isEmpty() {
@@ -26,11 +67,22 @@ export abstract class Container extends Item {
   }
 
   public update(_delta: number): void {
+    // 食材跟着容器移动
     this.ingredients.forEach(ingredient => {
       ingredient.x = this.x;
       ingredient.y = this.y;
       ingredient.depth = this.depth + 1;
     })
+
+    // 进度条跟着容器移动
+    if (this.bar) {
+      this.bar.x = this.x - 20;
+      this.bar.y = this.y - 30;
+    }
+    if (this.barBg) {
+      this.barBg.x = this.x;
+      this.barBg.y = this.y - 30;
+    }
 
     switch (this.status) {
       case 'empty':
@@ -42,8 +94,6 @@ export abstract class Container extends Item {
         break;
     }
   }
-
-  abstract canAddIngredient(_ingredient: Ingredient): boolean;
 
   /**
    * 添加食材
@@ -82,7 +132,7 @@ export abstract class Container extends Item {
     // this.setTexture('item_plate'); // 切换为干净盘子纹理
   }
 
-  transferTo(container: Container): void {
+  public transferTo(container: Container): void {
     if (this.isEmpty() || !this.canTransfer) return;
     if (container.isFull()) return;
     // 锅在working的时候不能transferTo

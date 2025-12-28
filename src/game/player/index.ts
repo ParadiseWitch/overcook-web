@@ -8,6 +8,7 @@ import { ALL_ITEMS } from '../manager/item-manager';
 import { ALL_STATIONS } from '../manager/station-manager';
 import { Station } from '../stations/station';
 import { PlayerKeyMap } from '../types/types';
+import { networkInterfaces } from 'os';
 
 
 export type Direction = { x: number, y: number };
@@ -59,27 +60,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   // 拾取物品逻辑，与原始GameScene中的逻辑保持一致。
-  pickup(item: Item) {
+  pick(item: Item) {
+    // player不空手，无法拿取
     if (this.heldItem) return;
-    this.replaceHeldItem(item);
-  }
-
-  replaceHeldItem(newItem: Item) {
-    // 旧物体销毁
-    this.heldItem?.destroy();
-    this.heldItem = newItem;
-    // 如果物体在工作台上，断开双向链接
-    if (newItem.station) {
-      newItem.station.item = null;
-      newItem.station = null;
+    if (item.station) {
+      // 如果item所属工作台不允许pick，直接返回
+      if (!item.station.canPick) return;
+      item.station.item = null;
+      item.station = null;
     }
-    newItem.heldBy = this;
-    newItem.isFlying = false;
+    this.heldItem = item;
+    item.heldBy = this;
+    item.isFlying = false;
 
-    if (newItem.body) {
-      newItem.body.enable = false; // 拾取时无物理碰撞
+    if (item.body) {
+      item.body.enable = false; // 拾取时无物理碰撞
     }
-    newItem.setVisible(true);
+    item.setVisible(true);
   }
 
   putDownToFloor() {
@@ -173,6 +170,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       } else if (this.lastCanBeInteractObj instanceof Item) {
         this.lastCanBeInteractObj.clearTint();
       }
+      // PERF:LATER 性能问题。参考解决方案：只在move、interact的时候检测
       const target = this.getInteractTarget();
       if (target) {
         target.setTint(0x9955ff);
@@ -241,23 +239,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+
     // 检测地面物品
     // 遍历所有item
     for (const item of ALL_ITEMS) {
       // 物品未被持有、未在飞行，且在观察点在item范围内
       if (!item.heldBy /* && !item.isFlying */ && Phaser.Math.Distance.Between(item.x, item.y, lookX, lookY) <= radius) {
+        if (item instanceof Container) return item;
         // 如果这个物品是食材，并且它属于某个容器，跳过它，返回容器
         if (item instanceof Ingredient) {
           // 检查是否有容器包含这个食材
+          // PERF:LATER 性能问题。解决方案：在Ingredient对象添加inContainer之类的属性
           for (const otherItem of ALL_ITEMS) {
             if (otherItem instanceof Container) {
               if (otherItem.ingredients.includes(item)) {
-                return otherItem; // 返回容器而不是食材
+                break;
               }
             }
           }
         }
-        return item;
       }
     }
 
@@ -268,6 +268,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   interact() {
     const target = this.getInteractTarget(); // 获取玩家当前交互目标
+    console.log(target);
+    if (target instanceof Container) {
+      console.log(target.heldBy);
+    }
+
     interact(this, target);
   }
 

@@ -1,3 +1,4 @@
+import { log } from "console";
 import { Item } from "../item";
 import { Container } from "../item/container/container";
 import { Ingredient } from "../item/ingredient/ingredient";
@@ -26,7 +27,7 @@ export const interact = (player: Player, target: Station | Item | null) => {
 }
 
 
-export const interactWithStation = (player: Player, station: Station) => {
+const interactWithStation = (player: Player, station: Station) => {
   if (station instanceof IngredientStation && !station.item && !player.heldItem) {
     // 在player手上生成食材。
     station.genIngredientForPlayer(player);
@@ -44,7 +45,7 @@ export const interactWithStation = (player: Player, station: Station) => {
   }
 };
 
-export const interactWithItem = (player: Player, item: Item) => {
+const interactWithItem = (player: Player, item: Item) => {
   if (item instanceof Container) {
     interactWithContainer(player, item);
     return;
@@ -55,10 +56,10 @@ export const interactWithItem = (player: Player, item: Item) => {
   }
 };
 
-export const interactWithContainer = (player: Player, container: Container) => {
+const interactWithContainer = (player: Player, container: Container) => {
   const heldItem = player.heldItem;
   if (!heldItem) {
-    player.pickup(container);
+    player.pick(container);
     return;
   }
   if (heldItem instanceof Ingredient) {
@@ -71,10 +72,10 @@ export const interactWithContainer = (player: Player, container: Container) => {
   }
 };
 
-export const interactWithIngredient = (player: Player, ingredient: Ingredient) => {
+const interactWithIngredient = (player: Player, ingredient: Ingredient) => {
   const heldItem = player.heldItem;
   if (!heldItem) {
-    player.pickup(ingredient);
+    player.pick(ingredient);
     return;
   }
   if (heldItem instanceof Container) {

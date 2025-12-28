@@ -7,7 +7,7 @@ import { Station } from './station';
 export class PotStation extends Station {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'station_pot', true, true);
+    super(scene, x, y, 'station_pot', true);
     this.workSpeed = 0.1;
   }
 
@@ -60,12 +60,5 @@ export class PotStation extends Station {
     ingredient.addCookstate('boil');
   }
 
-  // placeItem(item: Item): void {
-  //   // 只有处理好的食材可以放置
-  //   if (item.texture.key !== 'item_tomato_cut') {
-  //     return;
-  //   }
-  //   super.placeItem(item);
-  // }
 }
 

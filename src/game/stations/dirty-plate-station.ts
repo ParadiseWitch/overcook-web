@@ -21,7 +21,7 @@ export class DirtyPlateStation extends Station {
       const dirtyPlate = new Plate(this.scene, this.x, this.y, 'dirty');
       ALL_ITEMS.push(dirtyPlate); // 从ItemManager中删除，以防重复管理
       // this.placeItem(dirtyPlate);
-      // 工作站已放置物品，直接返回 TODO 应该叠加
+      // 工作站已放置物品，直接返回 TODO:LATER 应该叠加
       if (this.item) return;
       this.item = dirtyPlate;
       dirtyPlate.station = this;
