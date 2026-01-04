@@ -1,6 +1,6 @@
 import { Item } from '..';
 
-export type CookState = 'cut' | 'boil' | 'pan-fry' | 'deep-fry'; // 食材状态：已切、已煮、煎炒、油炸
+export type CookState = 'cut' | 'boil' | 'pan-fry' | 'deep-fry' | 'overcook'; // 食材状态：已切、已煮、煎炒、油炸
 
 export class Ingredient extends Item {
   // 食材的烹饪状态
@@ -21,6 +21,9 @@ export class Ingredient extends Item {
 
   addCookstate(cookState: CookState) {
     this.setProgress(0);
+    if (cookState == 'overcook') {
+      this.setTexture('overcooke')
+    }
     this.cookStates.push(cookState)
   }
 

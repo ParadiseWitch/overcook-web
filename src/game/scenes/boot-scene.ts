@@ -141,6 +141,11 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0xD2691E); g.fillCircle(16, 16, 14);
     });
 
+    // 煮糊食材的材质
+    drawItem('overcooke', (g) => {
+      g.fillStyle(0x000000); g.fillCircle(16, 16, 14);
+    });
+
     // dash smoke 
     g.clear();
     g.fillStyle(0xffffff);

@@ -160,6 +160,7 @@ export class PotStation extends Station {
     }
     if (this.timeAfterDone > this.safeTime + this.dangerTime) {
       this.workStatus = 'fire';
+      pot.ingredients[0].addCookstate('overcook');
       return;
     }
 
