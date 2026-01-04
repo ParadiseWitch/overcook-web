@@ -114,6 +114,12 @@ export class PotStation extends Station {
     this.item.x = this.x + Math.sin(this.scene.game.getTime() * 0.01) * 1.5;
   }
 
+  // FIXME: 同时食材可能被煮两次.进度条可能会跑两次
+  // 复现步骤:
+  // 1. 将切好的西红柿放入锅中煮,等待进度完成
+  // 2. 在safeTime内拿下锅放到地板上
+  // 3. 再将锅拿到灶上,此时又会出现进度条
+  // 期望: 拿上灶台时,不会出现进度条,直接读完safeTime,并进如dangerTime
   updateWhenDone(delta: number) {
     if (!this.item) {
       this.workStatus = 'idle';

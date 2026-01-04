@@ -20,6 +20,7 @@ export class TrashStation extends Station {
       // alpha: 0,
       duration: 1000,
       onComplete: () => {
+        // TODO:如果角色拿着容器交互,应该是将容器中的食材倒入垃圾桶
         this.item?.destroy();
         this.item = null;
         this.workStatus = 'done';
