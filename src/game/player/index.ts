@@ -248,14 +248,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // 如果这个物品是食材，并且它属于某个容器，跳过它，返回容器
         if (item instanceof Ingredient) {
           // 检查是否有容器包含这个食材
+          let ingredientInContainer = false;
           // PERF:LATER 性能问题。解决方案：在Ingredient对象添加inContainer之类的属性
           for (const otherItem of ALL_ITEMS) {
             if (otherItem instanceof Container) {
               if (otherItem.ingredients.includes(item)) {
+                ingredientInContainer = true;
                 break;
               }
             }
           }
+          // 如果检测到在容器中的食材,跳过它
+          if (ingredientInContainer) continue;
           return item;
         }
       }
