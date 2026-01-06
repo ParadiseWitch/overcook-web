@@ -16,7 +16,7 @@ export class PotStation extends Station {
   private fireEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'station_pot', true);
+    super(scene, x, y, 'station_pot', false);
     this.workSpeed = 0.1;
     this.drawDanger();
     this.dangerUI.setVisible(false);

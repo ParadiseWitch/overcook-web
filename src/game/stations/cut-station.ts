@@ -4,7 +4,7 @@ import { Station } from './station';
 
 export class CutStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'station_cut', true, true); // 切菜工作站
+    super(scene, x, y, 'station_cut'); // 切菜工作站
     this.workSpeed = 0.15; // 切菜速度
   }
 

@@ -59,13 +59,10 @@ export const handleThrow = (scene: Phaser.Scene) => {
     const item = itemObj as Item;
     const station = (stationSprite as Phaser.GameObjects.Sprite).getData('station') as Station; // 获取Station实例
 
+    // TODO:
+    // 现状：飞行停止时才会到工作台
+    // 对比：即使有速度也会被投掷到工作台
     if (item.isFlying && station) {
-      // 投掷汤到出餐口进行交付的逻辑
-      // if (station.type === 'delivery' && item.texture.key === 'item_soup') {
-      //   deliverItemToStation(item, station);
-      //   return;
-      // }
-
       // 如果工作站上没有物品，尝试放置
       if (!station.item) {
         station.placeItem(item);

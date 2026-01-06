@@ -3,15 +3,20 @@ import { DEPTH } from '../config';
 import { Plate } from '../item/container/plate';
 import { ALL_ITEMS } from '../manager/item-manager';
 import { Station } from './station';
+import { Item } from '../item';
 
 export class DirtyPlateStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) { // 使用柜台纹理
-    super(scene, x, y, 'station_dirty_plate', false);
+    super(scene, x, y, 'station_dirty_plate');
     this.scene.events.on('add-dirty-plate', () => {
       this.genDirtyPlate()
     });
   }
 
+  // 脏盘子点不能放东西
+  canPlace(item: Item): boolean {
+    return false;
+  }
 
   /**
    * 生成一个脏盘子并放置在工作站上

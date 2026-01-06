@@ -163,6 +163,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // 检测交互对象高亮
+    // TODO: 不能交互的物体不高亮，比如没有盘子的脏盘子生成器, 无法互动、无法拿去/放下物体的桌面
     if (this.speed > 0) {
       if (this.lastCanBeInteractObj instanceof Station) {
         (this.lastCanBeInteractObj.getChildren()[0] as Phaser.Physics.Arcade.Sprite)?.clearTint()
@@ -219,6 +220,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    */
   getInteractTarget(): Station | Item | null {
     // 计算玩家前方一个TILE_SIZE的“观察点”
+    // FIXME: 好像如果物体被扔到不能放置的工作台中间,就无法拾取到了
     const lookX = this.x + this.facing.x * 25;
     const lookY = this.y + this.facing.y * 25;
     const radius = 25;

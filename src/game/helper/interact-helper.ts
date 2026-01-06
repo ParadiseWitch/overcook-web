@@ -5,6 +5,9 @@ import { Ingredient } from "../item/ingredient/ingredient";
 import { Player } from "../player";
 import { IngredientStation } from "../stations/ingredient-station";
 import { Station } from "../stations/station";
+import { TrashStation } from "../stations/trash-station";
+import { DeliveryStation } from "../stations/delivery-station";
+import { Plate } from "../item/container/plate";
 
 export const interact = (player: Player, target: Station | Item | null) => {
   if (target == null && !player.heldItem) {
@@ -33,12 +36,16 @@ const interactWithStation = (player: Player, station: Station) => {
     station.genIngredientForPlayer(player);
     return;
   }
+
   if (!station.item && player.heldItem) {
-    station.placeItem(player.heldItem);
-    player.heldItem.heldBy = null;
-    player.heldItem = null;
+    const placeSucc = station.placeItem(player.heldItem);
+    if (placeSucc) {
+      player.heldItem.heldBy = null;
+      player.heldItem = null;
+    }
     return;
   }
+
   if (station.item) {
     interactWithItem(player, station.item);
     return;
