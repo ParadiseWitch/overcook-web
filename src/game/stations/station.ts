@@ -87,7 +87,7 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
   }
 
 
-  canPlace(item: Item): boolean {
+  canPlace(_item: Item): boolean {
     return true;
   }
 

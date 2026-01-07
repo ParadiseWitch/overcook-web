@@ -14,7 +14,7 @@ export class DirtyPlateStation extends Station {
   }
 
   // 脏盘子点不能放东西
-  canPlace(item: Item): boolean {
+  canPlace(_item: Item): boolean {
     return false;
   }
 

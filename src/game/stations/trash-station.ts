@@ -1,7 +1,6 @@
 import { DEPTH } from '../config';
 import { Item } from '../item';
 import { Container } from '../item/container/container';
-import { Ingredient } from '../item/ingredient/ingredient';
 import { Station } from './station';
 
 export class TrashStation extends Station {

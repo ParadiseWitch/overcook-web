@@ -1,13 +1,9 @@
-import { log } from "console";
 import { Item } from "../item";
 import { Container } from "../item/container/container";
 import { Ingredient } from "../item/ingredient/ingredient";
 import { Player } from "../player";
 import { IngredientStation } from "../stations/ingredient-station";
 import { Station } from "../stations/station";
-import { TrashStation } from "../stations/trash-station";
-import { DeliveryStation } from "../stations/delivery-station";
-import { Plate } from "../item/container/plate";
 
 export const interact = (player: Player, target: Station | Item | null) => {
   if (target == null && !player.heldItem) {
@@ -70,11 +66,11 @@ const interactWithContainer = (player: Player, container: Container) => {
     return;
   }
   if (heldItem instanceof Ingredient) {
-    interactWithContainerWhenHeldIngredient(player, container, heldItem);
+    interactWithContainerWhenHeldIngredient(container, heldItem);
     return;
   }
   if (heldItem instanceof Container) {
-    interactWithContainerWhenHeldContainer(player, container, heldItem);
+    interactWithContainerWhenHeldContainer(container, heldItem);
     return;
   }
 };
@@ -86,17 +82,17 @@ const interactWithIngredient = (player: Player, ingredient: Ingredient) => {
     return;
   }
   if (heldItem instanceof Container) {
-    interactWithIngredientWhenHeldContainer(player, ingredient, heldItem);
+    interactWithIngredientWhenHeldContainer(ingredient, heldItem);
     return;
   }
 };
 
 
-function interactWithContainerWhenHeldIngredient(player: Player, container: Container, heldIngredient: Ingredient) {
+function interactWithContainerWhenHeldIngredient(container: Container, heldIngredient: Ingredient) {
   container.addIngredient(heldIngredient);
 }
 
-function interactWithContainerWhenHeldContainer(player: Player, container: Container, heldContainer: Container) {
+function interactWithContainerWhenHeldContainer(container: Container, heldContainer: Container) {
   if (heldContainer.isEmpty() && !container.isEmpty()) {
     container.transferTo(heldContainer);
     return;
@@ -107,7 +103,7 @@ function interactWithContainerWhenHeldContainer(player: Player, container: Conta
   }
 }
 
-function interactWithIngredientWhenHeldContainer(player: Player, ingredient: Ingredient, heldContainer: Container) {
+function interactWithIngredientWhenHeldContainer(ingredient: Ingredient, heldContainer: Container) {
   heldContainer.addIngredient(ingredient);
 }
 
