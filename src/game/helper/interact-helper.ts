@@ -57,6 +57,11 @@ const interactWithItem = (player: Player, item: Item) => {
     interactWithIngredient(player, item);
     return;
   }
+  // 通用物品拾取（灭火器等）
+  if (!player.heldItem) {
+    player.pick(item);
+    return;
+  }
 };
 
 const interactWithContainer = (player: Player, container: Container) => {

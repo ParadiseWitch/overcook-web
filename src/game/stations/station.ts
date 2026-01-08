@@ -14,7 +14,8 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
   public workStatus: 'idle' | 'working' | 'done' | 'danger' | 'fire' = 'idle'; // 工作状态
   public workSpeed: number = 0.15; // 工作速度
   public sprite: Phaser.Physics.Arcade.Sprite; // 工作站的物理精灵
-  public useStationBar: boolean = true; // 使用工作站的进度条?
+  public useStationBar: boolean = true; // 是否有进度条
+  public canFire: boolean = true; // 能否着火
 
   public item: Item | null = null; // 工作站上持有的物品
   // private progress: number = 0; // 工作站的进度条值（例如切割、烹饪进度）
@@ -117,7 +118,7 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
 
   // 每帧更新工作站状态
   update(delta: number) {
-    if (this.item) {
+    if (this.item && this.workStatus !== 'fire') {
       // 确保物品在视觉上吸附在工作站上
       // if (!this.bar || !this.bar.visible) {
       this.item.x = this.x;
@@ -175,6 +176,10 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
   }
 
   updateWhenFire(_delta: number) {
+    if (this.item) {
+      this.item.x = this.x;
+      this.item.y = this.y;
+    }
   }
 
 

@@ -1,6 +1,7 @@
-import config, { DEPTH } from '../config';
+import { DEPTH } from '../config';
 import { Pot } from '../item/container/pot';
 import { Station } from './station';
+import { startFire } from '../helper/fire-helper';
 
 /**
  * 锅工作站类，处理煮汤逻辑
@@ -13,31 +14,13 @@ export class PotStation extends Station {
   private dangerBlinkInterval: number = 0;
   private isDangerVisible: boolean = false;
   private dangerUI: Phaser.GameObjects.Graphics;
-  private fireEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
+  private firedTriggered: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'station_pot', false);
     this.workSpeed = 0.1;
     this.drawDanger();
     this.dangerUI.setVisible(false);
-    this.fireEmitter = this.scene.add.particles(0, 0,
-      'flame', {
-      x: this.x,
-      y: this.y,
-      speed: { min: 30, max: 80 },
-      angle: { min: 230, max: 310 },
-      gravityY: -100,
-      scale: { start: 1.2, end: 0.1 },
-      alpha: { start: 1, end: 0 },
-      lifespan: { min: 500, max: 800 },
-      frequency: 20,
-      quantity: 2,
-      tint: [0xff0000, 0xff6600, 0xffaa00, 0xffff00],
-      rotate: { min: 0, max: 180 },
-      blendMode: 'ADD'
-    });
-    this.fireEmitter.setDepth(config.DEPTH.FX)
-    this.fireEmitter.stop();
   }
 
   drawDanger() {
@@ -85,9 +68,12 @@ export class PotStation extends Station {
   }
 
   updateWhenIdle(_delta: number): void {
+    this.dangerUI?.setVisible(false);
     if (!this.item) return;
     if (!(this.item instanceof Pot)) return;
     this.item.canTransfer = true;
+    this.firedTriggered = false;
+    this.timeAfterDone = 0;
     // 如果食材不为空 且 食材状态为 cut
     if (!this.item.isEmpty()
       && (this.item.ingredients[0].lastCookState() == 'cut' || this.item.ingredients[0].lastCookState() == 'boil')) {
@@ -167,6 +153,10 @@ export class PotStation extends Station {
     if (this.timeAfterDone > this.safeTime + this.dangerTime) {
       this.workStatus = 'fire';
       pot.ingredients[0].addCookstate('overcook');
+      if (!this.firedTriggered) {
+        startFire(this);
+        this.firedTriggered = true;
+      }
       return;
     }
 
@@ -183,7 +173,10 @@ export class PotStation extends Station {
 
   updateWhenFire(_delta: number): void {
     this.dangerUI?.setVisible(false);
-    this.fireEmitter?.start();
+    const pot = this.item;
+    if (pot instanceof Pot) {
+      pot.canTransfer = false;
+    }
   }
 
 

@@ -4,6 +4,7 @@ import { interact } from '../helper/interact-helper';
 import { Item } from '../item';
 import { Container } from '../item/container/container';
 import { Ingredient } from '../item/ingredient/ingredient';
+import { FireExtinguisher } from '../item/fire-extinguisher';
 import { ALL_ITEMS } from '../manager/item-manager';
 import { ALL_STATIONS } from '../manager/station-manager';
 import { Station } from '../stations/station';
@@ -196,6 +197,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 处理工作输入
     if (this.keyMap.work.isDown) {
       this.work();
+    } else if (this.heldItem instanceof FireExtinguisher && this.heldItem.isCurrentlySpraying()) {
+      this.heldItem.stopSpray();
     }
 
     // 冲刺
@@ -264,6 +267,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           if (ingredientInContainer) continue;
           return item;
         }
+        // 其他类型物品（如灭火器）
+        return item;
       }
     }
 
@@ -300,6 +305,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   work() {
+    // 如果手持灭火器，优先喷射
+    if (this.heldItem instanceof FireExtinguisher) {
+      this.heldItem.startSpray(this.facing);
+      return;
+    }
+
     const target = this.getInteractTarget(); // 获取玩家当前交互目标
     if (target instanceof Station) {
       // 空手才能在工作区work

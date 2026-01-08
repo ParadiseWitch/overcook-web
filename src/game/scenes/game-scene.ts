@@ -4,6 +4,7 @@ import { DEPTH, TILE_SIZE, WORLD_H, WORLD_W } from "../config";
 // 导入新类
 import { Item } from '../item';
 import { Player } from '../player';
+import { FireExtinguisher } from '../item/fire-extinguisher';
 
 // 导入管理器
 import { ALL_ITEMS, updateItems } from '../manager/item-manager';
@@ -11,6 +12,7 @@ import { createMap } from '../manager/map-manager';
 import { ALL_PLAYERS, updatePlayers } from '../manager/player-manager';
 import { ALL_STATIONS, updateStations } from '../manager/station-manager';
 import { handleCollision, handleThrow } from '../physics/collision-handler';
+import { initFireHelper, updateFireHelper, isOnFire, tryExtinguish } from '../helper/fire-helper';
 
 export class GameScene extends Phaser.Scene {
   // 组
@@ -48,6 +50,9 @@ export class GameScene extends Phaser.Scene {
     // runChildUpdate 对于 Station 子类调用其 update 方法很重要。
     // this.stations = this.physics.add.staticGroup({ classType: Phaser.Physics.Arcade.Sprite });
     this.items = this.physics.add.group({ classType: Item, runChildUpdate: true });
+
+    // 初始化火焰助手
+    initFireHelper(this);
 
     // 初始化管理器
 
@@ -190,6 +195,27 @@ export class GameScene extends Phaser.Scene {
     updateStations(delta);
     // 更新item
     updateItems(delta);
+    // 更新火焰系统
+    updateFireHelper(delta);
+
+    // 处理灭火器灭火逻辑
+    ALL_PLAYERS.forEach(player => {
+      if (player.heldItem instanceof FireExtinguisher) {
+        const extinguisher = player.heldItem;
+        if (extinguisher.isCurrentlySpraying()) {
+          const sprayRange = extinguisher.getSprayRange();
+          const sprayAngle = extinguisher.getSprayAngle();
+          const sprayX = player.x + player.facing.x * 20;
+          const sprayY = player.y + player.facing.y * 20;
+
+          ALL_STATIONS.forEach(station => {
+            if (isOnFire(station)) {
+              tryExtinguish(station, sprayX, sprayY, sprayRange, sprayAngle, player.facing, delta);
+            }
+          });
+        }
+      }
+    });
   }
 
   /**

@@ -4,6 +4,7 @@ import * as Phaser from 'phaser';
 import { Plate } from '../item/container/plate';
 import { Pot } from '../item/container/pot';
 import { Tomato } from '../item/ingredient/tomato';
+import { FireExtinguisher } from '../item/fire-extinguisher';
 import { CounterStation } from '../stations/counter-station';
 import { CutStation } from '../stations/cut-station';
 import { DeliveryStation } from '../stations/delivery-station';
@@ -57,6 +58,12 @@ export const createStation = (scene: Phaser.Scene, char: string, px: number, py:
       station = new DirtyPlateStation(scene, px, py);
       break;
     case 'T': station = new TrashStation(scene, px, py); break;
+    case 'E':
+      station = new CounterStation(scene, px, py);
+      const extinguisher = new FireExtinguisher(scene, px, py);
+      station.placeItem(extinguisher);
+      ALL_ITEMS.push(extinguisher);
+      break;
     default:
       // new Station(scene, px, py, 'station_nothing');
       break;

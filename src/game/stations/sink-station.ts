@@ -7,6 +7,7 @@ export class SinkStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'station_sink'); // 水槽工作站
     this.workSpeed = 0.12; // 清洗速度
+    this.canFire = false; // 水槽不能着火
   }
 
   getProgress(): number {
