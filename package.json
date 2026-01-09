@@ -18,7 +18,10 @@
     "dev": "node log.js dev & vite --config vite/config.dev.mjs",
     "build": "node log.js build & vite build --config vite/config.prod.mjs",
     "dev-nolog": "vite --config vite/config.dev.mjs",
-    "build-nolog": "vite build --config vite/config.prod.mjs"
+    "build-nolog": "vite build --config vite/config.prod.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
@@ -27,6 +30,7 @@
   },
   "dependencies": {
     "phaser": "^3.90.0",
-    "terser": "^5.39.0"
+    "terser": "^5.39.0",
+    "vitest": "^4.0.16"
   }
 }

@@ -3,26 +3,49 @@ import { Station } from '../stations/station';
 import { DEPTH, TILE_SIZE } from '../config';
 import { getStationAt } from '../manager/station-manager';
 
-let scene: Phaser.Scene;
-const spreadInterval: number = 3000;
-const firingStations: Map<Station, number> = new Map();
-const extinguishProgress: Map<Station, number> = new Map();
-const extinguishTime: number = 2000;
-const fireEmitters: Map<Station, Phaser.GameObjects.Particles.ParticleEmitter> = new Map();
-
-export const initFireHelper = (gameScene: Phaser.Scene) => {
-  scene = gameScene;
-  firingStations.clear();
-  extinguishProgress.clear();
-  fireEmitters.clear();
+// 火焰状态管理
+type FireState = {
+  scene: Phaser.Scene | null;
+  spreadInterval: number;
+  firingStations: Map<Station, number>;
+  extinguishProgress: Map<Station, number>;
+  extinguishTime: number;
+  fireEmitters: Map<Station, Phaser.GameObjects.Particles.ParticleEmitter>;
 };
 
-const createFireEmitter = (station: Station) => {
-  if (fireEmitters.has(station)) {
-    fireEmitters.get(station)?.destroy();
+// 创建火焰状态
+const createFireState = (): FireState => ({
+  scene: null,
+  spreadInterval: 3000,
+  firingStations: new Map(),
+  extinguishProgress: new Map(),
+  extinguishTime: 2000,
+  fireEmitters: new Map(),
+});
+
+// 全局状态（使用闭包封装）
+let fireState: FireState | null = null;
+
+// 获取或创建火焰状态
+const getFireState = (): FireState => {
+  if (!fireState) {
+    fireState = createFireState();
+  }
+  return fireState;
+};
+
+// 创建火焰发射器
+const createFireEmitter = (state: FireState, station: Station): void => {
+  if (state.fireEmitters.has(station)) {
+    state.fireEmitters.get(station)?.destroy();
   }
 
-  const emitter = scene.add.particles(station.x, station.y, 'flame', {
+  if (!state.scene) {
+    console.warn('FireHelper not initialized with scene');
+    return;
+  }
+
+  const emitter = state.scene.add.particles(station.x, station.y, 'flame', {
     speed: { min: 30, max: 80 },
     angle: { min: 230, max: 310 },
     gravityY: -100,
@@ -37,35 +60,39 @@ const createFireEmitter = (station: Station) => {
   });
   emitter.setDepth(DEPTH.FX);
 
-  fireEmitters.set(station, emitter);
+  state.fireEmitters.set(station, emitter);
 };
 
-const destroyFireEmitter = (station: Station) => {
-  const emitter = fireEmitters.get(station);
+// 销毁火焰发射器
+const destroyFireEmitter = (state: FireState, station: Station): void => {
+  const emitter = state.fireEmitters.get(station);
   if (emitter) {
     emitter.destroy();
-    fireEmitters.delete(station);
+    state.fireEmitters.delete(station);
   }
 };
 
-export const startFire = (station: Station) => {
+// 开始火焰
+const startFireFunc = (state: FireState, station: Station): void => {
   if (!station.canFire) return;
-  if (firingStations.has(station)) return;
+  if (state.firingStations.has(station)) return;
 
   station.workStatus = 'fire';
-  firingStations.set(station, 0);
-  createFireEmitter(station);
+  state.firingStations.set(station, 0);
+  createFireEmitter(state, station);
 };
 
-export const stopFire = (station: Station) => {
-  if (!firingStations.has(station)) return;
+// 停止火焰
+const stopFireFunc = (state: FireState, station: Station): void => {
+  if (!state.firingStations.has(station)) return;
 
   station.workStatus = 'idle';
-  firingStations.delete(station);
-  destroyFireEmitter(station);
+  state.firingStations.delete(station);
+  destroyFireEmitter(state, station);
 };
 
-const spreadFire = (station: Station) => {
+// 火焰蔓延
+const spreadFire = (state: FireState, station: Station): void => {
   const directions = [
     { dx: TILE_SIZE, dy: 0 },
     { dx: -TILE_SIZE, dy: 0 },
@@ -78,35 +105,39 @@ const spreadFire = (station: Station) => {
     const targetY = station.y + dy;
     const targetStation = getStationAt(targetX, targetY);
 
-    if (targetStation && targetStation.canFire && !firingStations.has(targetStation)) {
-      startFire(targetStation);
+    if (targetStation && targetStation.canFire && !state.firingStations.has(targetStation)) {
+      startFireFunc(state, targetStation);
     }
   });
 };
 
-export const updateFireHelper = (delta: number) => {
+// 更新火焰系统
+const updateFireHelperFunc = (state: FireState, delta: number): void => {
   const toSpread: Station[] = [];
 
-  firingStations.forEach((timeElapsed, station) => {
+  state.firingStations.forEach((timeElapsed, station) => {
     const newTime = timeElapsed + delta;
-    firingStations.set(station, newTime);
+    state.firingStations.set(station, newTime);
 
-    if (newTime >= spreadInterval) {
+    if (newTime >= state.spreadInterval) {
       toSpread.push(station);
-      firingStations.set(station, 0);
+      state.firingStations.set(station, 0);
     }
   });
 
   toSpread.forEach(station => {
-    spreadFire(station);
+    spreadFire(state, station);
   });
 };
 
-export const isOnFire = (station: Station): boolean => {
-  return firingStations.has(station);
+// 检查是否着火
+const isOnFireFunc = (state: FireState, station: Station): boolean => {
+  return state.firingStations.has(station);
 };
 
-export const tryExtinguish = (
+// 尝试灭火
+const tryExtinguishFunc = (
+  state: FireState,
   station: Station,
   sprayX: number,
   sprayY: number,
@@ -115,7 +146,7 @@ export const tryExtinguish = (
   facing: Phaser.Math.Vector2,
   delta: number
 ): boolean => {
-  if (!isOnFire(station)) return false;
+  if (!isOnFireFunc(state, station)) return false;
 
   const dx = station.x - sprayX;
   const dy = station.y - sprayY;
@@ -130,23 +161,71 @@ export const tryExtinguish = (
 
   if (angleDiff > sprayAngle / 2) return false;
 
-  const currentProgress = extinguishProgress.get(station) || 0;
+  const currentProgress = state.extinguishProgress.get(station) || 0;
   const newProgress = currentProgress + delta;
-  extinguishProgress.set(station, newProgress);
+  state.extinguishProgress.set(station, newProgress);
 
-  if (newProgress >= extinguishTime) {
-    stopFire(station);
-    extinguishProgress.delete(station);
+  if (newProgress >= state.extinguishTime) {
+    stopFireFunc(state, station);
+    state.extinguishProgress.delete(station);
     return true;
   }
 
   return false;
 };
 
-export const clearAllFires = () => {
-  firingStations.forEach((_, station) => {
+// 清除所有火焰
+const clearAllFiresFunc = (state: FireState): void => {
+  state.firingStations.forEach((_, station) => {
     station.workStatus = 'idle';
-    destroyFireEmitter(station);
+    destroyFireEmitter(state, station);
   });
-  firingStations.clear();
+  state.firingStations.clear();
+};
+
+// 清除所有数据
+const clearAllDataFunc = (state: FireState): void => {
+  state.firingStations.clear();
+  state.extinguishProgress.clear();
+  state.fireEmitters.forEach(emitter => emitter.destroy());
+  state.fireEmitters.clear();
+};
+
+// 导出的公共函数
+export const initFireHelper = (gameScene: Phaser.Scene) => {
+  const state = getFireState();
+  state.scene = gameScene;
+  clearAllDataFunc(state);
+};
+
+export const startFire = (station: Station) => {
+  startFireFunc(getFireState(), station);
+};
+
+export const stopFire = (station: Station) => {
+  stopFireFunc(getFireState(), station);
+};
+
+export const updateFireHelper = (delta: number) => {
+  updateFireHelperFunc(getFireState(), delta);
+};
+
+export const isOnFire = (station: Station): boolean => {
+  return isOnFireFunc(getFireState(), station);
+};
+
+export const tryExtinguish = (
+  station: Station,
+  sprayX: number,
+  sprayY: number,
+  sprayRange: number,
+  sprayAngle: number,
+  facing: Phaser.Math.Vector2,
+  delta: number
+): boolean => {
+  return tryExtinguishFunc(getFireState(), station, sprayX, sprayY, sprayRange, sprayAngle, facing, delta);
+};
+
+export const clearAllFires = () => {
+  clearAllFiresFunc(getFireState());
 };
