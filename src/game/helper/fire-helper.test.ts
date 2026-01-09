@@ -39,7 +39,7 @@ describe('FireHelper', () => {
     it('should start fire on a station', () => {
       const station = createMockStation(100, 100);
       startFire(station as any);
-      
+
       expect(station.workStatus).toBe('fire');
       expect(isOnFire(station as any)).toBe(true);
     });
@@ -47,7 +47,7 @@ describe('FireHelper', () => {
     it('should not start fire if station cannot catch fire', () => {
       const station = createMockStation(100, 100, false);
       startFire(station as any);
-      
+
       expect(station.workStatus).toBe('idle');
       expect(isOnFire(station as any)).toBe(false);
     });
@@ -56,7 +56,7 @@ describe('FireHelper', () => {
       const station = createMockStation(100, 100);
       startFire(station as any);
       startFire(station as any);
-      
+
       expect(station.workStatus).toBe('fire');
     });
   });
@@ -66,7 +66,7 @@ describe('FireHelper', () => {
       const station = createMockStation(100, 100);
       startFire(station as any);
       stopFire(station as any);
-      
+
       expect(station.workStatus).toBe('idle');
       expect(isOnFire(station as any)).toBe(false);
     });
@@ -74,7 +74,7 @@ describe('FireHelper', () => {
     it('should do nothing if station is not on fire', () => {
       const station = createMockStation(100, 100);
       stopFire(station as any);
-      
+
       expect(station.workStatus).toBe('idle');
     });
   });
@@ -83,13 +83,13 @@ describe('FireHelper', () => {
     it('should return true if station is on fire', () => {
       const station = createMockStation(100, 100);
       startFire(station as any);
-      
+
       expect(isOnFire(station as any)).toBe(true);
     });
 
     it('should return false if station is not on fire', () => {
       const station = createMockStation(100, 100);
-      
+
       expect(isOnFire(station as any)).toBe(false);
     });
   });
@@ -98,7 +98,7 @@ describe('FireHelper', () => {
     it('should spread fire after spread interval', () => {
       const station1 = createMockStation(100, 100);
       const station2 = createMockStation(148, 100);
-      
+
       vi.mocked(getStationAt).mockImplementation((x, y) => {
         if (x === 148 && y === 100) return station2 as any;
         return undefined;
@@ -113,7 +113,7 @@ describe('FireHelper', () => {
     it('should not spread fire before interval', () => {
       const station1 = createMockStation(100, 100);
       const station2 = createMockStation(148, 100);
-      
+
       vi.mocked(getStationAt).mockImplementation((x, y) => {
         if (x === 148 && y === 100) return station2 as any;
         return undefined;
@@ -132,7 +132,7 @@ describe('FireHelper', () => {
       startFire(station as any);
 
       const facing = { angle: () => 0 };
-      
+
       tryExtinguish(
         station as any,
         80,
@@ -151,7 +151,7 @@ describe('FireHelper', () => {
       startFire(station as any);
 
       const facing = { angle: () => 0 };
-      
+
       tryExtinguish(
         station as any,
         0,
@@ -170,7 +170,7 @@ describe('FireHelper', () => {
       startFire(station as any);
 
       const facing = { angle: () => Math.PI };
-      
+
       tryExtinguish(
         station as any,
         80,
@@ -189,7 +189,7 @@ describe('FireHelper', () => {
       startFire(station as any);
 
       const facing = { angle: () => 0 };
-      
+
       tryExtinguish(
         station as any,
         80,
@@ -220,12 +220,12 @@ describe('FireHelper', () => {
     it('should clear all fires', () => {
       const station1 = createMockStation(100, 100);
       const station2 = createMockStation(200, 200);
-      
+
       startFire(station1 as any);
       startFire(station2 as any);
-      
+
       clearAllFires();
-      
+
       expect(station1.workStatus).toBe('idle');
       expect(station2.workStatus).toBe('idle');
       expect(isOnFire(station1 as any)).toBe(false);
