@@ -46,7 +46,7 @@ export class FireExtinguisher extends Item {
 
   private updateEmitterPosition(direction: Phaser.Math.Vector2) {
     if (!this.heldBy) return;
-    
+
     const sprayX = this.heldBy.x + direction.x * 20;
     const sprayY = this.heldBy.y + direction.y * 20;
     const halfAngle = Phaser.Math.RadToDeg(this.sprayAngle / 2);
@@ -57,17 +57,18 @@ export class FireExtinguisher extends Item {
       this.lastAngle = this.currentAngle;
       this.sprayEmitter?.destroy();
       this.sprayEmitter = this.scene.add.particles(sprayX, sprayY, 'particle_smoke', {
-        speed: { min: 150, max: 250 },
-        angle: { min: minAngle, max: maxAngle },
-        scale: { start: 0.8, end: 0.2 },
-        alpha: { start: 0.8, end: 0 },
-        lifespan: { min: 300, max: 500 },
+        speed: { min: 100, max: 350, start: 100, end: 350 },
+        angle: { min: minAngle - 1 / 32, max: maxAngle + 1 / 32 },
+        scale: { start: 0.1, end: 1 },
+        alpha: { start: 1, end: 0 },
+        lifespan: { min: 600, max: 1000 },
         frequency: 30,
         quantity: 3,
         tint: 0xcccccc,
-        blendMode: 'NORMAL'
+        blendMode: 'add',
       });
       this.sprayEmitter.setDepth(DEPTH.FX);
+      // this.setScale(0.3);
     } else {
       this.sprayEmitter?.setPosition(sprayX, sprayY);
     }
@@ -89,7 +90,7 @@ export class FireExtinguisher extends Item {
    */
   update(delta: number) {
     super.update(delta);
-    
+
     if (this.isSpraying && this.heldBy) {
       const direction = this.heldBy.facing;
       this.currentAngle = Phaser.Math.RadToDeg(direction.angle());
