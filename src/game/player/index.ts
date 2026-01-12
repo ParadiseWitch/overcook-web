@@ -299,9 +299,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     item.flyEmitter.start(); // 启动粒子效果
     if (item.body) {
       item.body.enable = true; // 启用物理碰撞
-      const vec = this.facing.clone().scale(500); // 根据玩家朝向计算投掷速度
+      const vec = this.facing.clone().scale(1200); // 根据玩家朝向计算投掷速度
       (item.body as Phaser.Physics.Arcade.Body).setVelocity(vec.x, vec.y);
-      (item.body as Phaser.Physics.Arcade.Body).setDrag(500); // 设置空气阻力
+      (item.body as Phaser.Physics.Arcade.Body).setDrag(3000); // 设置空气阻力
     }
   }
 
