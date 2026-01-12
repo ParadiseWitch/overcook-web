@@ -296,6 +296,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     item.heldBy = null; // 物品不再被持有
     item.isFlying = true; // 物品进入飞行状态
     item.thrower = this; // 设置投掷者
+    item.flyEmitter.start(); // 启动粒子效果
     if (item.body) {
       item.body.enable = true; // 启用物理碰撞
       const vec = this.facing.clone().scale(500); // 根据玩家朝向计算投掷速度
