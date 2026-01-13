@@ -67,6 +67,7 @@ export abstract class Container extends Item {
   }
 
   public update(_delta: number): void {
+    super.update(_delta);
     // 食材跟着容器移动
     this.ingredients.forEach(ingredient => {
       ingredient.x = this.x;

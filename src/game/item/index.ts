@@ -40,7 +40,7 @@ export abstract class Item extends Phaser.Physics.Arcade.Sprite {
     this.flyEmitter.stop();
   }
 
-  update(delta: number): void {
+  update(_delta: number): void {
     if (this.isFlying) {
       if (!this.body?.velocity || (this.body?.velocity.x == 0 && this.body?.velocity.y == 0)) {
         this.isFlying = false;
@@ -49,5 +49,10 @@ export abstract class Item extends Phaser.Physics.Arcade.Sprite {
         return;
       };
     }
+  }
+
+  destroy(fromScene?: boolean): void {
+    super.destroy(fromScene);
+    this.flyEmitter.destroy(fromScene);
   }
 }
