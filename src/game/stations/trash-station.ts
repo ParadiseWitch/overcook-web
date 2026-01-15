@@ -18,8 +18,7 @@ export class TrashStation extends Station {
 
     // 手持非空容器应该只倒掉食材, 盘子不放在垃圾筒上
     if (item instanceof Container && item.heldBy && !item.isEmpty()) {
-      item.ingredients.forEach(i => i.destroy());
-      item.ingredients = [];
+      item.clear();
       return false;
     }
 

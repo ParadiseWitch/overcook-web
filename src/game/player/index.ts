@@ -257,7 +257,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           // PERF:LATER 性能问题。解决方案：在Ingredient对象添加inContainer之类的属性
           for (const otherItem of ALL_ITEMS) {
             if (otherItem instanceof Container) {
-              if (otherItem.ingredients.includes(item)) {
+              if (otherItem.food.has(item)) {
                 ingredientInContainer = true;
                 break;
               }

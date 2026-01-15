@@ -30,7 +30,7 @@ export class DeliveryStation extends Station {
     // 提示文字
     let tipText = '';
     // TODO:检测是否上菜成功
-    if (!plate || plate.isEmpty() || plate.ingredients[0].lastCookState() != 'boil') {
+    if (!plate || plate.isEmpty() || plate.food.ingredients[0].lastCookState() != 'boil') {
       // 上菜失败
       tipText = "上菜错误! -60";
       this.score -= 60; // 扣分
@@ -46,7 +46,7 @@ export class DeliveryStation extends Station {
     }
 
     // 销毁
-    plate.clearIngredients();
+    plate.clear();
     plate.destroy();
     this.item = null;
 

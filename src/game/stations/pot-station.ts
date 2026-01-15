@@ -76,7 +76,7 @@ export class PotStation extends Station {
     this.timeAfterDone = 0;
     // 如果食材不为空 且 食材状态为 cut
     if (!this.item.isEmpty()
-      && (this.item.ingredients[0].lastCookState() == 'cut' || this.item.ingredients[0].lastCookState() == 'boil')) {
+      && (this.item.food.ingredients[0].lastCookState() == 'cut' || this.item.food.ingredients[0].lastCookState() == 'boil')) {
       this.workStatus = 'working';
       this.item.canTransfer = false;
       return;
@@ -128,7 +128,7 @@ export class PotStation extends Station {
     }
     this.timeAfterDone += delta;
     // this.item.setTexture('item_soup_pot');
-    const ingredient = pot.ingredients[0];
+    const ingredient = pot.food.ingredients[0];
     if (ingredient.lastCookState() != 'boil') {
       ingredient.addCookstate('boil');
     }
@@ -152,7 +152,7 @@ export class PotStation extends Station {
     }
     if (this.timeAfterDone > this.safeTime + this.dangerTime) {
       this.workStatus = 'fire';
-      pot.ingredients[0].addCookstate('overcook');
+      pot.food.ingredients[0].addCookstate('overcook');
       if (!this.firedTriggered) {
         startFire(this);
         this.firedTriggered = true;
