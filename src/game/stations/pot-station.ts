@@ -4,10 +4,17 @@ import { Station } from './station';
 import { startFire } from '../helper/fire-helper';
 
 /**
- * 锅工作站类，处理煮汤逻辑
+ * 灶台工作站
+ * 
+ * 状态机流程：idle -> working -> done -> danger -> fire
+ * - 放入装有切好食材的锅后自动开始烹饪
+ * - 烹饪完成后有安全时间，超时进入危险状态
+ * - 危险状态不及时取走会着火
  */
 export class PotStation extends Station {
+  // 完成后的安全时间（毫秒）
   private safeTime: number = 3000;
+  // 危险状态持续时间（毫秒），超时后着火
   private dangerTime: number = 5000;
   private timeAfterDone: number = 0;
   private lastDnagerBlinkTime: number = 0;
@@ -23,9 +30,9 @@ export class PotStation extends Station {
     this.dangerUI.setVisible(false);
   }
 
+  // 绘制危险警告UI（红色三角形+感叹号）
   drawDanger() {
     const graphics = this.scene.add.graphics();
-    // === 三角形 ===
     graphics.fillStyle(0xff0000, 1);
     graphics.lineStyle(3, 0x000000, 1);
 
@@ -43,24 +50,9 @@ export class PotStation extends Station {
       centerX + 22, centerY + 12
     );
 
-    // === 感叹号 ===
     graphics.fillStyle(0xffffff, 1);
-
-    // 竖线
-    graphics.fillRoundedRect(
-      centerX - 3,   // 居中
-      centerY - 16,  // 起点稍微靠上
-      6,       // 更粗一点
-      18,      // 更长
-      3
-    );
-
-    // 点
-    graphics.fillCircle(
-      centerX,
-      centerY + 8,
-      3
-    );
+    graphics.fillRoundedRect(centerX - 3, centerY - 16, 6, 18, 3);
+    graphics.fillCircle(centerX, centerY + 8, 3);
 
     graphics.setDepth(DEPTH.UI);
     graphics.setVisible(true);
@@ -74,14 +66,24 @@ export class PotStation extends Station {
     this.item.canTransfer = true;
     this.firedTriggered = false;
     this.timeAfterDone = 0;
-    // 如果食材不为空 且 食材状态为 cut
-    if (!this.item.isEmpty()
-      && (this.item.food.ingredients[0].lastCookState() == 'cut' || this.item.food.ingredients[0].lastCookState() == 'boil')) {
-      this.workStatus = 'working';
-      this.item.canTransfer = false;
-      return;
+
+    if (!this.item.isEmpty()) {
+      const firstIngredient = this.item.food.ingredients[0];
+      const lastState = firstIngredient?.lastCookState();
+
+      // 已烹饪完成的食材放回灶台，继续危险/着火流程
+      if (lastState === 'stir-fry') {
+        this.workStatus = 'done';
+        return;
+      }
+
+      // 切好或煮过的食材，开始烹饪
+      if (lastState === 'cut' || lastState === 'boil') {
+        this.workStatus = 'working';
+        this.item.canTransfer = false;
+        return;
+      }
     }
-    // todo 灶上突然加入煮一半的锅 也是working
   }
 
   updateWhenWorking(_delta: number): void {
@@ -92,67 +94,68 @@ export class PotStation extends Station {
     if (!(this.item instanceof Pot)) {
       this.workStatus = 'idle';
       return;
-    };
+    }
     if (this.item.isEmpty()) {
       this.workStatus = 'idle';
       return;
     }
+    // 烹饪时锅轻微晃动的视觉效果
     this.item.x = this.x + Math.sin(this.scene.game.getTime() * 0.01) * 1.5;
   }
 
-  // FIXME: 同时食材可能被煮两次.进度条可能会跑两次
-  // 复现步骤:
-  // 1. 将切好的西红柿放入锅中煮,等待进度完成
-  // 2. 在safeTime内拿下锅放到地板上
-  // 3. 再将锅拿到灶上,此时又会出现进度条
-  // 期望: 拿上灶台时,不会出现进度条,直接读完safeTime,并进如dangerTime
   updateWhenDone(delta: number) {
     if (!this.item) {
       this.workStatus = 'idle';
       return;
-    };
+    }
     if (!(this.item instanceof Pot)) {
       this.workStatus = 'idle';
       return;
-    };
+    }
     const pot = this.item;
     pot.canTransfer = true;
     if (pot.isEmpty()) {
       this.workStatus = 'idle';
       return;
     }
-    // 超过时间变成danger
+
+    // 超过安全时间进入危险状态
     if (this.timeAfterDone > this.safeTime) {
       this.workStatus = 'danger';
       return;
     }
     this.timeAfterDone += delta;
-    // this.item.setTexture('item_soup_pot');
+
+    // 烹饪完成时给食材添加"炒"状态
     const ingredient = pot.food.ingredients[0];
-    if (ingredient.lastCookState() != 'boil') {
-      ingredient.addCookstate('boil');
+    if (ingredient && ingredient.lastCookState() !== 'stir-fry') {
+      ingredient.addCookstate('stir-fry');
     }
-    this.timeAfterDone += delta;
   }
 
   updateWhenDanger(delta: number): void {
     if (!this.item) {
       this.workStatus = 'idle';
       return;
-    };
+    }
     if (!(this.item instanceof Pot)) {
       this.workStatus = 'idle';
       return;
-    };
+    }
     const pot = this.item;
     pot.canTransfer = true;
     if (pot.isEmpty()) {
       this.workStatus = 'idle';
       return;
     }
+
+    // 超过危险时间则着火
     if (this.timeAfterDone > this.safeTime + this.dangerTime) {
       this.workStatus = 'fire';
-      pot.food.ingredients[0].addCookstate('overcook');
+      const ingredient = pot.food.ingredients[0];
+      if (ingredient) {
+        ingredient.addCookstate('overcook');
+      }
       if (!this.firedTriggered) {
         startFire(this);
         this.firedTriggered = true;
@@ -160,9 +163,10 @@ export class PotStation extends Station {
       return;
     }
 
+    // 危险警告UI闪烁，频率随时间加快
     const currentTime = this.scene.game.getTime();
-    const totolTime = this.safeTime + this.dangerTime;
-    this.dangerBlinkInterval = 500 - (this.timeAfterDone / totolTime) * 500;
+    const totalTime = this.safeTime + this.dangerTime;
+    this.dangerBlinkInterval = 500 - (this.timeAfterDone / totalTime) * 500;
     if (currentTime - this.lastDnagerBlinkTime > this.dangerBlinkInterval) {
       this.isDangerVisible = !this.isDangerVisible;
       this.dangerUI?.setVisible(this.isDangerVisible);
@@ -178,7 +182,4 @@ export class PotStation extends Station {
       pot.canTransfer = false;
     }
   }
-
-
 }
-

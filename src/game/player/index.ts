@@ -62,10 +62,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   // 拾取物品逻辑，与原始GameScene中的逻辑保持一致。
   pick(item: Item) {
     // player不空手，无法拿取
-    if (this.heldItem) return;
+    if (this.heldItem) {
+      console.log('[pick] failed: player already holding item');
+      return;
+    }
     if (item.station) {
       // 如果item所属工作台不允许pick，直接返回
-      if (!item.station.canPick) return;
+      if (!item.station.canPick) {
+        console.log('[pick] failed: station.canPick is false', item.station);
+        return;
+      }
       item.station.item = null;
       item.station = null;
     }
@@ -77,6 +83,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       item.body.enable = false; // 拾取时无物理碰撞
     }
     item.setVisible(true);
+    console.log('[pick] success:', item);
   }
 
   putDownToFloor() {

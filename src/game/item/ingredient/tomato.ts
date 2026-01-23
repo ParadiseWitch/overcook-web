@@ -1,14 +1,13 @@
-import { CookState, Ingredient } from "./ingredient";
+import { FoodState, Ingredient } from "./ingredient";
 
 export class Tomato extends Ingredient {
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string = 'item_tomato') {
-    super(scene, x, y, texture);
+    super(scene, x, y, texture, 'tomato');
   }
 
-  addCookstate(cookState: CookState) {
+  addCookstate(cookState: FoodState) {
     super.addCookstate(cookState);
     if (cookState == 'cut') {
-      // 切换为切好的番茄纹理
       this.setTexture('item_tomato_cut');
     }
   }

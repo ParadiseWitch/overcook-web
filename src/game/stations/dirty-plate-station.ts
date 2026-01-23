@@ -5,15 +5,20 @@ import { ALL_ITEMS } from '../manager/item-manager';
 import { Station } from './station';
 import { Item } from '../item';
 
+/**
+ * 脏盘子生成工作站
+ * 
+ * 玩家不能向此工作站放置物品，但可以拾取生成的脏盘子
+ */
 export class DirtyPlateStation extends Station {
-  constructor(scene: Phaser.Scene, x: number, y: number) { // 使用柜台纹理
+  constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'station_dirty_plate');
     this.scene.events.on('add-dirty-plate', () => {
-      this.genDirtyPlate()
+      this.genDirtyPlate();
     });
   }
 
-  // 脏盘子点不能放东西
+  // 玩家不能向脏盘子工作站放置物品
   canPlace(_item: Item): boolean {
     return false;
   }
@@ -22,24 +27,26 @@ export class DirtyPlateStation extends Station {
    * 生成一个脏盘子并放置在工作站上
    */
   public genDirtyPlate(): void {
-    if (!this.item) {
-      const dirtyPlate = new Plate(this.scene, this.x, this.y, 'dirty');
-      ALL_ITEMS.push(dirtyPlate); // 从ItemManager中删除，以防重复管理
-      // this.placeItem(dirtyPlate);
-      // 工作站已放置物品，直接返回 TODO:LATER 应该叠加
-      if (this.item) return;
-      this.item = dirtyPlate;
-      dirtyPlate.station = this;
-      dirtyPlate.heldBy = null; // 物品不再被持有
-      dirtyPlate.isFlying = false; // 物品不再飞行
-      if (dirtyPlate.body) {
-        dirtyPlate.body.enable = false; // 禁用物理碰撞
-        dirtyPlate.setVelocity(0, 0); // 停止移动
-      }
-      dirtyPlate.x = this.x;
-      dirtyPlate.y = this.y;
-      dirtyPlate.setDepth(DEPTH.ITEM); // 设置物品层级
-      dirtyPlate.homeStation = this; // 将此工作站的精灵设置为其家
+    // 工作站已有物品，不再生成（TODO: 后续可实现叠加）
+    if (this.item) return;
+
+    const dirtyPlate = new Plate(this.scene, this.x, this.y, 'dirty');
+    ALL_ITEMS.push(dirtyPlate);
+
+    // 手动设置关联（因为 canPlace 返回 false，无法使用 placeItem）
+    this.item = dirtyPlate;
+    dirtyPlate.station = this;
+    dirtyPlate.heldBy = null;
+    dirtyPlate.isFlying = false;
+    dirtyPlate.homeStation = this;
+
+    if (dirtyPlate.body) {
+      dirtyPlate.body.enable = false;
+      dirtyPlate.setVelocity(0, 0);
     }
+
+    dirtyPlate.x = this.x;
+    dirtyPlate.y = this.y;
+    dirtyPlate.setDepth(DEPTH.ITEM);
   }
 }

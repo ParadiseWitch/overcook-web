@@ -27,17 +27,18 @@ export class DeliveryStation extends Station {
   }
 
   deliver(plate: Plate) {
-    // 提示文字
     let tipText = '';
-    // TODO:检测是否上菜成功
-    if (!plate || plate.isEmpty() || plate.food.ingredients[0].lastCookState() != 'boil') {
-      // 上菜失败
+    // TODO: 使用 FoodMatcher 进行菜谱匹配，替代硬编码状态检查
+    const firstIngredient = plate.food.ingredients[0];
+    const isValidDish = plate && !plate.isEmpty() 
+      && firstIngredient?.lastCookState() === 'stir-fry';
+
+    if (!isValidDish) {
       tipText = "上菜错误! -60";
-      this.score -= 60; // 扣分
+      this.score -= 60;
     } else {
       tipText = "+100";
-      // 上菜成功
-      this.score += 100; // 增加得分
+      this.score += 100;
 
       // 延迟3秒后在出餐口生成脏盘子
       this.scene.time.delayedCall(3000, () => {
