@@ -1,4 +1,4 @@
-import { CookState } from '../item/ingredient/ingredient';
+import { CookState } from "../item/ingredient/ingredient";
 
 /**
  * 烹饪类型配置
@@ -6,12 +6,12 @@ import { CookState } from '../item/ingredient/ingredient';
  */
 export interface CookTypeConfig {
   type: CookState;
-  displayName: string;    // 显示名称
-  symbol: string;         // 菜单符号表示（参考菜单.md）
-  isSingle: boolean;      // 是否为单食材烹饪
-  station: string;        // 对应工作站类型
-  baseTime: number;       // 基础烹饪时间（毫秒）
-  canOvercook: boolean;   // 是否会过度烹饪
+  displayName: string; // 显示名称
+  symbol: string; // 菜单符号表示（参考菜单.md）
+  isSingle: boolean; // 是否为单食材烹饪
+  station: string; // 对应工作站类型
+  baseTime: number; // 基础烹饪时间（毫秒）
+  canOvercook: boolean; // 是否会过度烹饪
 }
 
 // NOTE: This registry only includes CookState (active cooking methods), not SpecialState
@@ -19,87 +19,87 @@ export interface CookTypeConfig {
 // so they don't have associated stations or base times.
 // 烹饪类型注册表：所有烹饪方式的配置
 export const COOK_TYPES: Record<CookState, CookTypeConfig> = {
-  'cut': {
-    type: 'cut',
-    displayName: '切',
-    symbol: '/',
+  cut: {
+    type: "cut",
+    displayName: "切",
+    symbol: "/",
     isSingle: true,
-    station: 'CutStation',
+    station: "CutStation",
     baseTime: 3000,
-    canOvercook: false
+    canOvercook: false,
   },
-  'boil': {
-    type: 'boil',
-    displayName: '煮',
-    symbol: '*',
+  boil: {
+    type: "boil",
+    displayName: "煮",
+    symbol: "*",
     isSingle: true,
-    station: 'BoilStation',
+    station: "BoilStation",
     baseTime: 5000,
-    canOvercook: true
+    canOvercook: true,
   },
-  'deep-fry': {
-    type: 'deep-fry',
-    displayName: '炸',
-    symbol: '/_',
+  "deep-fry": {
+    type: "deep-fry",
+    displayName: "炸",
+    symbol: "/_",
     isSingle: true,
-    station: 'FryStation',
+    station: "FryStation",
     baseTime: 4000,
-    canOvercook: true
+    canOvercook: true,
   },
-  'stir-fry': {
-    type: 'stir-fry',
-    displayName: '炒/煮汤',
-    symbol: '《》',
+  "stir-fry": {
+    type: "stir-fry",
+    displayName: "炒/煮汤",
+    symbol: "《》",
     isSingle: false,
-    station: 'PotStation',
+    station: "PotStation",
     baseTime: 6000,
-    canOvercook: true
+    canOvercook: true,
   },
-  'pan-fry': {
-    type: 'pan-fry',
-    displayName: '煎',
-    symbol: '',
+  "pan-fry": {
+    type: "pan-fry",
+    displayName: "煎",
+    symbol: "",
     isSingle: false,
-    station: 'PanStation',
+    station: "PanStation",
     baseTime: 5000,
-    canOvercook: true
+    canOvercook: true,
   },
-  'mix': {
-    type: 'mix',
-    displayName: '搅拌',
-    symbol: '｛｝',
+  mix: {
+    type: "mix",
+    displayName: "搅拌",
+    symbol: "｛｝",
     isSingle: false,
-    station: 'MixerStation',
+    station: "MixerStation",
     baseTime: 4000,
-    canOvercook: false
+    canOvercook: false,
   },
-  'bake': {
-    type: 'bake',
-    displayName: '烘焙',
-    symbol: '',
+  bake: {
+    type: "bake",
+    displayName: "烘焙",
+    symbol: "",
     isSingle: false,
-    station: 'OvenStation',
+    station: "OvenStation",
     baseTime: 8000,
-    canOvercook: true
+    canOvercook: true,
   },
-  'barbecue': {
-    type: 'barbecue',
-    displayName: '烧烤',
-    symbol: '',
+  barbecue: {
+    type: "barbecue",
+    displayName: "烧烤",
+    symbol: "",
     isSingle: false,
-    station: 'GrillStation',
+    station: "GrillStation",
     baseTime: 5000,
-    canOvercook: true
+    canOvercook: true,
   },
-  'steam': {
-    type: 'steam',
-    displayName: '蒸',
-    symbol: '',
+  steam: {
+    type: "steam",
+    displayName: "蒸",
+    symbol: "",
     isSingle: false,
-    station: 'SteamerStation',
+    station: "SteamerStation",
     baseTime: 6000,
-    canOvercook: true
-  }
+    canOvercook: true,
+  },
 };
 
 export function getCookTypeConfig(type: CookState): CookTypeConfig {

@@ -1,16 +1,22 @@
-import { Item } from '..';
+import { Item } from "..";
 
 // 单食材烹饪状态：只能对单个食材进行处理
-export type SingleCookState = 'cut' | 'boil' | 'deep-fry';
+export type SingleCookState = "cut" | "boil" | "deep-fry";
 
 // 多食物烹饪状态：可以对多个食材或加工后的食物一起处理
-export type MultiCookState = 'stir-fry' | 'barbecue' | 'mix' | 'bake' | 'steam' | 'pan-fry';
+export type MultiCookState =
+  | "stir-fry"
+  | "barbecue"
+  | "mix"
+  | "bake"
+  | "steam"
+  | "pan-fry";
 
 // 所有烹饪状态的联合类型
 export type CookState = SingleCookState | MultiCookState;
 
 // 特殊状态：过度烹饪会导致食物变质
-export type SpecialState = 'overcook' | 'burnt';
+export type SpecialState = "overcook" | "burnt";
 
 // 食物状态：包含正常烹饪状态和特殊状态
 export type FoodState = CookState | SpecialState;
@@ -40,7 +46,7 @@ export class Ingredient extends Item {
     y: number,
     texture: string,
     ingredientType?: string,
-    baseConfig?: BaseIngredientConfig
+    baseConfig?: BaseIngredientConfig,
   ) {
     super(scene, x, y, texture);
     this.ingredientType = ingredientType ?? texture;
@@ -58,15 +64,15 @@ export class Ingredient extends Item {
   }
 
   setProgress(value: number): void {
-    this._progress = value
+    this._progress = value;
   }
 
   addCookstate(cookState: FoodState) {
     this.setProgress(0);
-    if (cookState == 'overcook') {
-      this.setTexture('overcooke')
+    if (cookState == "overcook") {
+      this.setTexture("overcooke");
     }
-    this.cookStates.push(cookState)
+    this.cookStates.push(cookState);
   }
 
   lastCookState(): FoodState | undefined {

@@ -1,9 +1,7 @@
-import { AUTO, Game, Scale, Types } from 'phaser';
-import { TILE_SIZE, WORLD_H, WORLD_W } from './config';
-import { BootScene } from './scenes/boot-scene';
-import { GameScene } from './scenes/game-scene';
-
-
+import { AUTO, Game, Scale, Types } from "phaser";
+import { TILE_SIZE, WORLD_H, WORLD_W } from "./config";
+import { BootScene } from "./scenes/boot-scene";
+import { GameScene } from "./scenes/game-scene";
 
 // Find out more information about the Game Config at:
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
@@ -11,16 +9,17 @@ const config: Types.Core.GameConfig = {
   type: AUTO,
   width: TILE_SIZE * WORLD_W,
   height: TILE_SIZE * WORLD_H,
-  parent: 'game-container',
-  backgroundColor: '#028af8',
+  parent: "game-container",
+  backgroundColor: "#028af8",
   physics: {
-    default: 'arcade', arcade: {
-      debug: false
-    }
+    default: "arcade",
+    arcade: {
+      debug: false,
+    },
   },
   scale: {
     mode: Scale.NONE,
-    autoCenter: Scale.CENTER_BOTH
+    autoCenter: Scale.CENTER_BOTH,
   },
   // scene: [
   //   MainGame
@@ -29,12 +28,12 @@ const config: Types.Core.GameConfig = {
   input: {
     keyboard: true,
     mouse: true,
-    gamepad: true
-  }
+    gamepad: true,
+  },
 };
 
 const StartGame = (parent: string) => {
   return new Game({ ...config, parent });
-}
+};
 
 export default StartGame;

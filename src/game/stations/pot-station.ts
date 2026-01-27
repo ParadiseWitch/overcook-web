@@ -1,11 +1,11 @@
-import { DEPTH } from '../config';
-import { Pot } from '../item/container/pot';
-import { Station } from './station';
-import { startFire } from '../helper/fire-helper';
+import { DEPTH } from "../config";
+import { Pot } from "../item/container/pot";
+import { Station } from "./station";
+import { startFire } from "../helper/fire-helper";
 
 /**
  * 灶台工作站
- * 
+ *
  * 状态机流程：idle -> working -> done -> danger -> fire
  * - 放入装有切好食材的锅后自动开始烹饪
  * - 烹饪完成后有安全时间，超时进入危险状态
@@ -24,7 +24,7 @@ export class PotStation extends Station {
   private firedTriggered: boolean = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'station_pot', false);
+    super(scene, x, y, "station_pot", false);
     this.workSpeed = 0.1;
     this.drawDanger();
     this.dangerUI.setVisible(false);
@@ -40,14 +40,20 @@ export class PotStation extends Station {
     const centerY = this.y + 6;
 
     graphics.fillTriangle(
-      centerX, centerY - 30,
-      centerX - 22, centerY + 12,
-      centerX + 22, centerY + 12
+      centerX,
+      centerY - 30,
+      centerX - 22,
+      centerY + 12,
+      centerX + 22,
+      centerY + 12,
     );
     graphics.strokeTriangle(
-      centerX, centerY - 30,
-      centerX - 22, centerY + 12,
-      centerX + 22, centerY + 12
+      centerX,
+      centerY - 30,
+      centerX - 22,
+      centerY + 12,
+      centerX + 22,
+      centerY + 12,
     );
 
     graphics.fillStyle(0xffffff, 1);
@@ -72,14 +78,14 @@ export class PotStation extends Station {
       const lastState = firstIngredient?.lastCookState();
 
       // 已烹饪完成的食材放回灶台，继续危险/着火流程
-      if (lastState === 'stir-fry') {
-        this.workStatus = 'done';
+      if (lastState === "stir-fry") {
+        this.workStatus = "done";
         return;
       }
 
       // 切好或煮过的食材，开始烹饪
-      if (lastState === 'cut' || lastState === 'boil') {
-        this.workStatus = 'working';
+      if (lastState === "cut" || lastState === "boil") {
+        this.workStatus = "working";
         this.item.canTransfer = false;
         return;
       }
@@ -88,15 +94,15 @@ export class PotStation extends Station {
 
   updateWhenWorking(_delta: number): void {
     if (!this.item) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     if (!(this.item instanceof Pot)) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     if (this.item.isEmpty()) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     // 烹饪时锅轻微晃动的视觉效果
@@ -105,56 +111,56 @@ export class PotStation extends Station {
 
   updateWhenDone(delta: number) {
     if (!this.item) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     if (!(this.item instanceof Pot)) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     const pot = this.item;
     pot.canTransfer = true;
     if (pot.isEmpty()) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
 
     // 超过安全时间进入危险状态
     if (this.timeAfterDone > this.safeTime) {
-      this.workStatus = 'danger';
+      this.workStatus = "danger";
       return;
     }
     this.timeAfterDone += delta;
 
     // 烹饪完成时给食材添加"炒"状态
     const ingredient = pot.food.ingredients[0];
-    if (ingredient && ingredient.lastCookState() !== 'stir-fry') {
-      ingredient.addCookstate('stir-fry');
+    if (ingredient && ingredient.lastCookState() !== "stir-fry") {
+      ingredient.addCookstate("stir-fry");
     }
   }
 
   updateWhenDanger(delta: number): void {
     if (!this.item) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     if (!(this.item instanceof Pot)) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     const pot = this.item;
     pot.canTransfer = true;
     if (pot.isEmpty()) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
 
     // 超过危险时间则着火
     if (this.timeAfterDone > this.safeTime + this.dangerTime) {
-      this.workStatus = 'fire';
+      this.workStatus = "fire";
       const ingredient = pot.food.ingredients[0];
       if (ingredient) {
-        ingredient.addCookstate('overcook');
+        ingredient.addCookstate("overcook");
       }
       if (!this.firedTriggered) {
         startFire(this);

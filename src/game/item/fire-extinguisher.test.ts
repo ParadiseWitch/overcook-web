@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { FireExtinguisher } from './fire-extinguisher';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { FireExtinguisher } from "./fire-extinguisher";
 
-vi.mock('phaser', () => ({
+vi.mock("phaser", () => ({
   default: {
     Math: {
-      RadToDeg: (rad: number) => rad * (180 / Math.PI)
-    }
+      RadToDeg: (rad: number) => rad * (180 / Math.PI),
+    },
   },
   Math: {
-    RadToDeg: (rad: number) => rad * (180 / Math.PI)
-  }
+    RadToDeg: (rad: number) => rad * (180 / Math.PI),
+  },
 }));
 
 const createMockScene = () => {
@@ -21,23 +21,23 @@ const createMockScene = () => {
     setDepth: vi.fn(),
     setPosition: vi.fn(),
     emitting: false,
-    particleAngle: null as any
+    particleAngle: null as any,
   };
 
   return {
     add: {
-      particles: vi.fn().mockReturnValue(mockEmitter)
+      particles: vi.fn().mockReturnValue(mockEmitter),
     },
     physics: {
       add: {
-        existing: vi.fn()
-      }
+        existing: vi.fn(),
+      },
     },
-    mockEmitter
+    mockEmitter,
   };
 };
 
-vi.mock('./index', () => ({
+vi.mock("./index", () => ({
   Item: class MockItem {
     scene: any;
     x: number;
@@ -54,10 +54,10 @@ vi.mock('./index', () => ({
 
     update(_delta: number) {}
     destroy() {}
-  }
+  },
 }));
 
-describe('FireExtinguisher', () => {
+describe("FireExtinguisher", () => {
   let fireExtinguisher: FireExtinguisher;
   let mockScene: ReturnType<typeof createMockScene>;
 
@@ -66,72 +66,80 @@ describe('FireExtinguisher', () => {
     fireExtinguisher = new FireExtinguisher(mockScene as any, 100, 100);
   });
 
-  describe('constructor', () => {
-    it('should create a fire extinguisher at the specified position', () => {
+  describe("constructor", () => {
+    it("should create a fire extinguisher at the specified position", () => {
       expect(fireExtinguisher.x).toBe(100);
       expect(fireExtinguisher.y).toBe(100);
     });
   });
 
-  describe('progress', () => {
-    it('should have initial progress of 0', () => {
+  describe("progress", () => {
+    it("should have initial progress of 0", () => {
       expect(fireExtinguisher.getProgress()).toBe(0);
     });
 
-    it('should update progress', () => {
+    it("should update progress", () => {
       fireExtinguisher.setProgress(50);
       expect(fireExtinguisher.getProgress()).toBe(50);
     });
   });
 
-  describe('spray', () => {
-    const mockPlayer = { x: 100, y: 100, facing: { angle: () => 0, x: 1, y: 0 } };
+  describe("spray", () => {
+    const mockPlayer = {
+      x: 100,
+      y: 100,
+      facing: { angle: () => 0, x: 1, y: 0 },
+    };
 
-    it('should not be spraying initially', () => {
+    it("should not be spraying initially", () => {
       expect(fireExtinguisher.isCurrentlySpraying()).toBe(false);
     });
 
-    it('should start spraying when startSpray is called', () => {
+    it("should start spraying when startSpray is called", () => {
       fireExtinguisher.heldBy = mockPlayer as any;
       const direction = { angle: () => 0, x: 1, y: 0 };
       fireExtinguisher.startSpray(direction as any);
-      
+
       expect(fireExtinguisher.isCurrentlySpraying()).toBe(true);
       expect(mockScene.add.particles).toHaveBeenCalled();
     });
 
-    it('should not start spraying when not held by player', () => {
+    it("should not start spraying when not held by player", () => {
       const direction = { angle: () => 0, x: 1, y: 0 };
       fireExtinguisher.startSpray(direction as any);
-      
+
       expect(fireExtinguisher.isCurrentlySpraying()).toBe(false);
     });
 
-    it('should stop spraying when stopSpray is called', () => {
+    it("should stop spraying when stopSpray is called", () => {
       fireExtinguisher.heldBy = mockPlayer as any;
       const direction = { angle: () => 0, x: 1, y: 0 };
       fireExtinguisher.startSpray(direction as any);
       fireExtinguisher.stopSpray();
-      
+
       expect(fireExtinguisher.isCurrentlySpraying()).toBe(false);
     });
   });
 
-  describe('getSprayRange', () => {
-    it('should return the spray range', () => {
+  describe("getSprayRange", () => {
+    it("should return the spray range", () => {
       expect(fireExtinguisher.getSprayRange()).toBe(100);
     });
   });
 
-  describe('getSprayAngle', () => {
-    it('should return the spray angle', () => {
+  describe("getSprayAngle", () => {
+    it("should return the spray angle", () => {
       expect(fireExtinguisher.getSprayAngle()).toBe(Math.PI / 6);
     });
   });
 
-  describe('destroy', () => {
-    it('should destroy the emitter', () => {
-      fireExtinguisher.heldBy = { x: 100, y: 100, facing: { angle: () => 0, x: 1, y: 0 } } as any;
+  describe("destroy", () => {
+    it("should destroy the emitter", () => {
+      fireExtinguisher.heldBy = {
+        x: 100,
+        y: 100,
+        facing: { angle: () => 0, x: 1, y: 0 },
+      } as any;
       fireExtinguisher.startSpray({ angle: () => 0, x: 1, y: 0 } as any);
       fireExtinguisher.destroy();
       expect(mockScene.mockEmitter.destroy).toHaveBeenCalled();

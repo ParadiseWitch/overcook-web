@@ -1,16 +1,16 @@
-import { DEPTH } from '../config';
-import { Ingredient } from '../item/ingredient/ingredient';
-import { Station } from './station';
+import { DEPTH } from "../config";
+import { Ingredient } from "../item/ingredient/ingredient";
+import { Station } from "./station";
 
 export class CutStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'station_cut'); // 切菜工作站
+    super(scene, x, y, "station_cut"); // 切菜工作站
     this.workSpeed = 0.15; // 切菜速度
   }
 
   updateWhenWorking(_delta: number): void {
     if (!this.item) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
 
@@ -20,15 +20,15 @@ export class CutStation extends Station {
 
   updateWhenDone(): void {
     if (!this.item) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     if (!(this.item instanceof Ingredient)) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
     if (this.item.cookStates.length > 0) {
-      this.workStatus = 'idle';
+      this.workStatus = "idle";
       return;
     }
 
@@ -38,16 +38,21 @@ export class CutStation extends Station {
     this.item.y = this.y;
 
     // 显示“Chopped!”文字效果
-    const cutText = this.scene.add.text(this.x, this.y - 30, 'Chopped!', { fontSize: '14px', color: '#ff9900' })
-      .setOrigin(0.5).setDepth(DEPTH.UI_TIP);
+    const cutText = this.scene.add
+      .text(this.x, this.y - 30, "Chopped!", {
+        fontSize: "14px",
+        color: "#ff9900",
+      })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.UI_TIP);
     this.scene.tweens.add({
       targets: cutText,
       y: this.y - 50,
       alpha: 0,
       duration: 800,
-      onComplete: () => cutText.destroy() // 动画结束后销毁文字
+      onComplete: () => cutText.destroy(), // 动画结束后销毁文字
     });
-    this.workStatus = 'idle';
+    this.workStatus = "idle";
   }
 
   work() {
@@ -55,6 +60,6 @@ export class CutStation extends Station {
     if (!this.item) return;
     if (!(this.item instanceof Ingredient)) return;
     if (this.item.cookStates.length > 0) return;
-    this.workStatus = 'working';
+    this.workStatus = "working";
   }
 }

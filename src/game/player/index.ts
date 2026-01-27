@@ -1,17 +1,16 @@
-import * as Phaser from 'phaser';
-import { DASH_TIME, DEPTH, SPEED_DASH, SPEED_WALK } from '../config';
-import { interact } from '../helper/interact-helper';
-import { Item } from '../item';
-import { Container } from '../item/container/container';
-import { Ingredient } from '../item/ingredient/ingredient';
-import { FireExtinguisher } from '../item/fire-extinguisher';
-import { ALL_ITEMS } from '../manager/item-manager';
-import { ALL_STATIONS } from '../manager/station-manager';
-import { Station } from '../stations/station';
-import { PlayerKeyMap } from '../types/types';
+import * as Phaser from "phaser";
+import { DASH_TIME, DEPTH, SPEED_DASH, SPEED_WALK } from "../config";
+import { interact } from "../helper/interact-helper";
+import { Item } from "../item";
+import { Container } from "../item/container/container";
+import { Ingredient } from "../item/ingredient/ingredient";
+import { FireExtinguisher } from "../item/fire-extinguisher";
+import { ALL_ITEMS } from "../manager/item-manager";
+import { ALL_STATIONS } from "../manager/station-manager";
+import { Station } from "../stations/station";
+import { PlayerKeyMap } from "../types/types";
 
-
-export type Direction = { x: number, y: number };
+export type Direction = { x: number; y: number };
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   public id: number; // 玩家ID
@@ -26,8 +25,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public dashEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
   public lastCanBeInteractObj: Station | Item;
 
-  constructor(scene: Phaser.Scene, id: number, x: number, y: number, color: number, keyMap: { [key: string]: string }) {
-    super(scene, x, y, 'player');
+  constructor(
+    scene: Phaser.Scene,
+    id: number,
+    x: number,
+    y: number,
+    color: number,
+    keyMap: { [key: string]: string },
+  ) {
+    super(scene, x, y, "player");
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -44,12 +50,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(DEPTH.PLAYER);
     this.setCircle(15, 2, 2);
     this.setCollideWorldBounds(true);
-    this.dashEmitter = scene.add.particles(3, 3, 'particle_smoke');
+    this.dashEmitter = scene.add.particles(3, 3, "particle_smoke");
     this.dashEmitter.setConfig({
       speed: 100,
       scale: { start: 0.5, end: 0 },
-      blendMode: 'ADD',
-      lifespan: 300
+      blendMode: "ADD",
+      lifespan: 300,
     });
     this.dashEmitter.startFollow(this);
     this.dashEmitter.stop();
@@ -63,13 +69,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   pick(item: Item) {
     // player不空手，无法拿取
     if (this.heldItem) {
-      console.log('[pick] failed: player already holding item');
+      console.log("[pick] failed: player already holding item");
       return;
     }
     if (item.station) {
       // 如果item所属工作台不允许pick，直接返回
       if (!item.station.canPick) {
-        console.log('[pick] failed: station.canPick is false', item.station);
+        console.log("[pick] failed: station.canPick is false", item.station);
         return;
       }
       item.station.item = null;
@@ -83,7 +89,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       item.body.enable = false; // 拾取时无物理碰撞
     }
     item.setVisible(true);
-    console.log('[pick] success:', item);
+    console.log("[pick] success:", item);
   }
 
   putDownToFloor() {
@@ -101,7 +107,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   dash() {
-    if (this.dashCooldown > 0 || (this.facing.x == 0 && this.facing.y == 0)) return;
+    if (this.dashCooldown > 0 || (this.facing.x == 0 && this.facing.y == 0))
+      return;
     this.isDashing = true; // 激活冲刺状态
     this.dashTimer = DASH_TIME; // 设置冲刺持续时间
     this.dashCooldown = 300; // 重制冷却时间
@@ -124,12 +131,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.dashTimer <= 0) this.stopDash();
     }
     // 更新冲刺冷却时间
-    if (this.dashCooldown > 0) this.dashCooldown -= delta
+    if (this.dashCooldown > 0) this.dashCooldown -= delta;
     else this.dashCooldown = 0;
 
-
     // 3. 输入检测
-    let dx = 0, dy = 0;
+    let dx = 0,
+      dy = 0;
     if (this.keyMap.up.isDown) dy = -1;
     else if (this.keyMap.down.isDown) dy = 1;
     if (this.keyMap.left.isDown) dx = -1;
@@ -158,11 +165,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-
     if (dx == 0 && dy == 0) this.speed = 0;
     else this.speed = this.isDashing ? SPEED_DASH : SPEED_WALK;
     // const direction: Direction = { x: dx, y: dy };
-
 
     // 旋转 (更新玩家朝向)
     if (dx || dy) {
@@ -174,7 +179,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // TODO: 不能交互的物体不高亮，比如没有盘子的脏盘子生成器, 无法互动、无法拿去/放下物体的桌面
     if (this.speed > 0) {
       if (this.lastCanBeInteractObj instanceof Station) {
-        (this.lastCanBeInteractObj.getChildren()[0] as Phaser.Physics.Arcade.Sprite)?.clearTint()
+        (
+          this.lastCanBeInteractObj.getChildren()[0] as Phaser.Physics.Arcade.Sprite
+        )?.clearTint();
       } else if (this.lastCanBeInteractObj instanceof Item) {
         this.lastCanBeInteractObj.clearTint();
       }
@@ -188,7 +195,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // 设置移动速度
     if (this.body) {
-      (this.body as Phaser.Physics.Arcade.Body).setVelocity(this.facing.x * this.speed, this.facing.y * this.speed);
+      (this.body as Phaser.Physics.Arcade.Body).setVelocity(
+        this.facing.x * this.speed,
+        this.facing.y * this.speed,
+      );
     }
 
     // 交互在 GameScene 的 update 循环中根据玩家输入处理
@@ -197,14 +207,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.interact();
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keyMap.throw) && this.heldItem) { // 处理投掷输入
+    if (Phaser.Input.Keyboard.JustDown(this.keyMap.throw) && this.heldItem) {
+      // 处理投掷输入
       this.throw();
     }
 
     // 处理工作输入
     if (this.keyMap.work.isDown) {
       this.work();
-    } else if (this.heldItem instanceof FireExtinguisher && this.heldItem.isCurrentlySpraying()) {
+    } else if (
+      this.heldItem instanceof FireExtinguisher &&
+      this.heldItem.isCurrentlySpraying()
+    ) {
       this.heldItem.stopSpray();
     }
 
@@ -220,8 +234,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.heldItem.setDepth(DEPTH.PLAYER + 1); // 确保物品在玩家上方渲染
     }
   }
-
-
 
   /**
    * 获取交互对象
@@ -245,17 +257,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 获取所有工作站
     // const stations = stations;
     for (const s of ALL_STATIONS) {
-      if (Phaser.Math.Distance.Between(s.x, s.y, lookX, lookY) <= radius) { // 如果观察点在工作站范围内
+      if (Phaser.Math.Distance.Between(s.x, s.y, lookX, lookY) <= radius) {
+        // 如果观察点在工作站范围内
         return s;
       }
     }
-
 
     // 检测地面物品
     // 遍历所有item
     for (const item of ALL_ITEMS) {
       // 物品未被持有、未在飞行，且在观察点在item范围内
-      if (!item.heldBy /* && !item.isFlying */ && Phaser.Math.Distance.Between(item.x, item.y, lookX, lookY) <= radius) {
+      if (
+        !item.heldBy /* && !item.isFlying */ &&
+        Phaser.Math.Distance.Between(item.x, item.y, lookX, lookY) <= radius
+      ) {
         if (item instanceof Container) return item;
         // 如果这个物品是食材，并且它属于某个容器，跳过它，返回容器
         if (item instanceof Ingredient) {
@@ -280,15 +295,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     return null;
-
   }
-
 
   interact() {
     const target = this.getInteractTarget(); // 获取玩家当前交互目标
     interact(this, target);
   }
-
 
   /**
    * 投掷物品
@@ -330,30 +342,39 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   setGamepad(gamepad: Phaser.Input.Gamepad.Gamepad) {
     this.gamepad = gamepad;
     if (this.gamepad) {
-      this.gamepad.on('down', (buttonIndex: number, value: any, button: any) => {
-        console.log(`Player ${this.id} Gamepad button down:`, buttonIndex, ',', value, ',', button);
-        if (buttonIndex === 0) {
-          console.log("A 按钮被按下");
-          this.interact();
-        }
-        if (buttonIndex === 1) {
-          console.log("B 按钮被按下");
-          this.work();
-        }
-        // if (buttonIndex === 2) {
-        //   console.log("X 按钮被按下");
-        //   this.throw(this.scene);
-        // }
-        if (buttonIndex === 3) {
-          console.log("Y 按钮被按下");
-          this.throw();
-        }
-        if (buttonIndex === 4) {
-          console.log("LB 按钮被按下");
-          this.dash();
-        }
-      })
+      this.gamepad.on(
+        "down",
+        (buttonIndex: number, value: any, button: any) => {
+          console.log(
+            `Player ${this.id} Gamepad button down:`,
+            buttonIndex,
+            ",",
+            value,
+            ",",
+            button,
+          );
+          if (buttonIndex === 0) {
+            console.log("A 按钮被按下");
+            this.interact();
+          }
+          if (buttonIndex === 1) {
+            console.log("B 按钮被按下");
+            this.work();
+          }
+          // if (buttonIndex === 2) {
+          //   console.log("X 按钮被按下");
+          //   this.throw(this.scene);
+          // }
+          if (buttonIndex === 3) {
+            console.log("Y 按钮被按下");
+            this.throw();
+          }
+          if (buttonIndex === 4) {
+            console.log("LB 按钮被按下");
+            this.dash();
+          }
+        },
+      );
     }
-
   }
 }

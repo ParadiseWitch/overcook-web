@@ -1,10 +1,10 @@
-import Food, { FoodComponent } from '../item/food';
-import { FoodState, Ingredient } from '../item/ingredient/ingredient';
-import { FoodDef, IngredientDef, isFoodDef, isIngredientDef } from './types';
+import Food, { FoodComponent } from "../item/food";
+import { FoodState, Ingredient } from "../item/ingredient/ingredient";
+import { FoodDef, IngredientDef, isFoodDef, isIngredientDef } from "./types";
 
 /**
  * 食物匹配器
- * 
+ *
  * 用于验证玩家提交的食物是否符合订单要求
  * 核心思路：将玩家的 Food 与菜谱的 FoodDef 进行结构比较
  */
@@ -37,7 +37,7 @@ export class FoodMatcher {
    */
   static componentsMatch(
     submitted: FoodComponent[],
-    target: (FoodDef | IngredientDef)[]
+    target: (FoodDef | IngredientDef)[],
   ): boolean {
     const used = new Set<number>();
 
@@ -63,7 +63,7 @@ export class FoodMatcher {
   // 比较单个组件是否匹配
   static componentEquals(
     submitted: FoodComponent,
-    target: FoodDef | IngredientDef
+    target: FoodDef | IngredientDef,
   ): boolean {
     if (isIngredientDef(target)) {
       if (!(submitted instanceof Ingredient)) {
@@ -83,7 +83,10 @@ export class FoodMatcher {
   }
 
   // 比较食材是否匹配
-  static ingredientMatches(submitted: Ingredient, target: IngredientDef): boolean {
+  static ingredientMatches(
+    submitted: Ingredient,
+    target: IngredientDef,
+  ): boolean {
     if (submitted.ingredientType !== target.type) {
       return false;
     }
@@ -92,12 +95,12 @@ export class FoodMatcher {
 
   // 检查食物中是否包含指定类型的食材
   static hasIngredientType(food: Food, ingredientType: string): boolean {
-    return food.flatten().some(ing => ing.ingredientType === ingredientType);
+    return food.flatten().some((ing) => ing.ingredientType === ingredientType);
   }
 
   // 获取食物中所有食材的类型列表
   static getIngredientTypes(food: Food): string[] {
-    return food.flatten().map(ing => ing.ingredientType);
+    return food.flatten().map((ing) => ing.ingredientType);
   }
 
   /**
@@ -115,9 +118,12 @@ export class FoodMatcher {
       score += cookStateWeight;
     } else {
       const matchingStates = submitted.cookStates.filter(
-        (s, i) => target.cookStates[i] === s
+        (s, i) => target.cookStates[i] === s,
       ).length;
-      const totalStates = Math.max(submitted.cookStates.length, target.cookStates.length);
+      const totalStates = Math.max(
+        submitted.cookStates.length,
+        target.cookStates.length,
+      );
       if (totalStates > 0) {
         score += (matchingStates / totalStates) * cookStateWeight;
       }
@@ -131,7 +137,9 @@ export class FoodMatcher {
     const targetTypes = this.getTargetIngredientTypes(target);
 
     if (targetTypes.length > 0) {
-      const matchingTypes = submittedTypes.filter(t => targetTypes.includes(t)).length;
+      const matchingTypes = submittedTypes.filter((t) =>
+        targetTypes.includes(t),
+      ).length;
       const accuracy = matchingTypes / targetTypes.length;
       score += accuracy * componentWeight;
     }

@@ -1,18 +1,23 @@
-import * as Phaser from 'phaser';
+import * as Phaser from "phaser";
 import { DEPTH, TILE_SIZE, WORLD_H, WORLD_W } from "../config";
 
 // 导入新类
-import { Item } from '../item';
-import { Player } from '../player';
-import { FireExtinguisher } from '../item/fire-extinguisher';
+import { Item } from "../item";
+import { Player } from "../player";
+import { FireExtinguisher } from "../item/fire-extinguisher";
 
 // 导入管理器
-import { ALL_ITEMS, updateItems } from '../manager/item-manager';
-import { createMap } from '../manager/map-manager';
-import { ALL_PLAYERS, updatePlayers } from '../manager/player-manager';
-import { ALL_STATIONS, updateStations } from '../manager/station-manager';
-import { handleCollision, handleThrow } from '../physics/collision-handler';
-import { initFireHelper, updateFireHelper, isOnFire, tryExtinguish } from '../helper/fire-helper';
+import { ALL_ITEMS, updateItems } from "../manager/item-manager";
+import { createMap } from "../manager/map-manager";
+import { ALL_PLAYERS, updatePlayers } from "../manager/player-manager";
+import { ALL_STATIONS, updateStations } from "../manager/station-manager";
+import { handleCollision, handleThrow } from "../physics/collision-handler";
+import {
+  initFireHelper,
+  updateFireHelper,
+  isOnFire,
+  tryExtinguish,
+} from "../helper/fire-helper";
 
 export class GameScene extends Phaser.Scene {
   // 组
@@ -34,7 +39,7 @@ export class GameScene extends Phaser.Scene {
   private lastGamepadNavTime: number = 0; // 手柄摇杆导航的节流时间
 
   constructor() {
-    super('GameScene');
+    super("GameScene");
   }
 
   create(data?: { skipInitialMenu?: boolean }) {
@@ -44,12 +49,20 @@ export class GameScene extends Phaser.Scene {
     ALL_STATIONS.length = 0;
 
     // 初始化物理世界边界
-    this.physics.world.setBounds(0, 0, TILE_SIZE * WORLD_W, TILE_SIZE * WORLD_H);
+    this.physics.world.setBounds(
+      0,
+      0,
+      TILE_SIZE * WORLD_W,
+      TILE_SIZE * WORLD_H,
+    );
 
     // 初始化物理组
     // runChildUpdate 对于 Station 子类调用其 update 方法很重要。
     // this.stations = this.physics.add.staticGroup({ classType: Phaser.Physics.Arcade.Sprite });
-    this.items = this.physics.add.group({ classType: Item, runChildUpdate: true });
+    this.items = this.physics.add.group({
+      classType: Item,
+      runChildUpdate: true,
+    });
 
     // 初始化火焰助手
     initFireHelper(this);
@@ -63,7 +76,10 @@ export class GameScene extends Phaser.Scene {
     handleThrow(this);
     // 初始化UI
     this.score = 0;
-    this.add.text(20, 20, '得分: 0', { fontSize: '32px', fontStyle: 'bold' }).setDepth(DEPTH.UI).setName('scoreText');
+    this.add
+      .text(20, 20, "得分: 0", { fontSize: "32px", fontStyle: "bold" })
+      .setDepth(DEPTH.UI)
+      .setName("scoreText");
 
     // 初始化倒计时文本，显示在右下角
     const camera = this.cameras.main;
@@ -73,11 +89,11 @@ export class GameScene extends Phaser.Scene {
         camera.width - padding,
         camera.height - padding,
         `剩余时间: ${this.formatCountDownTime()}`,
-        { fontSize: '28px', fontStyle: 'bold' }
+        { fontSize: "28px", fontStyle: "bold" },
       )
       .setDepth(DEPTH.UI)
       .setOrigin(1, 1)
-      .setName('countDownText');
+      .setName("countDownText");
 
     // 创建菜单 UI（开始 / 继续 / 重新开始）
     this.createMenuUI();
@@ -92,22 +108,22 @@ export class GameScene extends Phaser.Scene {
 
     // 键盘 ESC 打开 / 关闭菜单
     if (this.input.keyboard) {
-      this.input.keyboard.on('keydown-ESC', () => {
+      this.input.keyboard.on("keydown-ESC", () => {
         this.togglePauseMenu();
       });
 
       // 键盘上下键导航菜单，Enter 确认
-      this.input.keyboard.on('keydown-UP', () => {
+      this.input.keyboard.on("keydown-UP", () => {
         if (this.menuContainer?.visible) {
           this.moveMenuSelection(-1);
         }
       });
-      this.input.keyboard.on('keydown-DOWN', () => {
+      this.input.keyboard.on("keydown-DOWN", () => {
         if (this.menuContainer?.visible) {
           this.moveMenuSelection(1);
         }
       });
-      this.input.keyboard.on('keydown-ENTER', () => {
+      this.input.keyboard.on("keydown-ENTER", () => {
         if (this.menuContainer?.visible) {
           this.confirmMenuSelection();
         }
@@ -125,35 +141,42 @@ export class GameScene extends Phaser.Scene {
       });
 
       // 之后新连接的手柄
-      this.input.gamepad.on('connected', (pad: Phaser.Input.Gamepad.Gamepad) => {
-        if (ALL_PLAYERS.length > 1 && !ALL_PLAYERS[1].gamepad) {
-          ALL_PLAYERS[1].setGamepad(pad);
-        }
-      });
+      this.input.gamepad.on(
+        "connected",
+        (pad: Phaser.Input.Gamepad.Gamepad) => {
+          if (ALL_PLAYERS.length > 1 && !ALL_PLAYERS[1].gamepad) {
+            ALL_PLAYERS[1].setGamepad(pad);
+          }
+        },
+      );
 
       // 任意手柄上的 “+” 或 Start 键 打开 / 关闭菜单；
       // 在菜单打开时，使用十字键 / 摇杆上下导航，A 键确认
-      this.input.gamepad.on('down', (_pad: Phaser.Input.Gamepad.Gamepad, button: any, index: number) => {
-        const btnIndex = typeof button === 'number' ? button : button.index ?? index;
-        // 常见手柄上：7 / 9 作为 Start / Options / “+” 键
-        if (btnIndex === 7 || btnIndex === 9) {
-          this.togglePauseMenu();
-          return;
-        }
-
-        // 菜单打开时：用手柄按钮控制导航与确认
-        if (this.menuContainer?.visible) {
-          // 12: dpad up, 13: dpad down, 0: A 按钮（大多数手柄）
-          if (btnIndex === 12) {
-            this.moveMenuSelection(-1);
-          } else if (btnIndex === 13) {
-            this.moveMenuSelection(1);
-          } else if (btnIndex === 0) {
-            this.confirmMenuSelection();
+      this.input.gamepad.on(
+        "down",
+        (_pad: Phaser.Input.Gamepad.Gamepad, button: any, index: number) => {
+          const btnIndex =
+            typeof button === "number" ? button : (button.index ?? index);
+          // 常见手柄上：7 / 9 作为 Start / Options / “+” 键
+          if (btnIndex === 7 || btnIndex === 9) {
+            this.togglePauseMenu();
+            return;
           }
-          return;
-        }
-      });
+
+          // 菜单打开时：用手柄按钮控制导航与确认
+          if (this.menuContainer?.visible) {
+            // 12: dpad up, 13: dpad down, 0: A 按钮（大多数手柄）
+            if (btnIndex === 12) {
+              this.moveMenuSelection(-1);
+            } else if (btnIndex === 13) {
+              this.moveMenuSelection(1);
+            } else if (btnIndex === 0) {
+              this.confirmMenuSelection();
+            }
+            return;
+          }
+        },
+      );
     }
   }
 
@@ -199,7 +222,7 @@ export class GameScene extends Phaser.Scene {
     updateFireHelper(delta);
 
     // 处理灭火器灭火逻辑
-    ALL_PLAYERS.forEach(player => {
+    ALL_PLAYERS.forEach((player) => {
       if (player.heldItem instanceof FireExtinguisher) {
         const extinguisher = player.heldItem;
         if (extinguisher.isCurrentlySpraying()) {
@@ -208,9 +231,17 @@ export class GameScene extends Phaser.Scene {
           const sprayX = player.x + player.facing.x * 20;
           const sprayY = player.y + player.facing.y * 20;
 
-          ALL_STATIONS.forEach(station => {
+          ALL_STATIONS.forEach((station) => {
             if (isOnFire(station)) {
-              tryExtinguish(station, sprayX, sprayY, sprayRange, sprayAngle, player.facing, delta);
+              tryExtinguish(
+                station,
+                sprayX,
+                sprayY,
+                sprayRange,
+                sprayAngle,
+                player.facing,
+                delta,
+              );
             }
           });
         }
@@ -227,9 +258,9 @@ export class GameScene extends Phaser.Scene {
     const seconds = Math.floor((totalMs % 60000) / 1000);
     const ms = Math.floor(totalMs % 1000);
 
-    const mm = minutes.toString().padStart(2, '0');
-    const ss = seconds.toString().padStart(2, '0');
-    const mmm = ms.toString().padStart(3, '0');
+    const mm = minutes.toString().padStart(2, "0");
+    const ss = seconds.toString().padStart(2, "0");
+    const mmm = ms.toString().padStart(3, "0");
 
     return `${mm}:${ss}:${mmm}`;
   }
@@ -245,41 +276,41 @@ export class GameScene extends Phaser.Scene {
       .setDepth(DEPTH.UI + 10);
 
     const title = this.add
-      .text(width / 2, height / 2 - 80, '游戏菜单', {
-        fontSize: '32px',
-        fontStyle: 'bold',
-        color: '#ffffff',
+      .text(width / 2, height / 2 - 80, "游戏菜单", {
+        fontSize: "32px",
+        fontStyle: "bold",
+        color: "#ffffff",
       })
       .setOrigin(0.5)
       .setDepth(DEPTH.UI + 11);
 
     const startResume = this.add
-      .text(width / 2, height / 2 - 10, '开始游戏', {
-        fontSize: '28px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        backgroundColor: '#00aa88',
+      .text(width / 2, height / 2 - 10, "开始游戏", {
+        fontSize: "28px",
+        fontStyle: "bold",
+        color: "#ffffff",
+        backgroundColor: "#00aa88",
         padding: { left: 20, right: 20, top: 10, bottom: 10 },
       })
       .setOrigin(0.5)
       .setDepth(DEPTH.UI + 11)
       .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => {
+      .on("pointerup", () => {
         this.onClickStartOrResume();
       });
 
     const restart = this.add
-      .text(width / 2, height / 2 + 60, '重新开始', {
-        fontSize: '24px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        backgroundColor: '#aa5500',
+      .text(width / 2, height / 2 + 60, "重新开始", {
+        fontSize: "24px",
+        fontStyle: "bold",
+        color: "#ffffff",
+        backgroundColor: "#aa5500",
         padding: { left: 20, right: 20, top: 8, bottom: 8 },
       })
       .setOrigin(0.5)
       .setDepth(DEPTH.UI + 11)
       .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => {
+      .on("pointerup", () => {
         this.onClickRestart();
       });
 
@@ -298,10 +329,11 @@ export class GameScene extends Phaser.Scene {
    * 初始进入场景时的菜单：只显示“开始游戏”
    */
   private showInitialMenu() {
-    if (!this.menuContainer || !this.startResumeButton || !this.restartButton) return;
+    if (!this.menuContainer || !this.startResumeButton || !this.restartButton)
+      return;
     this.isPaused = true;
     this.menuContainer.setVisible(true);
-    this.startResumeButton.setText('开始游戏');
+    this.startResumeButton.setText("开始游戏");
     this.restartButton.setVisible(false);
     this.selectedMenuIndex = 0;
     this.updateMenuSelectionVisual();
@@ -311,10 +343,11 @@ export class GameScene extends Phaser.Scene {
    * 游戏进行中按 ESC / “+” 键弹出的菜单：显示“继续游戏”和“重新开始”
    */
   private showPauseMenu() {
-    if (!this.menuContainer || !this.startResumeButton || !this.restartButton) return;
+    if (!this.menuContainer || !this.startResumeButton || !this.restartButton)
+      return;
     this.isPaused = true;
     this.menuContainer.setVisible(true);
-    this.startResumeButton.setText('继续游戏');
+    this.startResumeButton.setText("继续游戏");
     this.restartButton.setVisible(true);
     // 打开暂停菜单时，默认选中“继续游戏”
     this.selectedMenuIndex = 0;
@@ -329,10 +362,14 @@ export class GameScene extends Phaser.Scene {
 
   private togglePauseMenu() {
     // 如果菜单还没创建好，直接返回
-    if (!this.menuContainer || !this.startResumeButton || !this.restartButton) return;
+    if (!this.menuContainer || !this.startResumeButton || !this.restartButton)
+      return;
 
     // 如果是初始还未开始游戏的菜单，不响应 ESC / 手柄切换
-    if (this.menuContainer.visible && this.startResumeButton.text === '开始游戏') {
+    if (
+      this.menuContainer.visible &&
+      this.startResumeButton.text === "开始游戏"
+    ) {
       return;
     }
 
@@ -357,7 +394,12 @@ export class GameScene extends Phaser.Scene {
    * 菜单导航：移动当前选中的按钮
    */
   private moveMenuSelection(delta: number) {
-    if (!this.menuContainer || !this.menuContainer.visible || this.menuItems.length === 0) return;
+    if (
+      !this.menuContainer ||
+      !this.menuContainer.visible ||
+      this.menuItems.length === 0
+    )
+      return;
 
     // 只在可见按钮之间循环
     const visibleCount = this.menuItems.filter((b) => b.visible).length;
@@ -381,18 +423,18 @@ export class GameScene extends Phaser.Scene {
   private updateMenuSelectionVisual() {
     this.menuItems.forEach((btn, idx) => {
       if (!btn.visible) {
-        btn.setStyle({ backgroundColor: 'transparent' });
+        btn.setStyle({ backgroundColor: "transparent" });
         return;
       }
       if (idx === this.selectedMenuIndex) {
         // 选中的按钮高亮（黄色背景）
-        btn.setStyle({ backgroundColor: '#ffcc00' });
+        btn.setStyle({ backgroundColor: "#ffcc00" });
       } else {
         // 非选中按钮恢复各自的默认颜色
         if (btn === this.startResumeButton) {
-          btn.setStyle({ backgroundColor: '#00aa88' });
+          btn.setStyle({ backgroundColor: "#00aa88" });
         } else if (btn === this.restartButton) {
-          btn.setStyle({ backgroundColor: '#aa5500' });
+          btn.setStyle({ backgroundColor: "#aa5500" });
         }
       }
     });
@@ -402,7 +444,12 @@ export class GameScene extends Phaser.Scene {
    * 确认当前选中的按钮（键盘 Enter / 手柄 A）
    */
   private confirmMenuSelection() {
-    if (!this.menuContainer || !this.menuContainer.visible || this.menuItems.length === 0) return;
+    if (
+      !this.menuContainer ||
+      !this.menuContainer.visible ||
+      this.menuItems.length === 0
+    )
+      return;
     const btn = this.menuItems[this.selectedMenuIndex];
     if (!btn || !btn.visible) return;
 

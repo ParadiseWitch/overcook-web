@@ -1,7 +1,7 @@
-import * as Phaser from 'phaser';
-import { Station } from '../stations/station';
-import { DEPTH, TILE_SIZE } from '../config';
-import { getStationAt } from '../manager/station-manager';
+import * as Phaser from "phaser";
+import { Station } from "../stations/station";
+import { DEPTH, TILE_SIZE } from "../config";
+import { getStationAt } from "../manager/station-manager";
 
 // 火焰状态管理
 type FireState = {
@@ -41,11 +41,11 @@ const createFireEmitter = (state: FireState, station: Station): void => {
   }
 
   if (!state.scene) {
-    console.warn('FireHelper not initialized with scene');
+    console.warn("FireHelper not initialized with scene");
     return;
   }
 
-  const emitter = state.scene.add.particles(station.x, station.y, 'flame', {
+  const emitter = state.scene.add.particles(station.x, station.y, "flame", {
     speed: { min: 30, max: 80 },
     angle: { min: 230, max: 310 },
     gravityY: -100,
@@ -56,7 +56,7 @@ const createFireEmitter = (state: FireState, station: Station): void => {
     quantity: 2,
     tint: [0xff0000, 0xff6600, 0xffaa00, 0xffff00],
     rotate: { min: 0, max: 180 },
-    blendMode: 'ADD'
+    blendMode: "ADD",
   });
   emitter.setDepth(DEPTH.FX);
 
@@ -77,7 +77,7 @@ const startFireFunc = (state: FireState, station: Station): void => {
   if (!station.canFire) return;
   if (state.firingStations.has(station)) return;
 
-  station.workStatus = 'fire';
+  station.workStatus = "fire";
   state.firingStations.set(station, 0);
   createFireEmitter(state, station);
 };
@@ -86,7 +86,7 @@ const startFireFunc = (state: FireState, station: Station): void => {
 const stopFireFunc = (state: FireState, station: Station): void => {
   if (!state.firingStations.has(station)) return;
 
-  station.workStatus = 'idle';
+  station.workStatus = "idle";
   state.firingStations.delete(station);
   destroyFireEmitter(state, station);
 };
@@ -97,7 +97,7 @@ const spreadFire = (state: FireState, station: Station): void => {
     { dx: TILE_SIZE, dy: 0 },
     { dx: -TILE_SIZE, dy: 0 },
     { dx: 0, dy: TILE_SIZE },
-    { dx: 0, dy: -TILE_SIZE }
+    { dx: 0, dy: -TILE_SIZE },
   ];
 
   directions.forEach(({ dx, dy }) => {
@@ -105,7 +105,11 @@ const spreadFire = (state: FireState, station: Station): void => {
     const targetY = station.y + dy;
     const targetStation = getStationAt(targetX, targetY);
 
-    if (targetStation && targetStation.canFire && !state.firingStations.has(targetStation)) {
+    if (
+      targetStation &&
+      targetStation.canFire &&
+      !state.firingStations.has(targetStation)
+    ) {
       startFireFunc(state, targetStation);
     }
   });
@@ -125,7 +129,7 @@ const updateFireHelperFunc = (state: FireState, delta: number): void => {
     }
   });
 
-  toSpread.forEach(station => {
+  toSpread.forEach((station) => {
     spreadFire(state, station);
   });
 };
@@ -144,7 +148,7 @@ const tryExtinguishFunc = (
   sprayRange: number,
   sprayAngle: number,
   facing: Phaser.Math.Vector2,
-  delta: number
+  delta: number,
 ): boolean => {
   if (!isOnFireFunc(state, station)) return false;
 
@@ -177,7 +181,7 @@ const tryExtinguishFunc = (
 // 清除所有火焰
 const clearAllFiresFunc = (state: FireState): void => {
   state.firingStations.forEach((_, station) => {
-    station.workStatus = 'idle';
+    station.workStatus = "idle";
     destroyFireEmitter(state, station);
   });
   state.firingStations.clear();
@@ -187,7 +191,7 @@ const clearAllFiresFunc = (state: FireState): void => {
 const clearAllDataFunc = (state: FireState): void => {
   state.firingStations.clear();
   state.extinguishProgress.clear();
-  state.fireEmitters.forEach(emitter => emitter.destroy());
+  state.fireEmitters.forEach((emitter) => emitter.destroy());
   state.fireEmitters.clear();
 };
 
@@ -221,9 +225,18 @@ export const tryExtinguish = (
   sprayRange: number,
   sprayAngle: number,
   facing: Phaser.Math.Vector2,
-  delta: number
+  delta: number,
 ): boolean => {
-  return tryExtinguishFunc(getFireState(), station, sprayX, sprayY, sprayRange, sprayAngle, facing, delta);
+  return tryExtinguishFunc(
+    getFireState(),
+    station,
+    sprayX,
+    sprayY,
+    sprayRange,
+    sprayAngle,
+    facing,
+    delta,
+  );
 };
 
 export const clearAllFires = () => {

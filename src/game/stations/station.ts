@@ -1,9 +1,8 @@
-import * as Phaser from 'phaser';
-import { DEPTH } from '../config';
-import { Item } from '../item';
-import { Container } from '../item/container/container';
-import { Player } from '../player';
-
+import * as Phaser from "phaser";
+import { DEPTH } from "../config";
+import { Item } from "../item";
+import { Container } from "../item/container/container";
+import { Player } from "../player";
 
 export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
   public textureKey: string; // 游戏场景实例
@@ -11,7 +10,7 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
   public y: number; // 工作站的Y坐标
   // public canPlace: boolean = true; // 能否放置物品
   public canPick: boolean = true; // 能否拿去工作台上的物品
-  public workStatus: 'idle' | 'working' | 'done' | 'danger' | 'fire' = 'idle'; // 工作状态
+  public workStatus: "idle" | "working" | "done" | "danger" | "fire" = "idle"; // 工作状态
   public workSpeed: number = 0.15; // 工作速度
   public sprite: Phaser.Physics.Arcade.Sprite; // 工作站的物理精灵
   public useStationBar: boolean = true; // 是否有进度条
@@ -22,26 +21,39 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
   public barBg?: Phaser.GameObjects.Rectangle; // 进度条背景
   public bar?: Phaser.GameObjects.Rectangle; // 进度条填充
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, useStationBar: boolean = true) {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    texture: string,
+    useStationBar: boolean = true,
+  ) {
     super(scene.physics.world, scene);
     this.x = x;
     this.y = y;
     this.textureKey = texture;
     this.sprite = this.create(x, y, texture); // 创建物理精灵并添加到场景的静态组
-    this.sprite.setData('station', this); // 将当前Station实例存储到精灵数据中
+    this.sprite.setData("station", this); // 将当前Station实例存储到精灵数据中
     this.sprite.setDepth(DEPTH.STATION); // 设置层级
 
     // 是否使用工作区的进度条而不是容器的进度条,是则创建进度条
     this.useStationBar = useStationBar;
     if (this.useStationBar) {
-      this.barBg = this.scene.add.rectangle(x, y - 30, 40, 6, 0x000000).setDepth(DEPTH.UI).setVisible(false);
-      this.bar = this.scene.add.rectangle(x - 20, y - 30, 0, 4, 0x00ff00).setDepth(DEPTH.UI + 1).setOrigin(0, 0.5).setVisible(false);
+      this.barBg = this.scene.add
+        .rectangle(x, y - 30, 40, 6, 0x000000)
+        .setDepth(DEPTH.UI)
+        .setVisible(false);
+      this.bar = this.scene.add
+        .rectangle(x - 20, y - 30, 0, 4, 0x00ff00)
+        .setDepth(DEPTH.UI + 1)
+        .setOrigin(0, 0.5)
+        .setVisible(false);
     }
   }
 
   getProgress(): number {
     if (!this.item) return 0;
-    return this.item.getProgress()
+    return this.item.getProgress();
   }
 
   setProgress(value: number) {
@@ -87,14 +99,12 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
     return this.sprite.getBounds();
   }
 
-
   canPlace(_item: Item): boolean {
     return true;
   }
 
   // 将物品放置在工作站上
   public placeItem(item: Item): boolean {
-
     // 工作站不能放物品，直接返回
     if (!this.canPlace(item)) return false;
     // 工作站已放置物品，直接返回
@@ -118,7 +128,7 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
 
   // 每帧更新工作站状态
   update(delta: number) {
-    if (this.item && this.workStatus !== 'fire') {
+    if (this.item && this.workStatus !== "fire") {
       // 确保物品在视觉上吸附在工作站上
       // if (!this.bar || !this.bar.visible) {
       this.item.x = this.x;
@@ -127,53 +137,47 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
       this.item.setDepth(DEPTH.ITEM); // 设置物品层级在工作站之上
     }
 
-
     switch (this.workStatus) {
-      case 'idle':
+      case "idle":
         this.updateWhenIdle(delta);
         break;
-      case 'working':
+      case "working":
         if (!this.item) {
-          this.workStatus = 'idle';
+          this.workStatus = "idle";
           break;
         }
         const progress = this.getProgress();
         if (progress >= 100) {
           this.setProgress(100);
-          this.workStatus = 'done';
+          this.workStatus = "done";
           return;
         }
-        this.setProgress(progress + delta * this.workSpeed)
+        this.setProgress(progress + delta * this.workSpeed);
         this.showBar(); // 显示进度条
         this.updateWhenWorking(delta);
         break;
-      case 'done':
+      case "done":
         this.hideBar();
         this.updateWhenDone(delta);
         break;
-      case 'danger':
+      case "danger":
         this.updateWhenDanger(delta);
         break;
-      case 'fire':
+      case "fire":
         this.updateWhenFire(delta);
         break;
       default:
         break;
     }
-
   }
 
-  updateWhenIdle(_delta: number) {
-  }
+  updateWhenIdle(_delta: number) {}
 
-  updateWhenWorking(_delta: number) {
-  }
+  updateWhenWorking(_delta: number) {}
 
-  updateWhenDone(_delta: number) {
-  }
+  updateWhenDone(_delta: number) {}
 
-  updateWhenDanger(_delta: number) {
-  }
+  updateWhenDanger(_delta: number) {}
 
   updateWhenFire(_delta: number) {
     if (this.item) {
@@ -182,16 +186,14 @@ export abstract class Station extends Phaser.Physics.Arcade.StaticGroup {
     }
   }
 
-
   // 在工作站进行“工作”的方法，由子类重写以实现特定逻辑
   work(_player: Player) {
     // 通用工作站不做任何事情
   }
 
-
   // 从工作站移除物品的方法
   public removeItem() {
-    this.item?.destroy()
+    this.item?.destroy();
     this.item = null;
   }
 }

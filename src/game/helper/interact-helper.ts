@@ -23,11 +23,14 @@ export const interact = (player: Player, target: Station | Item | null) => {
     interactWithItem(player, target);
     return;
   }
-}
-
+};
 
 const interactWithStation = (player: Player, station: Station) => {
-  if (station instanceof IngredientStation && !station.item && !player.heldItem) {
+  if (
+    station instanceof IngredientStation &&
+    !station.item &&
+    !player.heldItem
+  ) {
     // 在player手上生成食材。
     station.genIngredientForPlayer(player);
     return;
@@ -92,12 +95,17 @@ const interactWithIngredient = (player: Player, ingredient: Ingredient) => {
   }
 };
 
-
-function interactWithContainerWhenHeldIngredient(container: Container, heldIngredient: Ingredient) {
+function interactWithContainerWhenHeldIngredient(
+  container: Container,
+  heldIngredient: Ingredient,
+) {
   container.addIngredient(heldIngredient);
 }
 
-function interactWithContainerWhenHeldContainer(container: Container, heldContainer: Container) {
+function interactWithContainerWhenHeldContainer(
+  container: Container,
+  heldContainer: Container,
+) {
   if (heldContainer.isEmpty() && !container.isEmpty()) {
     container.transferTo(heldContainer);
     return;
@@ -108,7 +116,9 @@ function interactWithContainerWhenHeldContainer(container: Container, heldContai
   }
 }
 
-function interactWithIngredientWhenHeldContainer(ingredient: Ingredient, heldContainer: Container) {
+function interactWithIngredientWhenHeldContainer(
+  ingredient: Ingredient,
+  heldContainer: Container,
+) {
   heldContainer.addIngredient(ingredient);
 }
-

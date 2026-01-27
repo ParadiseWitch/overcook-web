@@ -1,6 +1,6 @@
-import * as Phaser from 'phaser';
-import { Item } from './index';
-import { DEPTH } from '../config';
+import * as Phaser from "phaser";
+import { Item } from "./index";
+import { DEPTH } from "../config";
 
 /**
  * 灭火器物品类
@@ -16,7 +16,7 @@ export class FireExtinguisher extends Item {
   private lastAngle: number = -999;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'item_fire_extinguisher');
+    super(scene, x, y, "item_fire_extinguisher");
   }
 
   /**
@@ -53,20 +53,28 @@ export class FireExtinguisher extends Item {
     const minAngle = this.currentAngle - halfAngle;
     const maxAngle = this.currentAngle + halfAngle;
 
-    if (Math.abs(this.currentAngle - this.lastAngle) > 1 || !this.sprayEmitter) {
+    if (
+      Math.abs(this.currentAngle - this.lastAngle) > 1 ||
+      !this.sprayEmitter
+    ) {
       this.lastAngle = this.currentAngle;
       this.sprayEmitter?.destroy();
-      this.sprayEmitter = this.scene.add.particles(sprayX, sprayY, 'particle_smoke', {
-        speed: { min: 100, max: 350, start: 100, end: 350 },
-        angle: { min: minAngle - 1 / 32, max: maxAngle + 1 / 32 },
-        scale: { start: 0.1, end: 1 },
-        alpha: { start: 1, end: 0 },
-        lifespan: { min: 600, max: 1000 },
-        frequency: 30,
-        quantity: 3,
-        tint: 0xcccccc,
-        blendMode: 'add',
-      });
+      this.sprayEmitter = this.scene.add.particles(
+        sprayX,
+        sprayY,
+        "particle_smoke",
+        {
+          speed: { min: 100, max: 350, start: 100, end: 350 },
+          angle: { min: minAngle - 1 / 32, max: maxAngle + 1 / 32 },
+          scale: { start: 0.1, end: 1 },
+          alpha: { start: 1, end: 0 },
+          lifespan: { min: 600, max: 1000 },
+          frequency: 30,
+          quantity: 3,
+          tint: 0xcccccc,
+          blendMode: "add",
+        },
+      );
       this.sprayEmitter.setDepth(DEPTH.FX);
       // this.setScale(0.3);
     } else {

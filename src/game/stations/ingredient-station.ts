@@ -1,15 +1,23 @@
-import { Ingredient } from '../item/ingredient/ingredient';
-import { ALL_ITEMS } from '../manager/item-manager';
-import { Player } from '../player';
-import { Station } from './station';
+import { Ingredient } from "../item/ingredient/ingredient";
+import { ALL_ITEMS } from "../manager/item-manager";
+import { Player } from "../player";
+import { Station } from "./station";
 
 /**
  * 食材箱
  */
-export class IngredientStation<C extends new (...args: any[]) => Ingredient> extends Station {
+export class IngredientStation<
+  C extends new (...args: any[]) => Ingredient,
+> extends Station {
   ingredientType: C;
   // 箱子中生成的食材类型
-  constructor(scene: Phaser.Scene, x: number, y: number, ingredientType: C, key: string = 'station_crate',) {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    ingredientType: C,
+    key: string = "station_crate",
+  ) {
     super(scene, x, y, key);
     this.ingredientType = ingredientType;
   }
@@ -21,4 +29,3 @@ export class IngredientStation<C extends new (...args: any[]) => Ingredient> ext
     return newIngredient; // 玩家拾取新食材
   }
 }
-

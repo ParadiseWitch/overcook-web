@@ -1,11 +1,11 @@
-import { DEPTH } from '../config';
-import { Item } from '../item';
-import { Container } from '../item/container/container';
-import { Station } from './station';
+import { DEPTH } from "../config";
+import { Item } from "../item";
+import { Container } from "../item/container/container";
+import { Station } from "./station";
 
 export class TrashStation extends Station {
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'station_trash');
+    super(scene, x, y, "station_trash");
   }
 
   public placeItem(item: Item): boolean {
@@ -36,9 +36,8 @@ export class TrashStation extends Station {
       rotation: "+=10",
       scale: "0",
       duration: 1000,
-      onComplete: () => item.destroy()
+      onComplete: () => item.destroy(),
     });
     return true;
   }
-
 }

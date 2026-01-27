@@ -7,7 +7,7 @@ export type FoodComponent = Food | Ingredient;
 
 /**
  * 食物类
- * 
+ *
  * 代表由食材组合/烹饪而成的产物，支持嵌套结构以表达复杂菜品
  * 例如：清蛋糕 = 煎烤后的(搅拌后的(鸡蛋+面粉))
  */
@@ -36,8 +36,15 @@ export default class Food extends Phaser.Physics.Arcade.Sprite {
     this.cookStates = [];
     this.isCooking = false;
     this._progress = 0;
-    this.barBg = this.scene.add.rectangle(x, y - 30, 40, 6, 0x000000).setDepth(DEPTH.UI).setVisible(false);
-    this.bar = this.scene.add.rectangle(x - 20, y - 30, 0, 4, 0x00ff00).setDepth(DEPTH.UI + 1).setOrigin(0, 0.5).setVisible(false);
+    this.barBg = this.scene.add
+      .rectangle(x, y - 30, 40, 6, 0x000000)
+      .setDepth(DEPTH.UI)
+      .setVisible(false);
+    this.bar = this.scene.add
+      .rectangle(x - 20, y - 30, 0, 4, 0x00ff00)
+      .setDepth(DEPTH.UI + 1)
+      .setOrigin(0, 0.5)
+      .setVisible(false);
   }
 
   /**
@@ -46,11 +53,13 @@ export default class Food extends Phaser.Physics.Arcade.Sprite {
    * cause performance issues if called frequently (e.g., in update loops).
    */
   get ingredients(): Ingredient[] {
-    return this.components.filter((c): c is Ingredient => c instanceof Ingredient);
+    return this.components.filter(
+      (c): c is Ingredient => c instanceof Ingredient,
+    );
   }
 
   setXy(x: number, y: number) {
-    this.components.forEach(component => {
+    this.components.forEach((component) => {
       if (component instanceof Ingredient) {
         component.x = x;
         component.y = y;
@@ -110,7 +119,7 @@ export default class Food extends Phaser.Physics.Arcade.Sprite {
 
   // 递归检查是否包含某个食材（包括嵌套的Food中）
   hasIngredient(ingredient: Ingredient): boolean {
-    return this.components.some(c => {
+    return this.components.some((c) => {
       if (c === ingredient) return true;
       if (c instanceof Food) return c.hasIngredient(ingredient);
       return false;
@@ -137,7 +146,7 @@ export default class Food extends Phaser.Physics.Arcade.Sprite {
   /**
    * 检查是否可以添加配料
    * 需要有基底食材，且未超过配料数量限制，且配料类型被接受
-   * 
+   *
    * KNOWN LIMITATION: currentToppings 计算假设基底是第一个组件，
    * 但 getBaseIngredient() 是递归查找的。如果基底不在第一位，
    * 配料数量限制可能不准确。
@@ -164,7 +173,7 @@ export default class Food extends Phaser.Physics.Arcade.Sprite {
       return topping.ingredientType;
     }
     const firstIngredient = topping.ingredients[0];
-    return firstIngredient?.ingredientType ?? '';
+    return firstIngredient?.ingredientType ?? "";
   }
 
   /**
@@ -228,7 +237,7 @@ export default class Food extends Phaser.Physics.Arcade.Sprite {
   }
 
   destroy() {
-    this.components.forEach(c => {
+    this.components.forEach((c) => {
       if (c instanceof Ingredient) {
         c.destroy();
       } else if (c instanceof Food) {

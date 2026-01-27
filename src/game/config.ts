@@ -18,7 +18,7 @@ export const LEVEL_MAP = [
   "  B     E     B  ",
   "    C.B   B.C    ",
   "                 ",
-  "                 "
+  "                 ",
 ];
 export const DEPTH = {
   FLOOR: 0,
@@ -27,9 +27,8 @@ export const DEPTH = {
   PLAYER: 30,
   FX: 40,
   UI_TIP: 50,
-  UI: 100
+  UI: 100,
 };
-
 
 const config = {
   TILE_SIZE,
@@ -39,7 +38,7 @@ const config = {
   SPEED_DASH,
   DASH_TIME,
   LEVEL_MAP,
-  DEPTH
+  DEPTH,
 };
 
 export default config;

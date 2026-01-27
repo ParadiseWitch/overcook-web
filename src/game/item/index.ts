@@ -1,7 +1,7 @@
-import * as Phaser from 'phaser';
-import { DEPTH } from '../config';
-import { Player } from '../player';
-import { Station } from '../stations/station';
+import * as Phaser from "phaser";
+import { DEPTH } from "../config";
+import { Player } from "../player";
+import { Station } from "../stations/station";
 
 export abstract class Item extends Phaser.Physics.Arcade.Sprite {
   public isFlying: boolean = false;
@@ -21,20 +21,23 @@ export abstract class Item extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(DEPTH.PLAYER);
     this.setCircle(12, 2, 2);
     this.setCollideWorldBounds(true);
-    this.flyEmitter = scene.add.particles(3, 3, 'particle_smoke');
+    this.flyEmitter = scene.add.particles(3, 3, "particle_smoke");
     this.flyEmitter.setConfig({
       speed: { min: 50, max: 100 },
       scale: { start: 0.5, end: 0 },
-      blendMode: 'ADD',
+      blendMode: "ADD",
       lifespan: 300,
       frequency: 20,
       emitCallback: (particle: Phaser.GameObjects.Particles.Particle) => {
         if (this.body?.velocity) {
-          const angle = Math.atan2(-this.body.velocity.y, -this.body.velocity.x);
+          const angle = Math.atan2(
+            -this.body.velocity.y,
+            -this.body.velocity.x,
+          );
           particle.velocityX = Math.cos(angle) * Phaser.Math.Between(50, 100);
           particle.velocityY = Math.sin(angle) * Phaser.Math.Between(50, 100);
         }
-      }
+      },
     });
     this.flyEmitter.startFollow(this);
     this.flyEmitter.stop();
@@ -42,12 +45,15 @@ export abstract class Item extends Phaser.Physics.Arcade.Sprite {
 
   update(_delta: number): void {
     if (this.isFlying) {
-      if (!this.body?.velocity || (this.body?.velocity.x == 0 && this.body?.velocity.y == 0)) {
+      if (
+        !this.body?.velocity ||
+        (this.body?.velocity.x == 0 && this.body?.velocity.y == 0)
+      ) {
         this.isFlying = false;
         this.thrower = null;
         this.flyEmitter.stop();
         return;
-      };
+      }
     }
   }
 

@@ -1,10 +1,10 @@
-import Food from '../item/food';
-import { FoodMatcher } from './food-matcher';
-import { Order, Recipe } from './types';
+import Food from "../item/food";
+import { FoodMatcher } from "./food-matcher";
+import { Order, Recipe } from "./types";
 
 /**
  * 订单管理器
- * 
+ *
  * 负责生成订单、验证交付、计算得分
  * 订单池中的菜谱可以动态配置，适应不同关卡的需求
  */
@@ -28,7 +28,7 @@ export class OrderManager {
 
   // 获取当前待完成的订单
   getOrders(): Order[] {
-    return this.orders.filter(o => o.status === 'pending');
+    return this.orders.filter((o) => o.status === "pending");
   }
 
   getAllOrders(): Order[] {
@@ -40,7 +40,7 @@ export class OrderManager {
    * 如果未指定菜谱，会从菜谱池中随机选择
    */
   generateOrder(recipe?: Recipe): Order | null {
-    const pendingOrders = this.orders.filter(o => o.status === 'pending');
+    const pendingOrders = this.orders.filter((o) => o.status === "pending");
     if (pendingOrders.length >= this.maxOrders) {
       return null;
     }
@@ -59,7 +59,7 @@ export class OrderManager {
       createdAt: Date.now(),
       timeLimit: this.calculateTimeLimit(recipe),
       tipMultiplier: 1.0,
-      status: 'pending'
+      status: "pending",
     };
 
     this.orders.push(order);
@@ -78,7 +78,7 @@ export class OrderManager {
    * 遍历待完成订单，找到第一个匹配的订单返回
    */
   validateDelivery(submittedFood: Food): Order | null {
-    const pendingOrders = this.orders.filter(o => o.status === 'pending');
+    const pendingOrders = this.orders.filter((o) => o.status === "pending");
 
     for (const order of pendingOrders) {
       if (FoodMatcher.matches(submittedFood, order.recipe.targetFood)) {
@@ -94,12 +94,12 @@ export class OrderManager {
    * 得分 = 基础分 × 时间奖励倍率（最高1.5倍）
    */
   completeOrder(orderId: string): number {
-    const order = this.orders.find(o => o.id === orderId);
-    if (!order || order.status !== 'pending') {
+    const order = this.orders.find((o) => o.id === orderId);
+    if (!order || order.status !== "pending") {
       return 0;
     }
 
-    order.status = 'completed';
+    order.status = "completed";
 
     const elapsedTime = Date.now() - order.createdAt;
     const remainingTime = order.timeLimit - elapsedTime;
@@ -122,11 +122,11 @@ export class OrderManager {
     const expiredOrders: Order[] = [];
 
     for (const order of this.orders) {
-      if (order.status !== 'pending') continue;
+      if (order.status !== "pending") continue;
 
       const elapsed = now - order.createdAt;
       if (elapsed >= order.timeLimit) {
-        order.status = 'expired';
+        order.status = "expired";
         expiredOrders.push(order);
       } else {
         const remainingRatio = 1 - elapsed / order.timeLimit;
@@ -140,28 +140,28 @@ export class OrderManager {
   // 清理已完成/过期的旧订单
   clearOldOrders(maxAgeMs: number = 10000): void {
     const now = Date.now();
-    this.orders = this.orders.filter(o => {
-      if (o.status === 'pending') return true;
+    this.orders = this.orders.filter((o) => {
+      if (o.status === "pending") return true;
       return now - o.createdAt < maxAgeMs;
     });
   }
 
   getOrder(orderId: string): Order | undefined {
-    return this.orders.find(o => o.id === orderId);
+    return this.orders.find((o) => o.id === orderId);
   }
 
   cancelOrder(orderId: string): boolean {
-    const order = this.orders.find(o => o.id === orderId);
-    if (order && order.status === 'pending') {
-      order.status = 'failed';
+    const order = this.orders.find((o) => o.id === orderId);
+    if (order && order.status === "pending") {
+      order.status = "failed";
       return true;
     }
     return false;
   }
 
   getRemainingTime(orderId: string): number {
-    const order = this.orders.find(o => o.id === orderId);
-    if (!order || order.status !== 'pending') return 0;
+    const order = this.orders.find((o) => o.id === orderId);
+    if (!order || order.status !== "pending") return 0;
 
     const elapsed = Date.now() - order.createdAt;
     return Math.max(0, order.timeLimit - elapsed);
@@ -169,8 +169,8 @@ export class OrderManager {
 
   // 获取剩余时间比例 (0-1)，用于UI显示
   getRemainingTimeRatio(orderId: string): number {
-    const order = this.orders.find(o => o.id === orderId);
-    if (!order || order.status !== 'pending') return 0;
+    const order = this.orders.find((o) => o.id === orderId);
+    if (!order || order.status !== "pending") return 0;
 
     const elapsed = Date.now() - order.createdAt;
     return Math.max(0, 1 - elapsed / order.timeLimit);

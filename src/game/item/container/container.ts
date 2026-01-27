@@ -3,11 +3,11 @@ import Food, { FoodComponent } from "../food";
 import { Ingredient } from "../ingredient/ingredient";
 
 // 容器状态：空、脏（需要清洗）、可组合、已满
-export type ContainerStatus = 'empty' | 'dirty' | 'combinable' | 'full';
+export type ContainerStatus = "empty" | "dirty" | "combinable" | "full";
 
 /**
  * 容器基类
- * 
+ *
  * 容器是承载食物的载体，如盘子、锅等
  * 容器只关心装载的Food，不关心Food内部的具体组合
  */
@@ -21,11 +21,18 @@ export abstract class Container extends Item {
 
   // NOTE: _hasBar is kept for API compatibility but no longer used.
   // Progress bar is now managed by Food class directly.
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, status: ContainerStatus = 'empty', _hasBar: boolean = true) {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    texture: string,
+    status: ContainerStatus = "empty",
+    _hasBar: boolean = true,
+  ) {
     super(scene, x, y, texture);
     this.status = status;
     this.canTransfer = true;
-    this.food = new Food(scene, this.x, this.y, '');
+    this.food = new Food(scene, this.x, this.y, "");
   }
 
   // 子类实现：判断是否接受特定食材
@@ -68,10 +75,10 @@ export abstract class Container extends Item {
     this.food.setXy(this.x, this.y);
 
     switch (this.status) {
-      case 'empty':
+      case "empty":
         break;
-      case 'combinable':
-      case 'dirty':
+      case "combinable":
+      case "dirty":
       default:
         break;
     }
