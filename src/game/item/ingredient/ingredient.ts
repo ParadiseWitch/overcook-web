@@ -1,4 +1,5 @@
 import { Item } from "..";
+import { removeItem } from "../../manager/item-manager";
 
 // 单食材烹饪状态：只能对单个食材进行处理
 export type SingleCookState = "cut" | "boil" | "deep-fry";
@@ -83,5 +84,11 @@ export class Ingredient extends Item {
 
   hasCookState(state: FoodState): boolean {
     return this.cookStates.includes(state);
+  }
+
+  destroy(fromScene?: boolean): void {
+    // 从 ALL_ITEMS 中移除
+    removeItem(this);
+    super.destroy(fromScene);
   }
 }

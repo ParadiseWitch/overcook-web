@@ -48,6 +48,11 @@ export class DeliveryStation extends Station {
       });
     }
 
+    // 清除玩家对盘子的引用（如果玩家还持有它）
+    if (plate.thrower && plate.thrower.heldItem === plate) {
+      plate.thrower.heldItem = null;
+    }
+
     // 销毁
     plate.clear();
     plate.destroy();

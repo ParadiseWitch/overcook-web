@@ -4,6 +4,15 @@ import * as Phaser from "phaser";
 import { Plate } from "../item/container/plate";
 import { Pot } from "../item/container/pot";
 import { Tomato } from "../item/ingredient/tomato";
+import { Lettuce } from "../item/ingredient/lettuce";
+import { Egg } from "../item/ingredient/egg";
+import { Flour } from "../item/ingredient/flour";
+import { Rice } from "../item/ingredient/rice";
+import { Fish } from "../item/ingredient/fish";
+import { Seaweed } from "../item/ingredient/seaweed";
+import { Onion } from "../item/ingredient/onion";
+import { Potato } from "../item/ingredient/potato";
+import { Carrot } from "../item/ingredient/carrot";
 import { FireExtinguisher } from "../item/fire-extinguisher";
 import { CounterStation } from "../stations/counter-station";
 import { CutStation } from "../stations/cut-station";
@@ -44,9 +53,8 @@ export const createStation = (
       station.placeItem(plate);
       ALL_ITEMS.push(plate);
       break;
-    case "B":
-      // textureKey = 'station_counter';
-      station = new IngredientStation(scene, px, py, Tomato);
+    case "T":
+      station = new TrashStation(scene, px, py);
       break;
     case "C":
       station = new CutStation(scene, px, py);
@@ -66,14 +74,42 @@ export const createStation = (
     case "d": // 脏盘子生成点
       station = new DirtyPlateStation(scene, px, py);
       break;
-    case "T":
-      station = new TrashStation(scene, px, py);
-      break;
     case "E":
       station = new CounterStation(scene, px, py);
       const extinguisher = new FireExtinguisher(scene, px, py);
       station.placeItem(extinguisher);
       ALL_ITEMS.push(extinguisher);
+      break;
+    // 新食材箱
+    case "L": // 生菜箱
+      station = new IngredientStation(scene, px, py, Lettuce);
+      break;
+    case "R": // 米箱
+      station = new IngredientStation(scene, px, py, Rice);
+      break;
+    case "M": // 搅拌器位置（暂时用CounterStation代替）
+      station = new CounterStation(scene, px, py);
+      break;
+    case "F": // 鱼箱
+      station = new IngredientStation(scene, px, py, Fish);
+      break;
+    case "N": // 紫菜箱
+      station = new IngredientStation(scene, px, py, Seaweed);
+      break;
+    case "O": // 洋葱箱
+      station = new IngredientStation(scene, px, py, Onion);
+      break;
+    case "G": // 土豆箱
+      station = new IngredientStation(scene, px, py, Potato);
+      break;
+    case "P": // 胡萝卜箱
+      station = new IngredientStation(scene, px, py, Carrot);
+      break;
+    case "Q": // 鸡蛋箱
+      station = new IngredientStation(scene, px, py, Egg);
+      break;
+    case "B": // 番茄箱（保留原有）
+      station = new IngredientStation(scene, px, py, Tomato);
       break;
     default:
       // new Station(scene, px, py, 'station_nothing');

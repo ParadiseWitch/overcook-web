@@ -23,9 +23,16 @@ export class IngredientStation<
   }
 
   genIngredientForPlayer(player: Player) {
+    console.log(`[IngredientStation] Generating ingredient for player at (${this.x}, ${this.y})`);
+    console.log(`[IngredientStation] Current ALL_ITEMS length: ${ALL_ITEMS.length}`);
+    
     const newIngredient = new this.ingredientType(this.scene, this.x, this.y);
     player.pick(newIngredient);
     ALL_ITEMS.push(newIngredient); // 添加到ItemManager的物品列表
+    
+    console.log(`[IngredientStation] Created ingredient:`, newIngredient);
+    console.log(`[IngredientStation] Updated ALL_ITEMS length: ${ALL_ITEMS.length}`);
+    
     return newIngredient; // 玩家拾取新食材
   }
 }

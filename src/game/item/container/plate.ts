@@ -27,6 +27,8 @@ export class Plate extends Container {
   canAddIngredient(ingredient: Ingredient): boolean {
     // 只能放处理过的食材
     if (ingredient.cookStates.length == 0) return false;
+    // 检查是否已满
+    if (this.isFull()) return false;
     return true;
   }
 }

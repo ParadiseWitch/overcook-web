@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Ingredients</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
+<body>
+  <script type="module">
+    import { Lettuce } from './src/game/item/ingredient/lettuce.ts';
+    import { Fish } from './src/game/item/ingredient/fish.ts';
+    
+    const config = {
+      type: Phaser.AUTO,
+      width: 400,
+      height: 300,
+      scene: {
+        create: function() {
+          console.log('Testing ingredient creation...');
+          try {
+            const lettuce = new Lettuce(this, 100, 100);
+            console.log('✅ Lettuce created:', lettuce);
+            
+            const fish = new Fish(this, 200, 100);
+            console.log('✅ Fish created:', fish);
+          } catch (e) {
+            console.error('❌ Error:', e);
+          }
+        }
+      }
+    };
+    
+    new Phaser.Game(config);
+  </script>
+</body>
+</html>

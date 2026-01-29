@@ -26,11 +26,22 @@ export const interact = (player: Player, target: Station | Item | null) => {
 };
 
 const interactWithStation = (player: Player, station: Station) => {
+  console.log(`[interact-helper] Player interacting with station:`, station.constructor.name);
+  console.log(`[interact-helper] Station.item:`, station.item);
+  console.log(`[interact-helper] Player.heldItem:`, player.heldItem);
+  
+  // 检查玩家手持物品是否已被销毁
+  if (player.heldItem && !player.heldItem.scene) {
+    console.log(`[interact-helper] WARNING: Player holding destroyed item, clearing heldItem`);
+    player.heldItem = null;
+  }
+  
   if (
     station instanceof IngredientStation &&
     !station.item &&
     !player.heldItem
   ) {
+    console.log(`[interact-helper] Condition met: Generating ingredient from station`);
     // 在player手上生成食材。
     station.genIngredientForPlayer(player);
     return;

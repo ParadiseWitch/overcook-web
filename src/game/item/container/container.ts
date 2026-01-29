@@ -102,6 +102,8 @@ export abstract class Container extends Item {
 
   public clear() {
     this.food.destroy();
+    // 重新创建一个空的Food对象
+    this.food = new Food(this.scene, this.x, this.y, "");
   }
 
   /**

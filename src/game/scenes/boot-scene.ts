@@ -199,6 +199,145 @@ export class BootScene extends Phaser.Scene {
       g.fillCircle(16, 16, 14);
     });
 
+    // === 新增食材纹理 ===
+    
+    // 生菜 (绿色圆形)
+    drawItem("item_lettuce", (g) => {
+      g.fillStyle(0x32cd32);
+      g.fillCircle(16, 16, 11);
+      g.fillStyle(0x228b22);
+      g.fillCircle(16, 16, 8);
+    });
+
+    // 切好的生菜 (绿色碎块)
+    drawItem("item_lettuce_cut", (g) => {
+      g.fillStyle(0x32cd32);
+      g.fillRect(8, 8, 6, 6);
+      g.fillRect(18, 10, 5, 5);
+      g.fillRect(10, 19, 5, 5);
+      g.fillRect(19, 19, 6, 6);
+    });
+
+    // 鸡蛋 (白色椭圆)
+    drawItem("item_egg", (g) => {
+      g.fillStyle(0xfff8dc);
+      g.fillEllipse(16, 16, 10, 13);
+      g.fillStyle(0xffe4b5);
+      g.fillEllipse(16, 16, 7, 10);
+    });
+
+    // 面粉 (白色袋子)
+    drawItem("item_flour", (g) => {
+      g.fillStyle(0xf5f5dc);
+      g.fillRect(8, 10, 16, 14);
+      g.fillStyle(0xdcdcdc);
+      g.fillRect(10, 8, 12, 4);
+    });
+
+    // 米 (白色颗粒)
+    drawItem("item_rice", (g) => {
+      g.fillStyle(0xffffff);
+      g.fillRect(10, 10, 12, 12);
+      g.fillStyle(0xf0f0f0);
+      g.fillRect(11, 11, 10, 10);
+    });
+
+    // 煮好的米 (黄白色)
+    drawItem("item_rice_cooked", (g) => {
+      g.fillStyle(0xfffacd);
+      g.fillCircle(16, 16, 11);
+      g.fillStyle(0xffefd5);
+      g.fillCircle(16, 16, 9);
+    });
+
+    // 鱼 (银色鱼形)
+    drawItem("item_fish", (g) => {
+      g.fillStyle(0xc0c0c0);
+      g.fillEllipse(16, 16, 14, 8);
+      g.fillStyle(0xa9a9a9);
+      g.beginPath();
+      g.moveTo(26, 16);
+      g.lineTo(30, 12);
+      g.lineTo(30, 20);
+      g.fill();
+    });
+
+    // 切好的鱼 (鱼片)
+    drawItem("item_fish_cut", (g) => {
+      g.fillStyle(0xffc0cb);
+      g.fillRect(8, 10, 16, 4);
+      g.fillRect(8, 16, 16, 4);
+      g.fillRect(8, 22, 16, 4);
+    });
+
+    // 紫菜 (深绿色方块)
+    drawItem("item_seaweed", (g) => {
+      g.fillStyle(0x006400);
+      g.fillRect(8, 8, 16, 16);
+      g.fillStyle(0x008000);
+      g.fillRect(10, 10, 12, 12);
+    });
+
+    // 洋葱 (紫色圆形)
+    drawItem("item_onion", (g) => {
+      g.fillStyle(0x9370db);
+      g.fillCircle(16, 16, 11);
+      g.fillStyle(0x8a2be2);
+      g.fillCircle(16, 16, 8);
+    });
+
+    // 切好的洋葱 (紫色碎块)
+    drawItem("item_onion_cut", (g) => {
+      g.fillStyle(0x9370db);
+      g.fillRect(8, 8, 7, 7);
+      g.fillRect(18, 9, 6, 6);
+      g.fillRect(9, 19, 6, 6);
+      g.fillRect(19, 19, 7, 7);
+    });
+
+    // 土豆 (棕色椭圆)
+    drawItem("item_potato", (g) => {
+      g.fillStyle(0xd2b48c);
+      g.fillEllipse(16, 16, 12, 10);
+      g.fillStyle(0xbc9a6b);
+      g.fillEllipse(16, 16, 9, 7);
+    });
+
+    // 切好的土豆 (土豆块)
+    drawItem("item_potato_cut", (g) => {
+      g.fillStyle(0xffefd5);
+      g.fillRect(8, 8, 7, 7);
+      g.fillRect(18, 10, 6, 6);
+      g.fillRect(10, 19, 6, 6);
+      g.fillRect(19, 20, 6, 6);
+    });
+
+    // 胡萝卜 (橙色长条)
+    drawItem("item_carrot", (g) => {
+      g.fillStyle(0xff8c00);
+      g.beginPath();
+      g.moveTo(16, 6);
+      g.lineTo(10, 26);
+      g.lineTo(22, 26);
+      g.fill();
+      g.fillStyle(0x228b22);
+      g.fillRect(14, 4, 4, 5);
+    });
+
+    // 切好的胡萝卜 (橙色圆片)
+    drawItem("item_carrot_cut", (g) => {
+      g.fillStyle(0xff8c00);
+      g.fillCircle(12, 12, 4);
+      g.fillCircle(20, 12, 4);
+      g.fillCircle(12, 20, 4);
+      g.fillCircle(20, 20, 4);
+      g.fillStyle(0xffa500);
+      g.fillCircle(12, 12, 2);
+      g.fillCircle(20, 12, 2);
+      g.fillCircle(12, 20, 2);
+      g.fillCircle(20, 20, 2);
+    });
+
     // dash smoke
     g.clear();
     g.fillStyle(0xffffff);
@@ -238,6 +377,22 @@ export class BootScene extends Phaser.Scene {
       "icon-plate-dirty": "item_plate_dirty",
       "icon-soup": "item_soup",
       "icon-soup-pot": "item_soup_pot",
+      // 新增食材图标
+      "icon-lettuce": "item_lettuce",
+      "icon-lettuce-cut": "item_lettuce_cut",
+      "icon-fish": "item_fish",
+      "icon-fish-cut": "item_fish_cut",
+      "icon-rice": "item_rice",
+      "icon-rice-cooked": "item_rice_cooked",
+      "icon-onion": "item_onion",
+      "icon-onion-cut": "item_onion_cut",
+      "icon-potato": "item_potato",
+      "icon-potato-cut": "item_potato_cut",
+      "icon-carrot": "item_carrot",
+      "icon-carrot-cut": "item_carrot_cut",
+      "icon-egg": "item_egg",
+      "icon-flour": "item_flour",
+      "icon-seaweed": "item_seaweed",
     };
     for (let id in map) {
       const key = map[id];

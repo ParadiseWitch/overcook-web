@@ -20,7 +20,7 @@ export const createMap = (scene: Phaser.Scene) => {
   for (let y = 0; y < LEVEL_MAP.length; y++) {
     for (let x = 0; x < LEVEL_MAP[y].length; x++) {
       const char = LEVEL_MAP[y][x];
-      if (char === "F" || char === " ") continue; // 跳过地板和空地
+      if (char === " " || char === "X") continue; // 跳过地板和墙壁
 
       const px = x * TILE_SIZE + 24; // 计算中心X坐标
       const py = y * TILE_SIZE + 24; // 计算中心Y坐标
