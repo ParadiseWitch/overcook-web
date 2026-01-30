@@ -201,6 +201,8 @@ export const MockPhaser = {
       Between: (x1: number, y1: number, x2: number, y2: number) =>
         Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2),
     },
+    Between: (min: number, max: number) =>
+      Math.floor(Math.random() * (max - min + 1)) + min,
     RadToDeg: (rad: number) => rad * (180 / Math.PI),
   },
   Input: {
