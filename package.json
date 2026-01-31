@@ -21,10 +21,14 @@
     "build-nolog": "vite build --config vite/config.prod.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui --coverage",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "4.0.16",
+    "@vitest/ui": "4.0.16",
+    "jsdom": "^27.4.0",
     "typescript": "~5.7.2",
     "vite": "^6.3.1"
   },
