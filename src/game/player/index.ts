@@ -138,9 +138,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     let dx = 0,
       dy = 0;
     if (this.keyMap.up.isDown) dy = -1;
-    else if (this.keyMap.down.isDown) dy = 1;
+    if (this.keyMap.down.isDown) dy = +1;
     if (this.keyMap.left.isDown) dx = -1;
-    else if (this.keyMap.right.isDown) dx = 1;
+    if (this.keyMap.right.isDown) dx = +1;
     // 手柄方向（左摇杆 / 十字键），会覆盖键盘方向
     if (this.gamepad) {
       const pad = this.gamepad;
