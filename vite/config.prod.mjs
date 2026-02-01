@@ -1,4 +1,6 @@
 import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import { resolve } from 'path';
 
 const phasermsg = () => {
   return {
@@ -9,8 +11,7 @@ const phasermsg = () => {
     buildEnd() {
       const line = "---------------------------------------------------------";
       const msg = `❤️❤️❤️ Tell us about your game! - games@phaser.io ❤️❤️❤️`;
-      process.stdout.write(`${line}\n${msg}\n${line}\n`);
-
+      process.stdout.write(`${line}\n${msg}\n${line}\n\n`);
       process.stdout.write(`✨ Done ✨\n`);
     }
   }
@@ -19,11 +20,21 @@ const phasermsg = () => {
 export default defineConfig({
   base: '/overcook-web/',
   logLevel: 'warning',
+  plugins: [
+    vue(),
+    phasermsg()
+  ],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, '..', 'src'),
+    },
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
-          phaser: ['phaser']
+          phaser: ['phaser'],
+          vue: ['vue']
         }
       }
     },
@@ -40,8 +51,5 @@ export default defineConfig({
   },
   server: {
     port: 8080
-  },
-  plugins: [
-    phasermsg()
-  ]
+  }
 });

@@ -1,5 +1,6 @@
-import StartGame from "./game/main";
+import { createApp } from 'vue';
+import App from './App.vue';
 
-document.addEventListener("DOMContentLoaded", () => {
-  StartGame("game-container");
-});
+// Create the Vue application
+const app = createApp(App);
+app.mount('#app');

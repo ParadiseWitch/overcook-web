@@ -15,10 +15,9 @@
   },
   "homepage": "https://github.com/phaserjs/template-vite-ts#readme",
   "scripts": {
-    "dev": "node log.js dev & vite --config vite/config.dev.mjs",
-    "build": "node log.js build & vite build --config vite/config.prod.mjs",
-    "dev-nolog": "vite --config vite/config.dev.mjs",
-    "build-nolog": "vite build --config vite/config.prod.mjs",
+    "dev": "vite --config vite/config.dev.mjs",
+    "build": "vite build --config vite/config.prod.mjs",
+    "serve": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui --coverage",
@@ -33,8 +32,10 @@
     "vite": "^6.3.1"
   },
   "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.3",
     "phaser": "^3.90.0",
     "terser": "^5.39.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "vue": "^3.5.27"
   }
 }
