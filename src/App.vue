@@ -1,76 +1,20 @@
 <template>
   <div id="app">
-    <div id="game-container">
-      <PhaserGame />
-    </div>
-    
-    <!-- Legend System -->
-    <div id="legend-container">
-      <!-- Environment -->
-      <div class="legend-item"><img class="icon" src="" id="icon-counter">空柜台</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-crate">食材箱</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-cut">切菜板</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-pot-station">煮锅灶</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-sink">洗碗池</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-delivery">上菜口</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-dirty-spawn">脏盘子生成点</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-trash">垃圾桶</div>
-
-      <!-- Characters -->
-      <div class="legend-item"><img class="icon" src="" id="icon-player1">角色1</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-player2">角色2</div>
-
-      <!-- Items - Basics -->
-      <div class="legend-item"><img class="icon" src="" id="icon-pot">空锅</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-plate">空盘子</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-plate-dirty">脏盘子</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-soup">成品番茄汤</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-soup-pot">锅中的汤</div>
-
-      <!-- Ingredients - Tomato -->
-      <div class="legend-item"><img class="icon" src="" id="icon-tomato">番茄(红)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-tomato-cut">切好的番茄</div>
-
-      <!-- Ingredients - Lettuce -->
-      <div class="legend-item"><img class="icon" src="" id="icon-lettuce">生菜(绿)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-lettuce-cut">切好的生菜</div>
-
-      <!-- Ingredients - Fish -->
-      <div class="legend-item"><img class="icon" src="" id="icon-fish">鱼(银)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-fish-cut">切好的鱼</div>
-
-      <!-- Ingredients - Rice -->
-      <div class="legend-item"><img class="icon" src="" id="icon-rice">米(白)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-rice-cooked">煮好的米</div>
-
-      <!-- Ingredients - Onion -->
-      <div class="legend-item"><img class="icon" src="" id="icon-onion">洋葱(紫)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-onion-cut">切好的洋葱</div>
-
-      <!-- Ingredients - Potato -->
-      <div class="legend-item"><img class="icon" src="" id="icon-potato">土豆(棕)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-potato-cut">切好的土豆</div>
-
-      <!-- Ingredients - Carrot -->
-      <div class="legend-item"><img class="icon" src="" id="icon-carrot">胡萝卜(橙)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-carrot-cut">切好的胡萝卜</div>
-
-      <!-- Ingredients - Others -->
-      <div class="legend-item"><img class="icon" src="" id="icon-egg">鸡蛋(白椭圆)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-flour">面粉(白袋)</div>
-      <div class="legend-item"><img class="icon" src="" id="icon-seaweed">紫菜(深绿)</div>
-    </div>
-
-    <div id="controls">
-      <span style="color:#4da6ff">P1: WASD移动 | E 互动 | R 切/洗 | 空格 投掷 | Shift 冲刺</span> &nbsp;|&nbsp;
-      <span style="color:#ff4d44">P2: 箭头移动 | O 互动 | P 切/洗 | L 投掷 | Enter 冲刺</span>
-    </div>
+    <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
-import PhaserGame from './components/PhaserGame.vue';
+// App component using Vue Router
 </script>
+
+<style>
+#app {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+</style>
 
 <style>
 body {
