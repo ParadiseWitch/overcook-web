@@ -129,15 +129,15 @@ export class LevelEditorScene extends Phaser.Scene {
     // 创建一个矩形代表地板
     const floorSprite = this.add.rectangle(x, y, this.tileSize, this.tileSize, tint)
       .setStrokeStyle(1, 0x333333);
-    
+
     // 存储地板配置信息
     floorSprite.setData('floorConfig', floor);
-    
+
     // 添加点击事件
     floorSprite.setInteractive().on('pointerdown', () => {
       this.selectObject(floor, floorSprite);
     });
-    
+
     this.objectGroup.add(floorSprite);
   }
 
@@ -185,15 +185,15 @@ export class LevelEditorScene extends Phaser.Scene {
     // 创建一个圆形代表工作站
     const stationSprite = this.add.circle(x, y, this.tileSize / 2 - 4, tint)
       .setStrokeStyle(2, 0x333333);
-    
+
     // 存储工作站配置信息
     stationSprite.setData('stationConfig', station);
-    
+
     // 添加点击事件
     stationSprite.setInteractive().on('pointerdown', () => {
       this.selectObject(station, stationSprite);
     });
-    
+
     this.objectGroup.add(stationSprite);
   }
 
@@ -214,18 +214,18 @@ export class LevelEditorScene extends Phaser.Scene {
 
     // 存储玩家配置信息
     triangle.setData('playerConfig', player);
-    
+
     // 添加点击事件
     triangle.setInteractive().on('pointerdown', () => {
       this.selectObject(player, triangle);
     });
-    
+
     this.objectGroup.add(triangle);
   }
 
   private makeTriangle(config: any) {
     const { x, y, width, height, fillColor, strokeColor, strokeWidth } = config;
-    
+
     const triangle = this.add.graphics();
     triangle.fillStyle(fillColor);
     triangle.fillTriangle(
@@ -233,7 +233,7 @@ export class LevelEditorScene extends Phaser.Scene {
       x - width / 2, y + height / 2,  // 左下角
       x + width / 2, y + height / 2   // 右下角
     );
-    
+
     if (strokeColor && strokeWidth) {
       triangle.lineStyle(strokeWidth, strokeColor);
       triangle.strokeTriangle(
@@ -242,7 +242,7 @@ export class LevelEditorScene extends Phaser.Scene {
         x + width / 2, y + height / 2
       );
     }
-    
+
     return triangle;
   }
 
@@ -285,10 +285,10 @@ export class LevelEditorScene extends Phaser.Scene {
         this.levelConfigManager.addFloor({ type: 'wall', x, y });
         break;
       case 'conveyor-floor':
-        this.levelConfigManager.addFloor({ 
-          type: 'conveyor', 
-          x, 
-          y, 
+        this.levelConfigManager.addFloor({
+          type: 'conveyor',
+          x,
+          y,
           direction: 'right',
           speed: 100
         } as ConveyorFloor);
@@ -321,32 +321,32 @@ export class LevelEditorScene extends Phaser.Scene {
         this.levelConfigManager.addPlayer({ id: 2, x, y, color: 0xff4444 });
         break;
       case 'ingredient-tomato':
-        this.levelConfigManager.addStation({ 
-          type: 'ingredient', 
+        this.levelConfigManager.addStation({
+          type: 'ingredient',
           x, y,
           ingredientType: 'tomato' as IngredientType,
           infinite: true
         });
         break;
       case 'ingredient-lettuce':
-        this.levelConfigManager.addStation({ 
-          type: 'ingredient', 
+        this.levelConfigManager.addStation({
+          type: 'ingredient',
           x, y,
           ingredientType: 'lettuce' as IngredientType,
           infinite: true
         });
         break;
       case 'ingredient-rice':
-        this.levelConfigManager.addStation({ 
-          type: 'ingredient', 
+        this.levelConfigManager.addStation({
+          type: 'ingredient',
           x, y,
           ingredientType: 'rice' as IngredientType,
           infinite: true
         });
         break;
       case 'ingredient-fish':
-        this.levelConfigManager.addStation({ 
-          type: 'ingredient', 
+        this.levelConfigManager.addStation({
+          type: 'ingredient',
           x, y,
           ingredientType: 'fish' as IngredientType,
           infinite: true
@@ -423,21 +423,21 @@ export class LevelEditorScene extends Phaser.Scene {
     // 创建新的选择标记
     // 对于精灵对象，我们直接使用其位置和尺寸
     let centerX = 0, centerY = 0, width = 40, height = 40;
-    
+
     if ('x' in sprite && typeof sprite.x === 'number') {
       centerX = sprite.x;
     }
     if ('y' in sprite && typeof sprite.y === 'number') {
       centerY = sprite.y;
     }
-    
+
     // 根据精灵类型估算尺寸
     if ('width' in sprite && typeof sprite.width === 'number') {
       width = sprite.width;
     } else if ('displayWidth' in sprite && typeof sprite.displayWidth === 'number') {
       width = sprite.displayWidth;
     }
-    
+
     if ('height' in sprite && typeof sprite.height === 'number') {
       height = sprite.height;
     } else if ('displayHeight' in sprite && typeof sprite.displayHeight === 'number') {
@@ -506,7 +506,7 @@ export class LevelEditorScene extends Phaser.Scene {
     this.createGrid();
     this.renderLevelObjects();
   }
-  
+
   // Getter for selectedTool to make it accessible
   public getSelectedTool(): string | null {
     return this.selectedTool;
