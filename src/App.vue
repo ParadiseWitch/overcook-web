@@ -9,10 +9,15 @@
 </script>
 
 <style>
+html,
+body,
 #app {
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  width: 100%;
+  min-height: 100%;
+}
+
+#app {
+  min-height: 100vh;
 }
 </style>
 
@@ -22,12 +27,8 @@ body {
   background: #121212;
   color: #fff;
   font-family: "Microsoft YaHei", sans-serif;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
   user-select: none;
+  overflow: hidden;
 }
 
 #game-container {

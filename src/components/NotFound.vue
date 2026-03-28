@@ -1,9 +1,11 @@
 <template>
   <div id="not-found">
-    <h1>Page Not Found</h1>
-    <p>The requested page does not exist.</p>
-    <router-link to="/">Go to Main Game</router-link> | 
-    <router-link to="/editor">Go to Level Editor</router-link>
+    <h1>页面不存在</h1>
+    <p>你访问的页面不存在，请返回可用入口。</p>
+    <div class="links">
+      <router-link to="/">返回主游戏</router-link>
+      <router-link to="/editor">前往关卡编辑器</router-link>
+    </div>
   </div>
 </template>
 
@@ -21,15 +23,23 @@
   background: #121212;
   color: #fff;
   font-family: "Microsoft YaHei", sans-serif;
+  gap: 12px;
+  text-align: center;
 }
 
-.router-link {
+.links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+a {
   color: #4da6ff;
   text-decoration: none;
-  margin: 5px;
 }
 
-.router-link:hover {
+a:hover {
   text-decoration: underline;
 }
 </style>

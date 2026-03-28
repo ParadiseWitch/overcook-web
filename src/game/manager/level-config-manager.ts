@@ -1,15 +1,23 @@
-/**
- * 关卡配置管理器
- * 管理关卡配置数据的创建、修改、验证和导出
- */
-
-import { LevelConfig, getDefaultLevelConfig, FloorConfig, StationConfig, PlayerSpawn } from '@/game/types/level-config';
+import {
+  clampMapObjects,
+  cloneLevelConfig,
+  validateLevelConfig,
+} from "../editor/level-editor-utils";
+import {
+  type FloorConfig,
+  getDefaultLevelConfig,
+  type LevelConfig,
+  type PlayerSpawn,
+  type StationConfig,
+} from "../types/level-config";
 
 export class LevelConfigManager {
   private config: LevelConfig;
 
   constructor(initialConfig?: LevelConfig) {
-    this.config = initialConfig ? { ...initialConfig } : getDefaultLevelConfig();
+    this.config = initialConfig
+      ? cloneLevelConfig(initialConfig)
+      : getDefaultLevelConfig();
   }
 
   /**
@@ -38,6 +46,7 @@ export class LevelConfigManager {
   updateMapSize(width: number, height: number) {
     this.config.map.width = width;
     this.config.map.height = height;
+    this.config = clampMapObjects(this.config);
   }
 
   /**
@@ -134,21 +143,31 @@ export class LevelConfigManager {
    * 设置订单池
    */
   setOrderPool(orderPool: LevelConfig['orderPool']) {
-    this.config.orderPool = { ...orderPool };
+    this.config.orderPool = cloneLevelConfig({
+      ...this.config,
+      orderPool,
+    }).orderPool;
+  }
+
+  updateOrderPool(orderPool: Partial<LevelConfig["orderPool"]>) {
+    this.config.orderPool = {
+      ...this.config.orderPool,
+      ...orderPool,
+    };
   }
 
   /**
    * 获取当前配置
    */
   getConfig(): LevelConfig {
-    return { ...this.config }; // 返回副本防止意外修改
+    return cloneLevelConfig(this.config);
   }
 
   /**
    * 设置配置
    */
   setConfig(newConfig: LevelConfig) {
-    this.config = { ...newConfig };
+    this.config = cloneLevelConfig(newConfig);
   }
 
   /**
@@ -165,7 +184,7 @@ export class LevelConfigManager {
     try {
       const parsed = JSON.parse(jsonStr);
       if (this.isValidLevelConfig(parsed)) {
-        this.config = parsed;
+        this.config = clampMapObjects(cloneLevelConfig(parsed));
         return true;
       }
       console.error('Invalid level configuration:', parsed);
@@ -220,40 +239,6 @@ export class LevelConfigManager {
    * 验证关卡配置的有效性
    */
   validate(): { valid: boolean; errors: string[]; warnings: string[] } {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    // 检查是否至少有一个玩家
-    if (this.config.players.length === 0) {
-      errors.push('关卡必须至少有一个玩家出生点');
-    }
-
-    // 检查是否至少有一个上菜口
-    const hasDelivery = this.config.stations.some(s => s.type === 'delivery');
-    if (!hasDelivery) {
-      errors.push('关卡必须至少有一个上菜口');
-    }
-
-    // 检查地图尺寸是否合理
-    if (this.config.map.width < 5 || this.config.map.width > 50) {
-      errors.push('地图宽度必须在5到50之间');
-    }
-    if (this.config.map.height < 5 || this.config.map.height > 50) {
-      errors.push('地图高度必须在5到50之间');
-    }
-
-    // 检查是否有盘子来源
-    const hasPlateSource = this.config.stations.some(s => 
-      s.type === 'plate-counter' || s.type === 'delivery'
-    );
-    if (!hasPlateSource) {
-      warnings.push('关卡没有盘子来源，玩家可能无法获得盘子');
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-      warnings
-    };
+    return validateLevelConfig(this.config);
   }
 }

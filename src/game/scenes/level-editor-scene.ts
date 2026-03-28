@@ -1,470 +1,418 @@
-import Phaser from 'phaser';
-import { LevelConfig, getDefaultLevelConfig, FloorConfig, StationConfig, PlayerSpawn, ConveyorFloor, IngredientType } from '@/game/types/level-config';
-import { LevelConfigManager } from '@/game/manager/level-config-manager';
+import Phaser from "phaser";
+
+import {
+  buildDefaultFloorForTool,
+  buildDefaultPlayerForTool,
+  buildDefaultStationForTool,
+  cloneLevelConfig,
+  type EditorSelection,
+  type FloorToolOptions,
+} from "../editor/level-editor-utils";
+import {
+  buildRenderableFloors,
+  getFloorRenderSpec,
+  getIngredientLabel,
+  getStationTextureKey as resolveStationTextureKey,
+} from "../editor/editor-render";
+import { ensureEditorPreviewTextures } from "../editor/editor-preview-textures";
+import {
+  clampSceneZoom,
+  clampCameraScroll,
+  computeScrollForViewportCenter,
+  computeZoomScrollFromViewportCenter,
+  computeFitView,
+  normalizeZoom,
+} from "../editor/map-view";
+import { LevelConfigManager } from "../manager/level-config-manager";
+import type {
+  ConveyorFloor,
+  FloorConfig,
+  LevelConfig,
+  PlayerSpawn,
+  StationConfig,
+} from "../types/level-config";
+import { getDefaultLevelConfig } from "../types/level-config";
+
+export type MapViewMode = "fit" | "browse";
+export interface EditorCameraState {
+  scrollX: number;
+  scrollY: number;
+  zoom: number;
+  visibleWidth: number;
+  visibleHeight: number;
+  worldWidth: number;
+  worldHeight: number;
+  centerX: number;
+  centerY: number;
+}
+
+type SelectionPayload =
+  | { kind: "floor"; object: FloorConfig }
+  | { kind: "station"; object: StationConfig }
+  | { kind: "player"; object: PlayerSpawn }
+  | null;
 
 export class LevelEditorScene extends Phaser.Scene {
-  private levelConfigManager: LevelConfigManager;
+  private levelConfigManager = new LevelConfigManager(getDefaultLevelConfig());
   private selectedTool: string | null = null;
-  private gridWidth: number = 17;
-  private gridHeight: number = 13;
-  private tileSize: number = 48;
-  private gridGroup: Phaser.GameObjects.Group;
-  private objectGroup: Phaser.GameObjects.Group;
+  private toolOptions: FloorToolOptions = {
+    conveyorDirection: "right",
+    conveyorSpeed: 100,
+  };
+  private gridWidth = 17;
+  private gridHeight = 13;
+  private readonly tileSize = 48;
+  private readonly fitPadding = 0;
+  private readonly browseZoomDefault = 1;
+  private readonly panThreshold = 6;
+  private viewportWidth = 1280;
+  private viewportHeight = 720;
+  private mapViewMode: MapViewMode = "fit";
+  private interactionBlocked = false;
+  private isPanning = false;
+  private isZoomDragging = false;
+  private isDraggingObject = false;
+  private spacePressed = false;
+  private panStartPointer: { x: number; y: number } | null = null;
+  private panStartScroll: { x: number; y: number } | null = null;
+  private pendingPanStart: { x: number; y: number } | null = null;
+  private zoomDragOriginY = 0;
+  private zoomDragStartZoom = 1;
+  private objectDragSelection: EditorSelection | null = null;
+  private gridGroup!: Phaser.GameObjects.Group;
+  private objectGroup!: Phaser.GameObjects.Group;
   private selectionMarker: Phaser.GameObjects.Rectangle | null = null;
+  private selectedObject: EditorSelection | null = null;
+  private suppressCanvasPlacement = false;
 
   constructor() {
-    super({ key: 'LevelEditorScene' });
-    const initialConfig = getDefaultLevelConfig();
-    this.levelConfigManager = new LevelConfigManager(initialConfig);
-    this.gridGroup = this.add.group();
-    this.objectGroup = this.add.group();
+    super({ key: "LevelEditorScene" });
   }
 
-  init(data?: any) {
-    // 如果有传入的关卡配置，则使用它
-    if (data && data.levelConfig) {
-      this.levelConfigManager = new LevelConfigManager(data.levelConfig);
-      const config = this.levelConfigManager.getConfig();
-      this.gridWidth = config.map.width;
-      this.gridHeight = config.map.height;
-    }
+  init(data?: { levelConfig?: LevelConfig }) {
+    const initialConfig = data?.levelConfig ?? getDefaultLevelConfig();
+    this.levelConfigManager = new LevelConfigManager(initialConfig);
+    this.syncGridSize();
   }
 
   create() {
-    // 设置背景
-    this.cameras.main.setBackgroundColor(0x222222);
+    ensureEditorPreviewTextures(this);
+    this.gridGroup = this.add.group();
+    this.objectGroup = this.add.group();
 
-    // 创建网格
+    this.cameras.main.setBackgroundColor(0x20242b);
+    this.updateWorldBounds();
     this.createGrid();
-
-    // 创建对象
     this.renderLevelObjects();
-
-    // 设置输入事件
     this.setupInputEvents();
-
-    // 显示初始提示
-    this.add.text(10, 10, '关卡编辑器 - 点击左侧工具选择', {
-      fontSize: '16px',
-      color: '#ffffff'
-    }).setScrollFactor(0);
+    this.refreshCameraView();
+    this.emitConfigChanged();
+    this.emitSelectionChanged();
   }
 
-  private createGrid() {
-    // 清除现有的网格
-    this.gridGroup.clear(true, true);
-
-    // 绘制网格线
-    for (let x = 0; x <= this.gridWidth; x++) {
-      const lineX = this.add.line(
-        0,
-        0,
-        x * this.tileSize,
-        0,
-        x * this.tileSize,
-        this.gridHeight * this.tileSize,
-        0x444444
-      ).setLineWidth(1);
-      this.gridGroup.add(lineX);
-    }
-
-    for (let y = 0; y <= this.gridHeight; y++) {
-      const lineY = this.add.line(
-        0,
-        0,
-        0,
-        y * this.tileSize,
-        this.gridWidth * this.tileSize,
-        y * this.tileSize,
-        0x444444
-      ).setLineWidth(1);
-      this.gridGroup.add(lineY);
-    }
-
-    // 将网格置于底层
-    this.gridGroup.setDepth(-1);
-  }
-
-  private renderLevelObjects() {
-    // 清除现有的对象
-    this.objectGroup.clear(true, true);
-
-    const config = this.levelConfigManager.getConfig();
-
-    // 渲染地板
-    config.map.floors.forEach(floor => {
-      this.renderFloor(floor);
-    });
-
-    // 渲染工作站
-    config.stations.forEach(station => {
-      this.renderStation(station);
-    });
-
-    // 渲染玩家
-    config.players.forEach(player => {
-      this.renderPlayer(player);
-    });
-  }
-
-  private renderFloor(floor: FloorConfig) {
-    const x = floor.x * this.tileSize + this.tileSize / 2;
-    const y = floor.y * this.tileSize + this.tileSize / 2;
-
-    let tint = 0xffffff;
-
-    switch (floor.type) {
-      case 'wall':
-        tint = 0x666666;
-        break;
-      case 'conveyor':
-        tint = 0xaaaaaa;
-        break;
-      case 'normal':
-      default:
-        tint = 0xdddddd;
-        break;
-    }
-
-    // 创建一个矩形代表地板
-    const floorSprite = this.add.rectangle(x, y, this.tileSize, this.tileSize, tint)
-      .setStrokeStyle(1, 0x333333);
-
-    // 存储地板配置信息
-    floorSprite.setData('floorConfig', floor);
-
-    // 添加点击事件
-    floorSprite.setInteractive().on('pointerdown', () => {
-      this.selectObject(floor, floorSprite);
-    });
-
-    this.objectGroup.add(floorSprite);
-  }
-
-  private renderStation(station: StationConfig) {
-    const x = station.x * this.tileSize + this.tileSize / 2;
-    const y = station.y * this.tileSize + this.tileSize / 2;
-
-    let tint = 0xffffff;
-
-    switch (station.type) {
-      case 'delivery':
-        tint = 0x55aa55;
-        break;
-      case 'trash':
-        tint = 0x888888;
-        break;
-      case 'cut':
-        tint = 0xaaaaaa;
-        break;
-      case 'pot':
-        tint = 0xbbbbbb;
-        break;
-      case 'sink':
-        tint = 0x99ccff;
-        break;
-      case 'plate-counter':
-        tint = 0xaaaaff;
-        break;
-      case 'ingredient':
-        // 根据食材类型设置颜色
-        switch ((station as any).ingredientType) {
-          case 'tomato': tint = 0xff6666; break;
-          case 'lettuce': tint = 0x66ff66; break;
-          case 'rice': tint = 0xffffcc; break;
-          case 'fish': tint = 0x66ccff; break;
-          default: tint = 0xcccccc;
-        }
-        break;
-      case 'counter':
-      default:
-        tint = 0xcccccc;
-        break;
-    }
-
-    // 创建一个圆形代表工作站
-    const stationSprite = this.add.circle(x, y, this.tileSize / 2 - 4, tint)
-      .setStrokeStyle(2, 0x333333);
-
-    // 存储工作站配置信息
-    stationSprite.setData('stationConfig', station);
-
-    // 添加点击事件
-    stationSprite.setInteractive().on('pointerdown', () => {
-      this.selectObject(station, stationSprite);
-    });
-
-    this.objectGroup.add(stationSprite);
-  }
-
-  private renderPlayer(player: PlayerSpawn) {
-    const x = player.x * this.tileSize + this.tileSize / 2;
-    const y = player.y * this.tileSize + this.tileSize / 2;
-
-    // 使用三角形代表玩家，朝向向上
-    const triangle = this.makeTriangle({
-      x: x,
-      y: y,
-      width: this.tileSize - 8,
-      height: this.tileSize - 8,
-      fillColor: player.color || (player.id === 1 ? 0x4da6ff : 0xff4444),
-      strokeColor: 0x000000,
-      strokeWidth: 2
-    });
-
-    // 存储玩家配置信息
-    triangle.setData('playerConfig', player);
-
-    // 添加点击事件
-    triangle.setInteractive().on('pointerdown', () => {
-      this.selectObject(player, triangle);
-    });
-
-    this.objectGroup.add(triangle);
-  }
-
-  private makeTriangle(config: any) {
-    const { x, y, width, height, fillColor, strokeColor, strokeWidth } = config;
-
-    const triangle = this.add.graphics();
-    triangle.fillStyle(fillColor);
-    triangle.fillTriangle(
-      x, y - height / 2,      // 顶点
-      x - width / 2, y + height / 2,  // 左下角
-      x + width / 2, y + height / 2   // 右下角
-    );
-
-    if (strokeColor && strokeWidth) {
-      triangle.lineStyle(strokeWidth, strokeColor);
-      triangle.strokeTriangle(
-        x, y - height / 2,
-        x - width / 2, y + height / 2,
-        x + width / 2, y + height / 2
-      );
-    }
-
-    return triangle;
-  }
-
-  private setupInputEvents() {
-    // 监听画布点击事件
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      // 如果没有选择工具，则不处理点击
-      if (!this.selectedTool) return;
-
-      // 获取点击位置对应的网格坐标
-      const gridX = Math.floor(pointer.worldX / this.tileSize);
-      const gridY = Math.floor(pointer.worldY / this.tileSize);
-
-      // 检查是否在网格范围内
-      if (gridX >= 0 && gridX < this.gridWidth && gridY >= 0 && gridY < this.gridHeight) {
-        this.handleObjectPlacement(gridX, gridY);
-      }
-    });
-  }
-
-  private handleObjectPlacement(x: number, y: number) {
-    // 检查该位置是否已有对象
-    const existingObject = this.findObjectAtPosition(x, y);
-    if (existingObject) {
-      // 如果是相同类型的工具，则移除现有对象
-      if (this.isSameObjectType(existingObject, this.selectedTool)) {
-        this.removeObjectAtPosition(x, y);
-      } else {
-        // 如果是不同类型，则替换
-        this.removeObjectAtPosition(x, y);
-      }
-    }
-
-    // 根据选择的工具放置对象
-    switch (this.selectedTool) {
-      case 'normal-floor':
-        this.levelConfigManager.addFloor({ type: 'normal', x, y });
-        break;
-      case 'wall-floor':
-        this.levelConfigManager.addFloor({ type: 'wall', x, y });
-        break;
-      case 'conveyor-floor':
-        this.levelConfigManager.addFloor({
-          type: 'conveyor',
-          x,
-          y,
-          direction: 'right',
-          speed: 100
-        } as ConveyorFloor);
-        break;
-      case 'counter':
-        this.levelConfigManager.addStation({ type: 'counter', x, y });
-        break;
-      case 'plate-counter':
-        this.levelConfigManager.addStation({ type: 'plate-counter', x, y });
-        break;
-      case 'cut':
-        this.levelConfigManager.addStation({ type: 'cut', x, y });
-        break;
-      case 'pot':
-        this.levelConfigManager.addStation({ type: 'pot', x, y });
-        break;
-      case 'sink':
-        this.levelConfigManager.addStation({ type: 'sink', x, y });
-        break;
-      case 'delivery':
-        this.levelConfigManager.addStation({ type: 'delivery', x, y });
-        break;
-      case 'trash':
-        this.levelConfigManager.addStation({ type: 'trash', x, y });
-        break;
-      case 'player-1':
-        this.levelConfigManager.addPlayer({ id: 1, x, y, color: 0x4da6ff });
-        break;
-      case 'player-2':
-        this.levelConfigManager.addPlayer({ id: 2, x, y, color: 0xff4444 });
-        break;
-      case 'ingredient-tomato':
-        this.levelConfigManager.addStation({
-          type: 'ingredient',
-          x, y,
-          ingredientType: 'tomato' as IngredientType,
-          infinite: true
-        });
-        break;
-      case 'ingredient-lettuce':
-        this.levelConfigManager.addStation({
-          type: 'ingredient',
-          x, y,
-          ingredientType: 'lettuce' as IngredientType,
-          infinite: true
-        });
-        break;
-      case 'ingredient-rice':
-        this.levelConfigManager.addStation({
-          type: 'ingredient',
-          x, y,
-          ingredientType: 'rice' as IngredientType,
-          infinite: true
-        });
-        break;
-      case 'ingredient-fish':
-        this.levelConfigManager.addStation({
-          type: 'ingredient',
-          x, y,
-          ingredientType: 'fish' as IngredientType,
-          infinite: true
-        });
-        break;
-    }
-
-    // 重新渲染对象
-    this.renderLevelObjects();
-  }
-
-  private isSameObjectType(existingObj: any, tool: string | null): boolean {
-    if (!tool) return false;
-
-    // 检查工具类型与现有对象类型是否匹配
-    if (existingObj.type === 'floor') {
-      return tool.includes('-floor');
-    } else if (existingObj.type === 'station') {
-      return !tool.includes('-floor') && !tool.includes('player-');
-    } else if (existingObj.type === 'player') {
-      return tool.includes('player-');
-    }
-
-    return false;
-  }
-
-  private findObjectAtPosition(x: number, y: number) {
-    const config = this.levelConfigManager.getConfig();
-
-    // 检查是否存在地板
-    const floorIndex = config.map.floors.findIndex(f => f.x === x && f.y === y);
-    if (floorIndex !== -1) return { type: 'floor', index: floorIndex, config: config.map.floors[floorIndex] };
-
-    // 检查是否存在工作站
-    const stationIndex = config.stations.findIndex(s => s.x === x && s.y === y);
-    if (stationIndex !== -1) return { type: 'station', index: stationIndex, config: config.stations[stationIndex] };
-
-    // 检查是否存在玩家
-    const playerIndex = config.players.findIndex(p => p.x === x && p.y === y);
-    if (playerIndex !== -1) return { type: 'player', index: playerIndex, config: config.players[playerIndex] };
-
-    return null;
-  }
-
-  private removeObjectAtPosition(x: number, y: number) {
-    // 尝试移除地板
-    if (this.levelConfigManager.removeFloor(x, y)) {
+  public setSelectedTool(tool: string | null) {
+    this.selectedTool = tool;
+    if (this.interactionBlocked) {
       return;
     }
 
-    // 尝试移除工作站
-    if (this.levelConfigManager.removeStation(x, y)) {
+    if (tool === "hand-tool") {
+      this.input.setDefaultCursor("grab");
       return;
     }
 
-    // 尝试移除玩家
-    // 注意：这里需要特殊处理，因为玩家是通过ID而不是坐标删除的
-    const config = this.levelConfigManager.getConfig();
-    const playerIndex = config.players.findIndex(p => p.x === x && p.y === y);
-    if (playerIndex !== -1) {
-      config.players.splice(playerIndex, 1);
-      this.levelConfigManager.setConfig(config);
+    if (tool === "move-tool") {
+      this.input.setDefaultCursor("move");
       return;
+    }
+
+    if (tool === "zoom-tool") {
+      this.input.setDefaultCursor("zoom-in");
+      return;
+    }
+
+    this.input.setDefaultCursor("default");
+  }
+
+  public setToolOptions(options: Partial<FloorToolOptions>) {
+    this.toolOptions = {
+      ...this.toolOptions,
+      ...options,
+    };
+  }
+
+  public setViewportSize(width: number, height: number) {
+    const camera = this.cameras.main;
+    const centerX = camera.scrollX + this.viewportWidth / camera.zoom / 2;
+    const centerY = camera.scrollY + this.viewportHeight / camera.zoom / 2;
+
+    this.viewportWidth = Math.max(320, Math.floor(width));
+    this.viewportHeight = Math.max(240, Math.floor(height));
+
+    if (this.sys.isActive()) {
+      this.scale.resize(this.viewportWidth, this.viewportHeight);
+      const nextScroll = computeScrollForViewportCenter({
+        centerX,
+        centerY,
+        viewportWidth: this.viewportWidth,
+        viewportHeight: this.viewportHeight,
+        zoom: camera.zoom,
+      });
+      camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
+      this.clampCameraPosition();
+      this.emitCameraChanged();
     }
   }
 
-  private selectObject(object: any, sprite: Phaser.GameObjects.GameObject) {
-    // 取消之前的选择
-    if (this.selectionMarker) {
-      this.selectionMarker.destroy();
-      this.selectionMarker = null;
+  public setMapViewMode(mode: MapViewMode) {
+    this.mapViewMode = mode;
+
+    if (!this.sys.isActive()) {
+      return;
     }
 
-    // 创建新的选择标记
-    // 对于精灵对象，我们直接使用其位置和尺寸
-    let centerX = 0, centerY = 0, width = 40, height = 40;
-
-    if ('x' in sprite && typeof sprite.x === 'number') {
-      centerX = sprite.x;
-    }
-    if ('y' in sprite && typeof sprite.y === 'number') {
-      centerY = sprite.y;
+    if (mode === "fit") {
+      this.applyFitView();
+      this.emitViewModeChanged();
+      return;
     }
 
-    // 根据精灵类型估算尺寸
-    if ('width' in sprite && typeof sprite.width === 'number') {
-      width = sprite.width;
-    } else if ('displayWidth' in sprite && typeof sprite.displayWidth === 'number') {
-      width = sprite.displayWidth;
+    this.cameras.main.setZoom(this.browseZoomDefault);
+    this.clampCameraPosition();
+    this.emitViewModeChanged();
+    this.emitCameraChanged();
+  }
+
+  public resetCameraView() {
+    if (!this.sys.isActive()) {
+      return;
     }
 
-    if ('height' in sprite && typeof sprite.height === 'number') {
-      height = sprite.height;
-    } else if ('displayHeight' in sprite && typeof sprite.displayHeight === 'number') {
-      height = sprite.displayHeight;
+    if (this.mapViewMode === "fit") {
+      this.applyFitView();
+      return;
     }
 
-    this.selectionMarker = this.add.rectangle(
+    this.cameras.main.setZoom(this.browseZoomDefault);
+    this.centerCamera();
+    this.clampCameraPosition();
+    this.emitCameraChanged();
+  }
+
+  public getCameraState(): EditorCameraState {
+    const camera = this.cameras.main;
+    return {
+      scrollX: camera.scrollX,
+      scrollY: camera.scrollY,
+      zoom: camera.zoom,
+      visibleWidth: this.viewportWidth / camera.zoom,
+      visibleHeight: this.viewportHeight / camera.zoom,
+      worldWidth: this.gridWidth * this.tileSize,
+      worldHeight: this.gridHeight * this.tileSize,
+      centerX: camera.scrollX + this.viewportWidth / camera.zoom / 2,
+      centerY: camera.scrollY + this.viewportHeight / camera.zoom / 2,
+    };
+  }
+
+  public setCameraScroll(scrollX: number, scrollY: number) {
+    const camera = this.cameras.main;
+    camera.setScroll(scrollX, scrollY);
+    this.clampCameraPosition();
+    this.emitCameraChanged();
+  }
+
+  public setCameraCenter(centerX: number, centerY: number) {
+    const camera = this.cameras.main;
+    const nextScroll = computeScrollForViewportCenter({
       centerX,
       centerY,
-      width + 8,
-      height + 8,
-      0x00ff00
-    ).setStrokeStyle(2, 0x00ff00).setFillStyle(0x00ff00, 0.2);
-
-    // 触发属性面板更新
-    this.events.emit('object-selected', object);
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      zoom: camera.zoom,
+    });
+    camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
+    this.clampCameraPosition();
+    this.emitCameraChanged();
   }
 
-  public setSelectedTool(tool: string) {
-    this.selectedTool = tool;
+  public setCameraZoom(zoom: number) {
+    this.ensureBrowseMode();
+    const camera = this.cameras.main;
+    const nextZoom = clampSceneZoom({
+      zoom,
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      worldWidth: this.gridWidth * this.tileSize,
+      worldHeight: this.gridHeight * this.tileSize,
+      padding: this.fitPadding,
+    });
+    const nextScroll = computeZoomScrollFromViewportCenter({
+      scrollX: camera.scrollX,
+      scrollY: camera.scrollY,
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      currentZoom: camera.zoom,
+      nextZoom,
+    });
+    camera.setZoom(nextZoom);
+    camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
+    this.clampCameraPosition();
+    this.emitCameraChanged();
+  }
+
+  public setInteractionBlocked(blocked: boolean) {
+    this.interactionBlocked = blocked;
+    if (blocked) {
+      this.isPanning = false;
+      this.isZoomDragging = false;
+      this.isDraggingObject = false;
+      this.panStartPointer = null;
+      this.panStartScroll = null;
+      this.pendingPanStart = null;
+      this.objectDragSelection = null;
+    }
+  }
+
+  public updateLevelName(name: string) {
+    this.levelConfigManager.updateBasicInfo({ name });
+    this.emitConfigChanged();
+  }
+
+  public updateLevelDescription(description: string) {
+    this.levelConfigManager.updateBasicInfo({ description });
+    this.emitConfigChanged();
+  }
+
+  public updateGameType(
+    gameType: "local-coop" | "local-versus" | "online-coop" | "online-versus",
+  ) {
+    this.levelConfigManager.updateBasicInfo({ gameType });
+    this.emitConfigChanged();
+  }
+
+  public updateDuration(duration: number) {
+    this.levelConfigManager.updateBasicInfo({ duration });
+    this.emitConfigChanged();
+  }
+
+  public updateScoreTarget(target: Partial<LevelConfig["scoreTarget"]>) {
+    this.levelConfigManager.updateScoreTarget(target);
+    this.emitConfigChanged();
+  }
+
+  public updateOrderPool(orderPool: Partial<LevelConfig["orderPool"]>) {
+    this.levelConfigManager.updateOrderPool(orderPool);
+    this.emitConfigChanged();
+  }
+
+  public updateMapSize(width: number, height: number) {
+    this.levelConfigManager.updateMapSize(width, height);
+    this.refreshScene();
+  }
+
+  public updateSelectedObject(patch: Record<string, unknown>) {
+    if (!this.selectedObject) {
+      return;
+    }
+
+    const config = this.levelConfigManager.getConfig();
+
+    if (this.selectedObject.kind === "floor") {
+      const current = config.map.floors.find(
+        (floor) =>
+          floor.x === this.selectedObject?.x &&
+          floor.y === this.selectedObject?.y,
+      );
+      if (!current) {
+        return;
+      }
+
+      this.levelConfigManager.removeFloor(current.x, current.y);
+      const nextFloor = { ...current, ...patch } as FloorConfig;
+      this.levelConfigManager.addFloor(nextFloor);
+      this.selectedObject = {
+        kind: "floor",
+        x: nextFloor.x,
+        y: nextFloor.y,
+      };
+      this.refreshScene();
+      return;
+    }
+
+    if (this.selectedObject.kind === "station") {
+      const current = config.stations.find(
+        (station) =>
+          station.x === this.selectedObject?.x &&
+          station.y === this.selectedObject?.y,
+      );
+      if (!current) {
+        return;
+      }
+
+      this.levelConfigManager.removeStation(current.x, current.y);
+      const nextStation = { ...current, ...patch } as StationConfig;
+      this.levelConfigManager.addStation(nextStation);
+      this.selectedObject = {
+        kind: "station",
+        x: nextStation.x,
+        y: nextStation.y,
+      };
+      this.refreshScene();
+      return;
+    }
+
+    const current = config.players.find(
+      (player) => player.id === this.selectedObject?.id,
+    );
+    if (!current) {
+      return;
+    }
+
+    this.levelConfigManager.removePlayer(current.id);
+    const nextPlayer = { ...current, ...patch } as PlayerSpawn;
+    this.levelConfigManager.addPlayer(nextPlayer);
+    this.selectedObject = {
+      kind: "player",
+      id: nextPlayer.id,
+    };
+    this.refreshScene();
+  }
+
+  public deleteSelectedObject() {
+    if (!this.selectedObject) {
+      return;
+    }
+
+    if (this.selectedObject.kind === "floor") {
+      this.levelConfigManager.removeFloor(
+        this.selectedObject.x,
+        this.selectedObject.y,
+      );
+    } else if (this.selectedObject.kind === "station") {
+      this.levelConfigManager.removeStation(
+        this.selectedObject.x,
+        this.selectedObject.y,
+      );
+    } else {
+      this.levelConfigManager.removePlayer(this.selectedObject.id);
+    }
+
+    this.selectedObject = null;
+    this.refreshScene();
   }
 
   public clearSelection() {
-    if (this.selectionMarker) {
-      this.selectionMarker.destroy();
-      this.selectionMarker = null;
-    }
+    this.selectedObject = null;
+    this.refreshSelectionMarker();
+    this.emitSelectionChanged();
+  }
+
+  public createNewLevel() {
+    this.levelConfigManager = new LevelConfigManager(getDefaultLevelConfig());
+    this.selectedObject = null;
+    this.mapViewMode = "fit";
+    this.refreshScene();
+    this.emitViewModeChanged();
   }
 
   public getLevelConfig(): LevelConfig {
@@ -473,42 +421,876 @@ export class LevelEditorScene extends Phaser.Scene {
 
   public setLevelConfig(config: LevelConfig) {
     this.levelConfigManager = new LevelConfigManager(config);
-    this.gridWidth = config.map.width;
-    this.gridHeight = config.map.height;
-    this.createGrid();
-    this.renderLevelObjects();
+    this.selectedObject = null;
+    this.mapViewMode = "fit";
+    this.refreshScene();
+    this.emitViewModeChanged();
   }
 
   public exportLevelConfig(): LevelConfig {
     return this.levelConfigManager.getConfig();
   }
 
-  public updateLevelName(name: string) {
-    this.levelConfigManager.updateBasicInfo({ name });
+  public importLevelConfig(jsonString: string) {
+    const success = this.levelConfigManager.importJSON(jsonString);
+    if (!success) {
+      return {
+        success: false,
+        error: "导入失败，所选文件不是有效的关卡配置。",
+      };
+    }
+
+    this.selectedObject = null;
+    this.mapViewMode = "fit";
+    this.refreshScene();
+    this.emitViewModeChanged();
+    return { success: true };
   }
 
-  public updateLevelDescription(description: string) {
-    this.levelConfigManager.updateBasicInfo({ description });
-  }
-
-  public updateGameType(gameType: 'local-coop' | 'local-versus' | 'online-coop' | 'online-versus') {
-    this.levelConfigManager.updateBasicInfo({ gameType });
-  }
-
-  public updateDuration(duration: number) {
-    this.levelConfigManager.updateBasicInfo({ duration });
-  }
-
-  public updateMapSize(width: number, height: number) {
-    this.levelConfigManager.updateMapSize(width, height);
-    this.gridWidth = width;
-    this.gridHeight = height;
+  private refreshScene() {
+    this.syncGridSize();
+    this.updateWorldBounds();
     this.createGrid();
     this.renderLevelObjects();
+    this.refreshSelectionMarker();
+    this.refreshCameraView();
+    this.emitConfigChanged();
+    this.emitSelectionChanged();
+    this.emitCameraChanged();
   }
 
-  // Getter for selectedTool to make it accessible
-  public getSelectedTool(): string | null {
-    return this.selectedTool;
+  private syncGridSize() {
+    const config = this.levelConfigManager.getConfig();
+    this.gridWidth = config.map.width;
+    this.gridHeight = config.map.height;
+  }
+
+  private updateWorldBounds() {
+    const worldWidth = this.gridWidth * this.tileSize;
+    const worldHeight = this.gridHeight * this.tileSize;
+
+    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
+  }
+
+  private refreshCameraView() {
+    if (!this.sys.isActive()) {
+      return;
+    }
+
+    if (this.mapViewMode === "fit") {
+      this.applyFitView();
+      return;
+    }
+
+    this.clampCameraPosition();
+  }
+
+  private applyFitView() {
+    const camera = this.cameras.main;
+    const result = computeFitView({
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      worldWidth: this.gridWidth * this.tileSize,
+      worldHeight: this.gridHeight * this.tileSize,
+      padding: this.fitPadding,
+    });
+
+    camera.setZoom(normalizeZoom(result.zoom));
+    const nextScroll = computeScrollForViewportCenter({
+      centerX: result.centerX,
+      centerY: result.centerY,
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      zoom: camera.zoom,
+    });
+    camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
+    this.clampCameraPosition();
+    this.emitCameraChanged();
+  }
+
+  private centerCamera() {
+    const camera = this.cameras.main;
+    const nextScroll = computeScrollForViewportCenter({
+      centerX: (this.gridWidth * this.tileSize) / 2,
+      centerY: (this.gridHeight * this.tileSize) / 2,
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      zoom: camera.zoom,
+    });
+    camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
+  }
+
+  private clampCameraPosition() {
+    const camera = this.cameras.main;
+    const next = clampCameraScroll({
+      scrollX: camera.scrollX,
+      scrollY: camera.scrollY,
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      zoom: camera.zoom,
+      worldWidth: this.gridWidth * this.tileSize,
+      worldHeight: this.gridHeight * this.tileSize,
+    });
+
+    camera.setScroll(next.scrollX, next.scrollY);
+  }
+
+  private createGrid() {
+    this.gridGroup.clear(true, true);
+  }
+
+  private renderLevelObjects() {
+    this.objectGroup.clear(true, true);
+
+    const config = this.levelConfigManager.getConfig();
+    buildRenderableFloors(config).forEach((floor) => this.renderFloor(floor));
+    config.stations.forEach((station) => this.renderStation(station));
+    config.players.forEach((player) => this.renderPlayer(player));
+  }
+
+  private renderFloor(floor: FloorConfig) {
+    const { centerX, centerY } = this.toWorldPosition(floor.x, floor.y);
+    const renderSpec = getFloorRenderSpec(floor);
+    const tile = this.add.image(centerX, centerY, renderSpec.textureKey);
+    tile.setDisplaySize(this.tileSize, this.tileSize);
+    tile.setDepth(renderSpec.depth);
+    tile.setAngle(renderSpec.angle);
+    tile.setInteractive();
+    tile.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      this.handleObjectPointerDown(
+        pointer,
+        { kind: "floor", x: floor.x, y: floor.y },
+        cloneLevelConfig({
+          ...getDefaultLevelConfig(),
+          map: {
+            width: 1,
+            height: 1,
+            floors: [floor],
+          },
+          players: [],
+          stations: [],
+        }).map.floors[0],
+      );
+    });
+    this.objectGroup.add(tile);
+
+    if (floor.type !== "conveyor") {
+      return;
+    }
+
+    const label = this.add.text(
+      centerX,
+      centerY,
+      this.getDirectionGlyph(floor.direction),
+      {
+        fontSize: "18px",
+        color: "#111827",
+        fontStyle: "bold",
+      },
+    );
+    label.setOrigin(0.5);
+    label.setDepth(2);
+    this.objectGroup.add(label);
+  }
+
+  private renderStation(station: StationConfig) {
+    const { centerX, centerY } = this.toWorldPosition(station.x, station.y);
+    const textureKey = resolveStationTextureKey(station);
+    const stationSprite = this.add.image(
+      centerX,
+      centerY,
+      textureKey,
+    );
+    stationSprite.setDisplaySize(this.tileSize, this.tileSize);
+    stationSprite.setDepth(10);
+    stationSprite.setInteractive();
+    stationSprite.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      this.handleObjectPointerDown(
+        pointer,
+        { kind: "station", x: station.x, y: station.y },
+        cloneLevelConfig({
+          ...getDefaultLevelConfig(),
+          stations: [station],
+          players: [],
+          map: { width: 1, height: 1, floors: [] },
+        }).stations[0],
+      );
+    });
+    this.objectGroup.add(stationSprite);
+
+    this.renderStationOverlay(station, centerX, centerY);
+  }
+
+  private renderPlayer(player: PlayerSpawn) {
+    const { centerX, centerY } = this.toWorldPosition(player.x, player.y);
+    const sprite = this.add.image(
+      centerX,
+      centerY,
+      "player",
+    );
+    sprite.setDisplaySize(30, 30);
+    sprite.setDepth(30);
+    sprite.setTint(player.color ?? (player.id === 1 ? 0x4da6ff : 0xff4444));
+    sprite.setInteractive();
+    sprite.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      this.handleObjectPointerDown(pointer, { kind: "player", id: player.id }, { ...player });
+    });
+    this.objectGroup.add(sprite);
+
+    const label = this.add.text(centerX, centerY + 2, `P${player.id}`, {
+      fontSize: "10px",
+      color: "#ffffff",
+      fontStyle: "bold",
+    });
+    label.setOrigin(0.5);
+    label.setDepth(31);
+    this.objectGroup.add(label);
+  }
+
+  private setupInputEvents() {
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (this.interactionBlocked) {
+        return;
+      }
+
+      if (this.selectedTool === "hand-tool" || this.spacePressed) {
+        this.beginCameraPan(pointer);
+        return;
+      }
+
+      if (this.selectedTool === "zoom-tool") {
+        this.beginZoomDrag(pointer);
+        return;
+      }
+
+      if (this.suppressCanvasPlacement) {
+        this.suppressCanvasPlacement = false;
+        return;
+      }
+
+      const gridX = Math.floor(pointer.worldX / this.tileSize);
+      const gridY = Math.floor(pointer.worldY / this.tileSize);
+
+      if (!this.isInBounds(gridX, gridY)) {
+        this.clearSelection();
+        return;
+      }
+
+      if (!this.selectedTool) {
+        this.beginPotentialPan(pointer);
+        return;
+      }
+
+      this.placeObjectAt(gridX, gridY);
+    });
+
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (this.isDraggingObject) {
+        return;
+      }
+
+      this.promotePendingPan(pointer);
+
+      if (!this.isPanning || !this.panStartPointer || !this.panStartScroll) {
+        if (this.isZoomDragging) {
+          this.updateZoomDrag(pointer);
+        }
+        return;
+      }
+
+      const camera = this.cameras.main;
+      camera.setScroll(
+        this.panStartScroll.x - (pointer.x - this.panStartPointer.x) / camera.zoom,
+        this.panStartScroll.y - (pointer.y - this.panStartPointer.y) / camera.zoom,
+      );
+      this.clampCameraPosition();
+      this.emitCameraChanged();
+    });
+
+    this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (this.isDraggingObject) {
+        this.finishObjectDrag(pointer);
+      }
+
+      if (this.pendingPanStart && !this.isPanning && this.selectedTool === null) {
+        this.clearSelection();
+      }
+
+      this.pendingPanStart = null;
+      this.stopPanning();
+      this.stopZoomDrag();
+    });
+
+    this.input.on(
+      "wheel",
+      (
+        pointer: Phaser.Input.Pointer,
+        _gameObjects: Phaser.GameObjects.GameObject[],
+        _deltaX: number,
+        deltaY: number,
+      ) => {
+        if (this.interactionBlocked) {
+          return;
+        }
+
+        this.ensureBrowseMode();
+        const camera = this.cameras.main;
+        const nextZoom = clampSceneZoom({
+          zoom: camera.zoom * (deltaY > 0 ? 0.9 : 1.1),
+          viewportWidth: this.viewportWidth,
+          viewportHeight: this.viewportHeight,
+          worldWidth: this.gridWidth * this.tileSize,
+          worldHeight: this.gridHeight * this.tileSize,
+          padding: this.fitPadding,
+        });
+        const nextScroll = computeZoomScrollFromViewportCenter({
+          scrollX: camera.scrollX,
+          scrollY: camera.scrollY,
+          viewportWidth: this.viewportWidth,
+          viewportHeight: this.viewportHeight,
+          currentZoom: camera.zoom,
+          nextZoom,
+        });
+        camera.setZoom(nextZoom);
+        camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
+        this.clampCameraPosition();
+        this.emitCameraChanged();
+      },
+    );
+
+    this.input.keyboard?.on("keydown-SPACE", () => {
+      this.spacePressed = true;
+      if (this.mapViewMode === "browse" && !this.interactionBlocked) {
+        this.input.setDefaultCursor("grab");
+      }
+    });
+    this.input.keyboard?.on("keyup-SPACE", () => {
+      this.spacePressed = false;
+      this.stopPanning();
+      if (!this.interactionBlocked) {
+        this.input.setDefaultCursor("default");
+      }
+    });
+
+    this.input.keyboard?.on("keydown-DELETE", () => {
+      if (!this.interactionBlocked) {
+        this.deleteSelectedObject();
+      }
+    });
+    this.input.keyboard?.on("keydown-BACKSPACE", () => {
+      if (!this.interactionBlocked) {
+        this.deleteSelectedObject();
+      }
+    });
+  }
+
+  private stopPanning() {
+    this.isPanning = false;
+    this.panStartPointer = null;
+    this.panStartScroll = null;
+    this.pendingPanStart = null;
+    this.input.setDefaultCursor(
+      this.isHandToolActive() || this.spacePressed
+        ? "grab"
+        : this.selectedTool === "move-tool"
+          ? "move"
+          : this.selectedTool === "zoom-tool"
+            ? "zoom-in"
+            : "default",
+    );
+  }
+
+  private stopZoomDrag() {
+    this.isZoomDragging = false;
+  }
+
+  private placeObjectAt(x: number, y: number) {
+    const floor = buildDefaultFloorForTool(
+      this.selectedTool ?? "",
+      x,
+      y,
+      this.toolOptions,
+    );
+    if (floor) {
+      this.levelConfigManager.addFloor(floor);
+      this.selectedObject = { kind: "floor", x, y };
+      this.refreshScene();
+      return;
+    }
+
+    const station = buildDefaultStationForTool(this.selectedTool ?? "", x, y);
+    if (station) {
+      this.levelConfigManager.addStation(station);
+      this.selectedObject = { kind: "station", x, y };
+      this.refreshScene();
+      return;
+    }
+
+    const player = buildDefaultPlayerForTool(this.selectedTool ?? "", x, y);
+    if (player) {
+      this.levelConfigManager.addPlayer(player);
+      this.selectedObject = { kind: "player", id: player.id };
+      this.refreshScene();
+    }
+  }
+
+  private selectObject(
+    selection: EditorSelection,
+    object: FloorConfig | StationConfig | PlayerSpawn,
+  ) {
+    this.selectedObject = selection;
+    this.refreshSelectionMarker();
+
+    if (selection.kind === "floor") {
+      this.events.emit("object-selected", {
+        kind: "floor",
+        object,
+      } satisfies Exclude<SelectionPayload, null>);
+      return;
+    }
+
+    if (selection.kind === "station") {
+      this.events.emit("object-selected", {
+        kind: "station",
+        object,
+      } satisfies Exclude<SelectionPayload, null>);
+      return;
+    }
+
+    this.events.emit("object-selected", {
+      kind: "player",
+      object,
+    } satisfies Exclude<SelectionPayload, null>);
+  }
+
+  private refreshSelectionMarker() {
+    this.selectionMarker?.destroy();
+    this.selectionMarker = null;
+
+    const target = this.getSelectionTarget();
+    if (!target) {
+      return;
+    }
+
+    const { centerX, centerY } = this.toWorldPosition(target.x, target.y);
+    this.selectionMarker = this.add.rectangle(
+      centerX,
+      centerY,
+      this.tileSize - 4,
+      this.tileSize - 4,
+      0x22c55e,
+      0.14,
+    );
+    this.selectionMarker.setStrokeStyle(2, 0x22c55e);
+  }
+
+  private emitConfigChanged() {
+    this.events.emit("config-changed", {
+      config: this.levelConfigManager.getConfig(),
+      validation: this.levelConfigManager.validate(),
+    });
+  }
+
+  private emitSelectionChanged() {
+    if (!this.selectedObject) {
+      this.events.emit("object-selected", null satisfies SelectionPayload);
+      return;
+    }
+
+    const selection = this.getSelectedConfigObject();
+    if (!selection) {
+      this.events.emit("object-selected", null satisfies SelectionPayload);
+      return;
+    }
+
+    this.selectObject(this.selectedObject, selection);
+  }
+
+  private getSelectedConfigObject(): FloorConfig | StationConfig | PlayerSpawn | null {
+    const config = this.levelConfigManager.getConfig();
+
+    if (!this.selectedObject) {
+      return null;
+    }
+
+    if (this.selectedObject.kind === "floor") {
+      return (
+        config.map.floors.find(
+          (floor) =>
+            floor.x === this.selectedObject?.x &&
+            floor.y === this.selectedObject?.y,
+        ) ?? null
+      );
+    }
+
+    if (this.selectedObject.kind === "station") {
+      return (
+        config.stations.find(
+          (station) =>
+            station.x === this.selectedObject?.x &&
+            station.y === this.selectedObject?.y,
+        ) ?? null
+      );
+    }
+
+    return (
+      config.players.find((player) => player.id === this.selectedObject?.id) ?? null
+    );
+  }
+
+  private getSelectionTarget() {
+    if (!this.selectedObject) {
+      return null;
+    }
+
+    if (this.selectedObject.kind === "player") {
+      const player = this.levelConfigManager
+        .getConfig()
+        .players.find((entry) => entry.id === this.selectedObject?.id);
+      return player ? { x: player.x, y: player.y } : null;
+    }
+
+    return { x: this.selectedObject.x, y: this.selectedObject.y };
+  }
+
+  private getFloorColor(floor: FloorConfig) {
+    switch (floor.type) {
+      case "wall":
+        return 0x64748b;
+      case "conveyor":
+        return 0xfacc15;
+      default:
+        return 0xe2e8f0;
+    }
+  }
+
+  private getStationColor(station: StationConfig) {
+    switch (station.type) {
+      case "delivery":
+        return 0x4ade80;
+      case "plate-counter":
+        return 0x93c5fd;
+      case "cut":
+        return 0xfda4af;
+      case "pot":
+        return 0xfb923c;
+      case "sink":
+        return 0x67e8f9;
+      case "dirty-plate":
+        return 0x94a3b8;
+      case "trash":
+        return 0x9ca3af;
+      case "fire-extinguisher":
+        return 0xf87171;
+      case "mixer":
+        return 0xc084fc;
+      case "ingredient":
+        return this.getIngredientColor(station.ingredientType);
+      default:
+        return 0xd6d3d1;
+    }
+  }
+
+  private getIngredientColor(ingredientType: string) {
+    const colorMap: Record<string, number> = {
+      tomato: 0xfb7185,
+      lettuce: 0x86efac,
+      rice: 0xfef3c7,
+      fish: 0x7dd3fc,
+      seaweed: 0x6ee7b7,
+      onion: 0xe9d5ff,
+      potato: 0xfdba74,
+      carrot: 0xfb923c,
+      egg: 0xfef08a,
+      flour: 0xe7e5e4,
+      meat: 0xfca5a5,
+      cheese: 0xfde047,
+      chocolate: 0xa16207,
+      "burger-bun": 0xf5d0a9,
+    };
+
+    return colorMap[ingredientType] ?? 0xd4d4d8;
+  }
+
+  private getStationLabel(station: StationConfig) {
+    switch (station.type) {
+      case "counter":
+        return "柜台";
+      case "plate-counter":
+        return "盘子";
+      case "cut":
+        return "切菜";
+      case "pot":
+        return "锅";
+      case "sink":
+        return "洗碗";
+      case "delivery":
+        return "上菜";
+      case "dirty-plate":
+        return "脏盘";
+      case "trash":
+        return "垃圾";
+      case "fire-extinguisher":
+        return "灭火";
+      case "mixer":
+        return "搅拌";
+      case "ingredient":
+        return this.getIngredientLabel(station.ingredientType);
+      default:
+        return station.type;
+    }
+  }
+
+  private getIngredientLabel(ingredientType: string) {
+    const labelMap: Record<string, string> = {
+      tomato: "番茄",
+      lettuce: "生菜",
+      rice: "米",
+      fish: "鱼",
+      seaweed: "紫菜",
+      onion: "洋葱",
+      potato: "土豆",
+      carrot: "胡萝卜",
+      egg: "鸡蛋",
+      flour: "面粉",
+      meat: "肉",
+      cheese: "芝士",
+      chocolate: "巧克力",
+      "burger-bun": "面包胚",
+    };
+
+    return labelMap[ingredientType] ?? ingredientType;
+  }
+
+  private getDirectionGlyph(direction: ConveyorFloor["direction"]) {
+    switch (direction) {
+      case "up":
+        return "↑";
+      case "down":
+        return "↓";
+      case "left":
+        return "←";
+      default:
+        return "→";
+    }
+  }
+
+  private isInBounds(x: number, y: number) {
+    return x >= 0 && y >= 0 && x < this.gridWidth && y < this.gridHeight;
+  }
+
+  private toWorldPosition(x: number, y: number) {
+    return {
+      centerX: x * this.tileSize + this.tileSize / 2,
+      centerY: y * this.tileSize + this.tileSize / 2,
+    };
+  }
+
+  private handleObjectPointerDown(
+    pointer: Phaser.Input.Pointer,
+    selection: EditorSelection,
+    object: FloorConfig | StationConfig | PlayerSpawn,
+  ) {
+    this.suppressCanvasPlacement = true;
+    this.selectObject(selection, object);
+
+    if (this.selectedTool === "move-tool") {
+      this.objectDragSelection = selection;
+      this.isDraggingObject = true;
+      this.input.setDefaultCursor("grabbing");
+    }
+
+    if (this.selectedTool === "hand-tool") {
+      this.beginCameraPan(pointer);
+    }
+  }
+
+  private isHandToolActive() {
+    return this.selectedTool === "hand-tool";
+  }
+
+  private beginPotentialPan(pointer: Phaser.Input.Pointer) {
+    this.pendingPanStart = { x: pointer.x, y: pointer.y };
+    this.panStartScroll = {
+      x: this.cameras.main.scrollX,
+      y: this.cameras.main.scrollY,
+    };
+  }
+
+  private promotePendingPan(pointer: Phaser.Input.Pointer) {
+    if (!this.pendingPanStart || this.isPanning || !this.panStartScroll) {
+      return;
+    }
+
+    const deltaX = pointer.x - this.pendingPanStart.x;
+    const deltaY = pointer.y - this.pendingPanStart.y;
+    if (Math.hypot(deltaX, deltaY) < this.panThreshold) {
+      return;
+    }
+
+    this.ensureBrowseMode();
+    this.isPanning = true;
+    this.panStartPointer = { ...this.pendingPanStart };
+    this.input.setDefaultCursor("grabbing");
+  }
+
+  private beginCameraPan(pointer: Phaser.Input.Pointer) {
+    this.ensureBrowseMode();
+    this.isPanning = true;
+    this.pendingPanStart = null;
+    this.panStartPointer = { x: pointer.x, y: pointer.y };
+    this.panStartScroll = {
+      x: this.cameras.main.scrollX,
+      y: this.cameras.main.scrollY,
+    };
+    this.input.setDefaultCursor("grabbing");
+  }
+
+  private beginZoomDrag(pointer: Phaser.Input.Pointer) {
+    this.ensureBrowseMode();
+    this.isZoomDragging = true;
+    this.zoomDragOriginY = pointer.y;
+    this.zoomDragStartZoom = this.cameras.main.zoom;
+    this.input.setDefaultCursor("ns-resize");
+  }
+
+  private updateZoomDrag(pointer: Phaser.Input.Pointer) {
+    const delta = (this.zoomDragOriginY - pointer.y) / 240;
+    const camera = this.cameras.main;
+    const nextZoom = clampSceneZoom({
+      zoom: this.zoomDragStartZoom + delta,
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      worldWidth: this.gridWidth * this.tileSize,
+      worldHeight: this.gridHeight * this.tileSize,
+      padding: this.fitPadding,
+    });
+    const nextScroll = computeZoomScrollFromViewportCenter({
+      scrollX: camera.scrollX,
+      scrollY: camera.scrollY,
+      viewportWidth: this.viewportWidth,
+      viewportHeight: this.viewportHeight,
+      currentZoom: camera.zoom,
+      nextZoom,
+    });
+    camera.setZoom(nextZoom);
+    camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
+    this.clampCameraPosition();
+    this.emitCameraChanged();
+  }
+
+  private finishObjectDrag(pointer: Phaser.Input.Pointer) {
+    if (!this.objectDragSelection) {
+      return;
+    }
+
+    const gridX = Math.floor(pointer.worldX / this.tileSize);
+    const gridY = Math.floor(pointer.worldY / this.tileSize);
+
+    this.isDraggingObject = false;
+    this.objectDragSelection = null;
+    this.input.setDefaultCursor(this.isHandToolActive() ? "grab" : "default");
+
+    if (!this.isInBounds(gridX, gridY)) {
+      return;
+    }
+
+    if (this.selectedObject?.kind === "player") {
+      this.updateSelectedObject({ x: gridX, y: gridY });
+      return;
+    }
+
+    if (
+      this.selectedObject &&
+      "x" in this.selectedObject &&
+      "y" in this.selectedObject &&
+      this.selectedObject.x === gridX &&
+      this.selectedObject.y === gridY
+    ) {
+      return;
+    }
+
+    this.updateSelectedObject({ x: gridX, y: gridY });
+  }
+
+  private ensureBrowseMode() {
+    if (this.mapViewMode === "browse") {
+      return;
+    }
+
+    this.mapViewMode = "browse";
+    this.emitViewModeChanged();
+  }
+
+  private emitViewModeChanged() {
+    this.events.emit("view-mode-changed", this.mapViewMode);
+  }
+
+  private emitCameraChanged() {
+    this.events.emit("camera-changed", this.getCameraState());
+  }
+
+  private getStationTextureKey(station: StationConfig) {
+    return resolveStationTextureKey(station);
+  }
+
+  private renderStationOverlay(
+    station: StationConfig,
+    centerX: number,
+    centerY: number,
+  ) {
+    if (station.type === "plate-counter") {
+      const plate = this.add.image(centerX, centerY, "item_plate");
+      plate.setDisplaySize(28, 28);
+      plate.setDepth(11);
+      this.objectGroup.add(plate);
+      return;
+    }
+
+    if (station.type === "pot") {
+      const pot = this.add.image(centerX, centerY, "item_pot");
+      pot.setDisplaySize(28, 28);
+      pot.setDepth(11);
+      this.objectGroup.add(pot);
+      return;
+    }
+
+    if (station.type === "fire-extinguisher") {
+      const extinguisher = this.add.image(centerX, centerY, "item_fire_extinguisher");
+      extinguisher.setDisplaySize(22, 22);
+      extinguisher.setDepth(11);
+      this.objectGroup.add(extinguisher);
+      return;
+    }
+
+    if (station.type === "ingredient") {
+      const badge = this.add.text(
+        centerX,
+        centerY + 16,
+        getIngredientLabel(station.ingredientType),
+        {
+          fontSize: "8px",
+          color: "#f8fafc",
+          backgroundColor: "#0f172a",
+          padding: { left: 4, right: 4, top: 1, bottom: 1 },
+        },
+      );
+      badge.setOrigin(0.5);
+      badge.setDepth(12);
+      this.objectGroup.add(badge);
+      return;
+    }
+
+    if (station.type === "mixer") {
+      const badge = this.add.text(centerX, centerY + 16, "搅拌", {
+        fontSize: "8px",
+        color: "#f8fafc",
+        backgroundColor: "#0f172a",
+        padding: { left: 4, right: 4, top: 1, bottom: 1 },
+      });
+      badge.setOrigin(0.5);
+      badge.setDepth(12);
+      this.objectGroup.add(badge);
+    }
   }
 }
