@@ -1,14 +1,11 @@
 import { buildDefaultFloorForTool, buildDefaultPlayerForTool, buildDefaultStationForTool } from "../../editor/level-editor-utils";
+import type { FloorToolOptions } from "../../editor/level-editor-utils";
 import type { FloorConfig, LevelConfig, PlayerSpawn, StationConfig } from "../../types/level-config";
 import type { EditorSelection } from "../../editor/level-editor-utils";
 
 // 承接关卡配置变更，并在每次编辑后统一刷新场景。
 export interface EditorSceneConfigContext {
   levelConfigManager: {
-    updateBasicInfo: (patch: Record<string, unknown>) => void;
-    updateScoreTarget: (target: Partial<LevelConfig["scoreTarget"]>) => void;
-    updateOrderPool: (orderPool: Partial<LevelConfig["orderPool"]>) => void;
-    updateMapSize: (width: number, height: number) => void;
     getConfig: () => LevelConfig;
     addFloor: (floor: FloorConfig) => void;
     removeFloor: (x: number, y: number) => void;
@@ -17,72 +14,11 @@ export interface EditorSceneConfigContext {
     addPlayer: (player: PlayerSpawn) => void;
     removePlayer: (id: number) => void;
     importJSON: (jsonString: string) => boolean;
-    validate: () => unknown;
   };
   selectedObject: EditorSelection | null;
   selectedTool: string | null;
-  toolOptions: { conveyorDirection: "up" | "down" | "left" | "right"; conveyorSpeed: number };
-  emitConfigChanged: () => void;
+  toolOptions: FloorToolOptions;
   refreshScene: () => void;
-}
-
-/**
- * 更新关卡名称并触发配置变更事件。
- */
-export function updateLevelName(scene: EditorSceneConfigContext, name: string) {
-  scene.levelConfigManager.updateBasicInfo({ name });
-  scene.emitConfigChanged();
-}
-
-/**
- * 更新关卡描述并触发配置变更事件。
- */
-export function updateLevelDescription(scene: EditorSceneConfigContext, description: string) {
-  scene.levelConfigManager.updateBasicInfo({ description });
-  scene.emitConfigChanged();
-}
-
-/**
- * 更新关卡模式并触发配置变更事件。
- */
-export function updateGameType(
-  scene: EditorSceneConfigContext,
-  gameType: "local-coop" | "local-versus" | "online-coop" | "online-versus",
-) {
-  scene.levelConfigManager.updateBasicInfo({ gameType });
-  scene.emitConfigChanged();
-}
-
-/**
- * 更新关卡时长并触发配置变更事件。
- */
-export function updateDuration(scene: EditorSceneConfigContext, duration: number) {
-  scene.levelConfigManager.updateBasicInfo({ duration });
-  scene.emitConfigChanged();
-}
-
-/**
- * 更新目标分数配置并触发配置变更事件。
- */
-export function updateScoreTarget(scene: EditorSceneConfigContext, target: Partial<LevelConfig["scoreTarget"]>) {
-  scene.levelConfigManager.updateScoreTarget(target);
-  scene.emitConfigChanged();
-}
-
-/**
- * 更新订单池配置并触发配置变更事件。
- */
-export function updateOrderPool(scene: EditorSceneConfigContext, orderPool: Partial<LevelConfig["orderPool"]>) {
-  scene.levelConfigManager.updateOrderPool(orderPool);
-  scene.emitConfigChanged();
-}
-
-/**
- * 更新地图尺寸，并刷新整个编辑器场景。
- */
-export function updateMapSize(scene: EditorSceneConfigContext, width: number, height: number) {
-  scene.levelConfigManager.updateMapSize(width, height);
-  scene.refreshScene();
 }
 
 /**
@@ -171,30 +107,6 @@ export function deleteSelectedObject(scene: EditorSceneConfigContext) {
 
   scene.selectedObject = null;
   scene.refreshScene();
-}
-
-/**
- * 基于默认配置重置编辑器场景状态。
- */
-export function createNewLevel(scene: EditorSceneConfigContext) {
-  scene.selectedObject = null;
-  scene.refreshScene();
-}
-
-/**
- * 用外部传入的配置替换当前场景内容。
- */
-export function setLevelConfig(scene: EditorSceneConfigContext, config: LevelConfig) {
-  void config;
-  scene.selectedObject = null;
-  scene.refreshScene();
-}
-
-/**
- * 导出当前关卡配置。
- */
-export function exportLevelConfig(scene: EditorSceneConfigContext) {
-  return scene.levelConfigManager.getConfig();
 }
 
 /**

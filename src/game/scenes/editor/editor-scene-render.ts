@@ -11,20 +11,16 @@ import {
 import type {
   ConveyorFloor,
   FloorConfig,
-  LevelConfig,
   PlayerSpawn,
   StationConfig,
 } from "../../types/level-config";
 import { getDefaultLevelConfig } from "../../types/level-config";
 
 // 负责渲染编辑器中的网格内容和可交互对象。
-export interface EditorSceneRenderContext {
+export interface EditorSceneRenderContext extends inputModule.EditorSceneInputContext {
   add: Phaser.GameObjects.GameObjectFactory;
   gridGroup: Phaser.GameObjects.Group;
   objectGroup: Phaser.GameObjects.Group;
-  tileSize: number;
-  levelConfigManager: { getConfig: () => LevelConfig };
-  inputContext: inputModule.EditorSceneInputContext;
 }
 
 /**
@@ -59,7 +55,7 @@ export function renderFloor(scene: EditorSceneRenderContext, floor: FloorConfig)
   tile.setInteractive();
   tile.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
     inputModule.handleObjectPointerDown(
-      scene.inputContext,
+      scene,
       pointer,
       { kind: "floor", x: floor.x, y: floor.y },
       cloneLevelConfig({
@@ -108,7 +104,7 @@ export function renderStation(scene: EditorSceneRenderContext, station: StationC
   stationSprite.setInteractive();
   stationSprite.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
     inputModule.handleObjectPointerDown(
-      scene.inputContext,
+      scene,
       pointer,
       { kind: "station", x: station.x, y: station.y },
       cloneLevelConfig({
@@ -136,7 +132,7 @@ export function renderPlayer(scene: EditorSceneRenderContext, player: PlayerSpaw
   sprite.setInteractive();
   sprite.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
     inputModule.handleObjectPointerDown(
-      scene.inputContext,
+      scene,
       pointer,
       { kind: "player", id: player.id },
       { ...player },

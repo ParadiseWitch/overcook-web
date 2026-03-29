@@ -7,13 +7,15 @@ import {
   panCameraByScreenDelta,
   screenToWorld,
   setCameraZoom as updateCameraZoom,
-  type EditorCameraState,
 } from "../../editor/editor-camera";
 import type { EditorSelection } from "../../editor/level-editor-utils";
 import type { FloorConfig, PlayerSpawn, StationConfig } from "../../types/level-config";
 
 // 负责平移、缩放和对象编辑相关的指针/键盘状态切换。
-export interface EditorSceneInputContext {
+export interface EditorSceneInputContext
+  extends cameraModule.EditorSceneCameraContext,
+    selectionModule.EditorSceneSelectionContext,
+    configModule.EditorSceneConfigContext {
   input: Phaser.Input.InputPlugin;
   selectedTool: string | null;
   interactionBlocked: boolean;
@@ -32,11 +34,6 @@ export interface EditorSceneInputContext {
   zoomDragOriginY: number;
   zoomDragStartZoom: number;
   objectDragSelection: EditorSelection | null;
-  selectedObject: EditorSelection | null;
-  cameraState: EditorCameraState;
-  cameraContext: cameraModule.EditorSceneCameraContext;
-  selectionContext: selectionModule.EditorSceneSelectionContext;
-  configContext: configModule.EditorSceneConfigContext;
   setCurrentCursor: () => void;
 }
 
@@ -52,7 +49,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
     const worldPoint = screenToWorld(scene.cameraState, { x: pointer.x, y: pointer.y });
     if (!worldPoint.insideCanvas) {
       if (scene.selectedTool === null) {
-        selectionModule.clearSelection(scene.selectionContext);
+        selectionModule.clearSelection(scene);
       }
       return;
     }
@@ -76,7 +73,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
     const gridY = Math.floor((worldPoint.y ?? 0) / scene.tileSize);
 
     if (!isInBounds(scene, gridX, gridY)) {
-      selectionModule.clearSelection(scene.selectionContext);
+      selectionModule.clearSelection(scene);
       return;
     }
 
@@ -85,7 +82,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
       return;
     }
 
-    configModule.placeObjectAt(scene.configContext, gridX, gridY);
+    configModule.placeObjectAt(scene, gridX, gridY);
   });
 
   scene.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
@@ -107,7 +104,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
       deltaY: pointer.y - scene.panStartPointer.y,
     });
 
-    cameraModule.setCameraCenter(scene.cameraContext, nextState.centerX, nextState.centerY);
+    cameraModule.setCameraCenter(scene, nextState.centerX, nextState.centerY);
   });
 
   scene.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -116,7 +113,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
     }
 
     if (scene.pendingPanStart && !scene.isPanning && scene.selectedTool === null) {
-      selectionModule.clearSelection(scene.selectionContext);
+      selectionModule.clearSelection(scene);
     }
 
     scene.pendingPanStart = null;
@@ -141,7 +138,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
         return;
       }
 
-      cameraModule.setCameraZoom(scene.cameraContext, scene.cameraState.zoom * (deltaY > 0 ? 0.9 : 1.1));
+      cameraModule.setCameraZoom(scene, scene.cameraState.zoom * (deltaY > 0 ? 0.9 : 1.1));
     },
   );
 
@@ -161,12 +158,12 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
 
   scene.input.keyboard?.on("keydown-DELETE", () => {
     if (!scene.interactionBlocked) {
-      configModule.deleteSelectedObject(scene.configContext);
+      configModule.deleteSelectedObject(scene);
     }
   });
   scene.input.keyboard?.on("keydown-BACKSPACE", () => {
     if (!scene.interactionBlocked) {
-      configModule.deleteSelectedObject(scene.configContext);
+      configModule.deleteSelectedObject(scene);
     }
   });
 }
@@ -249,7 +246,7 @@ export function beginZoomDrag(scene: EditorSceneInputContext, pointer: Phaser.In
 export function updateZoomDrag(scene: EditorSceneInputContext, pointer: Phaser.Input.Pointer) {
   const delta = (scene.zoomDragOriginY - pointer.y) / 240;
   const nextState = updateCameraZoom(scene.cameraState, scene.zoomDragStartZoom + delta);
-  cameraModule.setCameraZoom(scene.cameraContext, nextState.zoom);
+  cameraModule.setCameraZoom(scene, nextState.zoom);
 }
 
 /**
@@ -278,7 +275,7 @@ export function finishObjectDrag(scene: EditorSceneInputContext, pointer: Phaser
   }
 
   if (scene.selectedObject?.kind === "player") {
-    configModule.updateSelectedObject(scene.configContext, { x: gridX, y: gridY });
+    configModule.updateSelectedObject(scene, { x: gridX, y: gridY });
     return;
   }
 
@@ -292,7 +289,7 @@ export function finishObjectDrag(scene: EditorSceneInputContext, pointer: Phaser
     return;
   }
 
-  configModule.updateSelectedObject(scene.configContext, { x: gridX, y: gridY });
+  configModule.updateSelectedObject(scene, { x: gridX, y: gridY });
 }
 
 /**
@@ -305,7 +302,7 @@ export function handleObjectPointerDown(
   object: FloorConfig | StationConfig | PlayerSpawn,
 ) {
   scene.suppressCanvasPlacement = true;
-  selectionModule.selectObject(scene.selectionContext, selection, object);
+  selectionModule.selectObject(scene, selection, object);
 
   if (scene.selectedTool === "move-tool") {
     scene.objectDragSelection = selection;

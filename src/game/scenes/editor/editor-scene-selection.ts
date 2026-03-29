@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 
+import type { EditorSceneConfigContext } from "./editor-scene-config";
 import type { EditorSelection } from "../../editor/level-editor-utils";
 import type { FloorConfig, PlayerSpawn, StationConfig } from "../../types/level-config";
 
@@ -15,14 +16,7 @@ export interface EditorSceneSelectionContext {
   tileSize: number;
   selectedObject: EditorSelection | null;
   selectionMarker: Phaser.GameObjects.Rectangle | null;
-  levelConfigManager: {
-    getConfig: () => {
-      map: { floors: FloorConfig[] };
-      stations: StationConfig[];
-      players: PlayerSpawn[];
-    };
-  };
-  toWorldPosition: (x: number, y: number) => { centerX: number; centerY: number };
+  levelConfigManager: EditorSceneConfigContext["levelConfigManager"];
 }
 
 // 统一维护选中状态、选中框渲染和对外事件载荷。
@@ -80,7 +74,8 @@ export function refreshSelectionMarker(scene: EditorSceneSelectionContext) {
     return;
   }
 
-  const { centerX, centerY } = scene.toWorldPosition(target.x, target.y);
+  const centerX = target.x * scene.tileSize + scene.tileSize / 2;
+  const centerY = target.y * scene.tileSize + scene.tileSize / 2;
   scene.selectionMarker = scene.add.rectangle(
     centerX,
     centerY,

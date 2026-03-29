@@ -13,13 +13,13 @@ export interface EditorSceneCameraContext {
   cameras: { main: Phaser.Cameras.Scene2D.Camera };
   scale: { resize: (width: number, height: number) => void };
   sys: { isActive: () => boolean };
+  events: Phaser.Events.EventEmitter;
   canvasContainerWidth: number;
   canvasContainerHeight: number;
   gridWidth: number;
   gridHeight: number;
   tileSize: number;
   cameraState: EditorCameraState;
-  emitCameraChanged: () => void;
 }
 
 /**
@@ -55,7 +55,7 @@ export function setCanvasSize(scene: EditorSceneCameraContext, width: number, he
     zoom: scene.cameraState.zoom,
   });
   applyCameraState(scene);
-  scene.emitCameraChanged();
+  emitCameraChanged(scene);
 }
 
 /**
@@ -64,7 +64,7 @@ export function setCanvasSize(scene: EditorSceneCameraContext, width: number, he
 export function setCameraCenter(scene: EditorSceneCameraContext, centerX: number, centerY: number) {
   scene.cameraState = updateCameraCenter(scene.cameraState, centerX, centerY);
   applyCameraState(scene);
-  scene.emitCameraChanged();
+  emitCameraChanged(scene);
 }
 
 /**
@@ -73,7 +73,7 @@ export function setCameraCenter(scene: EditorSceneCameraContext, centerX: number
 export function setCameraZoom(scene: EditorSceneCameraContext, zoom: number) {
   scene.cameraState = updateCameraZoom(scene.cameraState, zoom);
   applyCameraState(scene);
-  scene.emitCameraChanged();
+  emitCameraChanged(scene);
 }
 
 /**
@@ -88,7 +88,7 @@ export function resetCamera(scene: EditorSceneCameraContext) {
     zoom: 1,
   });
   applyCameraState(scene);
-  scene.emitCameraChanged();
+  emitCameraChanged(scene);
 }
 
 /**
@@ -109,7 +109,7 @@ export function refreshCameraView(scene: EditorSceneCameraContext) {
     zoom: scene.cameraState.zoom,
   });
   applyCameraState(scene);
-  scene.emitCameraChanged();
+  emitCameraChanged(scene);
 }
 
 /**
@@ -143,4 +143,8 @@ function applyCameraState(scene: EditorSceneCameraContext) {
   );
   camera.setZoom(phaserZoom);
   camera.setScroll(scene.cameraState.viewportLeft, scene.cameraState.viewportTop);
+}
+
+function emitCameraChanged(scene: Pick<EditorSceneCameraContext, "events" | "cameraState">) {
+  scene.events.emit("camera-changed", scene.cameraState);
 }

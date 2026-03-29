@@ -56,19 +56,8 @@ export class LevelEditorScene extends Phaser.Scene {
   public selectedObject: EditorSelection | null = null;
   public suppressCanvasPlacement = false;
 
-  public readonly editorSceneCameraContext: cameraModule.EditorSceneCameraContext;
-  public readonly editorSceneRenderContext: renderModule.EditorSceneRenderContext;
-  public readonly editorSceneSelectionContext: selectionModule.EditorSceneSelectionContext;
-  public readonly editorSceneConfigContext: configModule.EditorSceneConfigContext;
-  public readonly editorSceneInputContext: inputModule.EditorSceneInputContext;
-
   constructor() {
     super({ key: "LevelEditorScene" });
-    this.editorSceneCameraContext = this.createCameraContext();
-    this.editorSceneRenderContext = this.createRenderContext();
-    this.editorSceneSelectionContext = this.createSelectionContext();
-    this.editorSceneConfigContext = this.createConfigContext();
-    this.editorSceneInputContext = this.createInputContext();
   }
 
   /**
@@ -94,14 +83,14 @@ export class LevelEditorScene extends Phaser.Scene {
     ensureEditorPreviewTextures(this);
     this.gridGroup = this.add.group();
     this.objectGroup = this.add.group();
-    cameraModule.initializeCameraViewport(this.editorSceneCameraContext);
+    cameraModule.initializeCameraViewport(this);
     this.updateWorldBoundsFromGrid();
-    renderModule.createGrid(this.editorSceneRenderContext);
-    renderModule.renderLevelObjects(this.editorSceneRenderContext);
-    inputModule.setupInputEvents(this.editorSceneInputContext);
-    cameraModule.refreshCameraView(this.editorSceneCameraContext);
+    renderModule.createGrid(this);
+    renderModule.renderLevelObjects(this);
+    inputModule.setupInputEvents(this);
+    cameraModule.refreshCameraView(this);
     this.emitConfigChangedEvent();
-    selectionModule.emitSelectionChanged(this.editorSceneSelectionContext);
+    selectionModule.emitSelectionChanged(this);
   }
 
   /**
@@ -128,14 +117,14 @@ export class LevelEditorScene extends Phaser.Scene {
    * 更新编辑器容器尺寸。
    */
   public setCanvasSize(width: number, height: number) {
-    cameraModule.setCanvasSize(this.editorSceneCameraContext, width, height);
+    cameraModule.setCanvasSize(this, width, height);
   }
 
   /**
    * 重置相机到默认中心和缩放。
    */
   public resetCamera() {
-    cameraModule.resetCamera(this.editorSceneCameraContext);
+    cameraModule.resetCamera(this);
   }
 
   /**
@@ -149,14 +138,14 @@ export class LevelEditorScene extends Phaser.Scene {
    * 直接设置相机中心点。
    */
   public setCameraCenter(centerX: number, centerY: number) {
-    cameraModule.setCameraCenter(this.editorSceneCameraContext, centerX, centerY);
+    cameraModule.setCameraCenter(this, centerX, centerY);
   }
 
   /**
    * 直接设置相机缩放值。
    */
   public setCameraZoom(zoom: number) {
-    cameraModule.setCameraZoom(this.editorSceneCameraContext, zoom);
+    cameraModule.setCameraZoom(this, zoom);
   }
 
   /**
@@ -182,14 +171,16 @@ export class LevelEditorScene extends Phaser.Scene {
    * 更新关卡名称。
    */
   public updateLevelName(name: string) {
-    configModule.updateLevelName(this.editorSceneConfigContext, name);
+    this.levelConfigManager.updateBasicInfo({ name });
+    this.emitConfigChangedEvent();
   }
 
   /**
    * 更新关卡描述。
    */
   public updateLevelDescription(description: string) {
-    configModule.updateLevelDescription(this.editorSceneConfigContext, description);
+    this.levelConfigManager.updateBasicInfo({ description });
+    this.emitConfigChangedEvent();
   }
 
   /**
@@ -198,49 +189,54 @@ export class LevelEditorScene extends Phaser.Scene {
   public updateGameType(
     gameType: "local-coop" | "local-versus" | "online-coop" | "online-versus",
   ) {
-    configModule.updateGameType(this.editorSceneConfigContext, gameType);
+    this.levelConfigManager.updateBasicInfo({ gameType });
+    this.emitConfigChangedEvent();
   }
 
   /**
    * 更新关卡时长。
    */
   public updateDuration(duration: number) {
-    configModule.updateDuration(this.editorSceneConfigContext, duration);
+    this.levelConfigManager.updateBasicInfo({ duration });
+    this.emitConfigChangedEvent();
   }
 
   /**
    * 更新目标分数配置。
    */
   public updateScoreTarget(target: Partial<LevelConfig["scoreTarget"]>) {
-    configModule.updateScoreTarget(this.editorSceneConfigContext, target);
+    this.levelConfigManager.updateScoreTarget(target);
+    this.emitConfigChangedEvent();
   }
 
   /**
    * 更新订单池配置。
    */
   public updateOrderPool(orderPool: Partial<LevelConfig["orderPool"]>) {
-    configModule.updateOrderPool(this.editorSceneConfigContext, orderPool);
+    this.levelConfigManager.updateOrderPool(orderPool);
+    this.emitConfigChangedEvent();
   }
 
   /**
    * 更新地图尺寸。
    */
   public updateMapSize(width: number, height: number) {
-    configModule.updateMapSize(this.editorSceneConfigContext, width, height);
+    this.levelConfigManager.updateMapSize(width, height);
+    this.refreshSceneComposition();
   }
 
   /**
    * 更新当前选中对象的属性补丁。
    */
   public updateSelectedObject(patch: Record<string, unknown>) {
-    configModule.updateSelectedObject(this.editorSceneConfigContext, patch);
+    configModule.updateSelectedObject(this, patch);
   }
 
   /**
    * 删除当前选中对象。
    */
   public deleteSelectedObject() {
-    configModule.deleteSelectedObject(this.editorSceneConfigContext);
+    configModule.deleteSelectedObject(this);
   }
 
   /**
@@ -248,7 +244,8 @@ export class LevelEditorScene extends Phaser.Scene {
    */
   public createNewLevel() {
     this.levelConfigManager = new LevelConfigManager(getDefaultLevelConfig());
-    configModule.createNewLevel(this.editorSceneConfigContext);
+    this.selectedObject = null;
+    this.refreshSceneComposition();
   }
 
   /**
@@ -256,21 +253,26 @@ export class LevelEditorScene extends Phaser.Scene {
    */
   public setLevelConfig(config: LevelConfig) {
     this.levelConfigManager = new LevelConfigManager(config);
-    configModule.setLevelConfig(this.editorSceneConfigContext, config);
+    this.selectedObject = null;
+    this.refreshSceneComposition();
   }
 
   /**
    * 导出当前关卡配置。
    */
   public exportLevelConfig(): LevelConfig {
-    return configModule.exportLevelConfig(this.editorSceneConfigContext);
+    return this.levelConfigManager.getConfig();
   }
 
   /**
    * 从 JSON 文本导入关卡配置。
    */
   public importLevelConfig(jsonString: string) {
-    return configModule.importLevelConfig(this.editorSceneConfigContext, jsonString);
+    return configModule.importLevelConfig(this, jsonString);
+  }
+
+  public refreshScene() {
+    this.refreshSceneComposition();
   }
 
   /**
@@ -288,242 +290,6 @@ export class LevelEditorScene extends Phaser.Scene {
     );
   }
 
-  private createCameraContext(): cameraModule.EditorSceneCameraContext {
-    const scene = this;
-    return {
-      cameras: scene.cameras,
-      scale: scene.scale,
-      sys: scene.sys,
-      get canvasContainerWidth() {
-        return scene.canvasContainerWidth;
-      },
-      set canvasContainerWidth(value: number) {
-        scene.canvasContainerWidth = value;
-      },
-      get canvasContainerHeight() {
-        return scene.canvasContainerHeight;
-      },
-      set canvasContainerHeight(value: number) {
-        scene.canvasContainerHeight = value;
-      },
-      get gridWidth() {
-        return scene.gridWidth;
-      },
-      get gridHeight() {
-        return scene.gridHeight;
-      },
-      get tileSize() {
-        return scene.tileSize;
-      },
-      get cameraState() {
-        return scene.cameraState;
-      },
-      set cameraState(value: EditorCameraState) {
-        scene.cameraState = value;
-      },
-      emitCameraChanged: () => {
-        scene.events.emit("camera-changed", scene.cameraState);
-      },
-    };
-  }
-
-  private createRenderContext(): renderModule.EditorSceneRenderContext {
-    const scene = this;
-    return {
-      add: scene.add,
-      get gridGroup() {
-        return scene.gridGroup;
-      },
-      get objectGroup() {
-        return scene.objectGroup;
-      },
-      get tileSize() {
-        return scene.tileSize;
-      },
-      levelConfigManager: {
-        getConfig: () => scene.levelConfigManager.getConfig(),
-      },
-      get inputContext() {
-        return scene.editorSceneInputContext;
-      },
-    };
-  }
-
-  private createSelectionContext(): selectionModule.EditorSceneSelectionContext {
-    const scene = this;
-    return {
-      add: scene.add,
-      events: scene.events,
-      get tileSize() {
-        return scene.tileSize;
-      },
-      get selectedObject() {
-        return scene.selectedObject;
-      },
-      set selectedObject(value: EditorSelection | null) {
-        scene.selectedObject = value;
-      },
-      get selectionMarker() {
-        return scene.selectionMarker;
-      },
-      set selectionMarker(value: Phaser.GameObjects.Rectangle | null) {
-        scene.selectionMarker = value;
-      },
-      levelConfigManager: {
-        getConfig: () => scene.levelConfigManager.getConfig(),
-      },
-      toWorldPosition: (x, y) => renderModule.toWorldPosition(scene.editorSceneRenderContext, x, y),
-    };
-  }
-
-  private createConfigContext(): configModule.EditorSceneConfigContext {
-    const scene = this;
-    return {
-      levelConfigManager: {
-        updateBasicInfo: (patch) => scene.levelConfigManager.updateBasicInfo(patch),
-        updateScoreTarget: (target) => scene.levelConfigManager.updateScoreTarget(target),
-        updateOrderPool: (orderPool) => scene.levelConfigManager.updateOrderPool(orderPool),
-        updateMapSize: (width, height) => scene.levelConfigManager.updateMapSize(width, height),
-        getConfig: () => scene.levelConfigManager.getConfig(),
-        addFloor: (floor) => scene.levelConfigManager.addFloor(floor),
-        removeFloor: (x, y) => scene.levelConfigManager.removeFloor(x, y),
-        addStation: (station) => scene.levelConfigManager.addStation(station),
-        removeStation: (x, y) => scene.levelConfigManager.removeStation(x, y),
-        addPlayer: (player) => scene.levelConfigManager.addPlayer(player),
-        removePlayer: (id) => scene.levelConfigManager.removePlayer(id),
-        importJSON: (jsonString) => scene.levelConfigManager.importJSON(jsonString),
-        validate: () => scene.levelConfigManager.validate(),
-      },
-      get selectedObject() {
-        return scene.selectedObject;
-      },
-      set selectedObject(value: EditorSelection | null) {
-        scene.selectedObject = value;
-      },
-      get selectedTool() {
-        return scene.selectedTool;
-      },
-      get toolOptions() {
-        return scene.toolOptions;
-      },
-      emitConfigChanged: () => {
-        scene.emitConfigChangedEvent();
-      },
-      refreshScene: () => {
-        scene.refreshSceneComposition();
-      },
-    };
-  }
-
-  private createInputContext(): inputModule.EditorSceneInputContext {
-    const scene = this;
-    return {
-      input: scene.input,
-      get selectedTool() {
-        return scene.selectedTool;
-      },
-      get interactionBlocked() {
-        return scene.interactionBlocked;
-      },
-      get spacePressed() {
-        return scene.spacePressed;
-      },
-      set spacePressed(value: boolean) {
-        scene.spacePressed = value;
-      },
-      get suppressCanvasPlacement() {
-        return scene.suppressCanvasPlacement;
-      },
-      set suppressCanvasPlacement(value: boolean) {
-        scene.suppressCanvasPlacement = value;
-      },
-      get tileSize() {
-        return scene.tileSize;
-      },
-      get gridWidth() {
-        return scene.gridWidth;
-      },
-      get gridHeight() {
-        return scene.gridHeight;
-      },
-      get panThreshold() {
-        return scene.panThreshold;
-      },
-      get isPanning() {
-        return scene.isPanning;
-      },
-      set isPanning(value: boolean) {
-        scene.isPanning = value;
-      },
-      get isZoomDragging() {
-        return scene.isZoomDragging;
-      },
-      set isZoomDragging(value: boolean) {
-        scene.isZoomDragging = value;
-      },
-      get isDraggingObject() {
-        return scene.isDraggingObject;
-      },
-      set isDraggingObject(value: boolean) {
-        scene.isDraggingObject = value;
-      },
-      get panStartPointer() {
-        return scene.panStartPointer;
-      },
-      set panStartPointer(value: { x: number; y: number } | null) {
-        scene.panStartPointer = value;
-      },
-      get panStartCenter() {
-        return scene.panStartCenter;
-      },
-      set panStartCenter(value: { x: number; y: number } | null) {
-        scene.panStartCenter = value;
-      },
-      get pendingPanStart() {
-        return scene.pendingPanStart;
-      },
-      set pendingPanStart(value: { x: number; y: number } | null) {
-        scene.pendingPanStart = value;
-      },
-      get zoomDragOriginY() {
-        return scene.zoomDragOriginY;
-      },
-      set zoomDragOriginY(value: number) {
-        scene.zoomDragOriginY = value;
-      },
-      get zoomDragStartZoom() {
-        return scene.zoomDragStartZoom;
-      },
-      set zoomDragStartZoom(value: number) {
-        scene.zoomDragStartZoom = value;
-      },
-      get objectDragSelection() {
-        return scene.objectDragSelection;
-      },
-      set objectDragSelection(value: EditorSelection | null) {
-        scene.objectDragSelection = value;
-      },
-      get selectedObject() {
-        return scene.selectedObject;
-      },
-      get cameraState() {
-        return scene.cameraState;
-      },
-      get cameraContext() {
-        return scene.editorSceneCameraContext;
-      },
-      get selectionContext() {
-        return scene.editorSceneSelectionContext;
-      },
-      get configContext() {
-        return scene.editorSceneConfigContext;
-      },
-      setCurrentCursor: () => {
-        scene.setCurrentCursor();
-      },
-    };
-  }
-
   private syncGridSizeFromConfig() {
     const config = this.levelConfigManager.getConfig();
     this.gridWidth = config.map.width;
@@ -539,12 +305,12 @@ export class LevelEditorScene extends Phaser.Scene {
   private refreshSceneComposition() {
     this.syncGridSizeFromConfig();
     this.updateWorldBoundsFromGrid();
-    renderModule.createGrid(this.editorSceneRenderContext);
-    renderModule.renderLevelObjects(this.editorSceneRenderContext);
-    selectionModule.refreshSelectionMarker(this.editorSceneSelectionContext);
-    cameraModule.refreshCameraView(this.editorSceneCameraContext);
+    renderModule.createGrid(this);
+    renderModule.renderLevelObjects(this);
+    selectionModule.refreshSelectionMarker(this);
+    cameraModule.refreshCameraView(this);
     this.emitConfigChangedEvent();
-    selectionModule.emitSelectionChanged(this.editorSceneSelectionContext);
+    selectionModule.emitSelectionChanged(this);
   }
 
   private emitConfigChangedEvent() {
