@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 
+import * as inputModule from "./editor-scene-input";
 import { cloneLevelConfig } from "../../editor/level-editor-utils";
 import {
   buildRenderableFloors,
@@ -7,7 +8,6 @@ import {
   getIngredientLabel,
   getStationTextureKey as resolveStationTextureKey,
 } from "../../editor/editor-render";
-import type { EditorSelection } from "../../editor/level-editor-utils";
 import type {
   ConveyorFloor,
   FloorConfig,
@@ -24,11 +24,7 @@ export interface EditorSceneRenderContext {
   objectGroup: Phaser.GameObjects.Group;
   tileSize: number;
   levelConfigManager: { getConfig: () => LevelConfig };
-  handleObjectPointerDown: (
-    pointer: Phaser.Input.Pointer,
-    selection: EditorSelection,
-    object: FloorConfig | StationConfig | PlayerSpawn,
-  ) => void;
+  inputContext: inputModule.EditorSceneInputContext;
 }
 
 /**
@@ -62,7 +58,8 @@ export function renderFloor(scene: EditorSceneRenderContext, floor: FloorConfig)
   tile.setAngle(renderSpec.angle);
   tile.setInteractive();
   tile.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-    scene.handleObjectPointerDown(
+    inputModule.handleObjectPointerDown(
+      scene.inputContext,
       pointer,
       { kind: "floor", x: floor.x, y: floor.y },
       cloneLevelConfig({
@@ -110,7 +107,8 @@ export function renderStation(scene: EditorSceneRenderContext, station: StationC
   stationSprite.setDepth(10);
   stationSprite.setInteractive();
   stationSprite.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-    scene.handleObjectPointerDown(
+    inputModule.handleObjectPointerDown(
+      scene.inputContext,
       pointer,
       { kind: "station", x: station.x, y: station.y },
       cloneLevelConfig({
@@ -137,7 +135,12 @@ export function renderPlayer(scene: EditorSceneRenderContext, player: PlayerSpaw
   sprite.setTint(player.color ?? (player.id === 1 ? 0x4da6ff : 0xff4444));
   sprite.setInteractive();
   sprite.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-    scene.handleObjectPointerDown(pointer, { kind: "player", id: player.id }, { ...player });
+    inputModule.handleObjectPointerDown(
+      scene.inputContext,
+      pointer,
+      { kind: "player", id: player.id },
+      { ...player },
+    );
   });
   scene.objectGroup.add(sprite);
 

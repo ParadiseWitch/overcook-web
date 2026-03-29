@@ -343,20 +343,8 @@ export class LevelEditorScene extends Phaser.Scene {
       levelConfigManager: {
         getConfig: () => scene.levelConfigManager.getConfig(),
       },
-      handleObjectPointerDown: (pointer, selection, object) => {
-        inputModule.handleObjectPointerDown(
-          scene.editorSceneInputContext,
-          pointer,
-          selection,
-          object,
-          (nextSelection, nextObject) => {
-            selectionModule.selectObject(
-              scene.editorSceneSelectionContext,
-              nextSelection,
-              nextObject,
-            );
-          },
-        );
+      get inputContext() {
+        return scene.editorSceneInputContext;
       },
     };
   }
@@ -452,6 +440,12 @@ export class LevelEditorScene extends Phaser.Scene {
       get tileSize() {
         return scene.tileSize;
       },
+      get gridWidth() {
+        return scene.gridWidth;
+      },
+      get gridHeight() {
+        return scene.gridHeight;
+      },
       get panThreshold() {
         return scene.panThreshold;
       },
@@ -515,27 +509,17 @@ export class LevelEditorScene extends Phaser.Scene {
       get cameraState() {
         return scene.cameraState;
       },
-      clearSelection: () => {
-        selectionModule.clearSelection(scene.editorSceneSelectionContext);
+      get cameraContext() {
+        return scene.editorSceneCameraContext;
       },
-      placeObjectAt: (x, y) => {
-        configModule.placeObjectAt(scene.editorSceneConfigContext, x, y);
+      get selectionContext() {
+        return scene.editorSceneSelectionContext;
       },
-      updateSelectedObject: (patch) => {
-        configModule.updateSelectedObject(scene.editorSceneConfigContext, patch);
-      },
-      setCameraCenter: (centerX, centerY) => {
-        cameraModule.setCameraCenter(scene.editorSceneCameraContext, centerX, centerY);
-      },
-      setCameraZoom: (zoom) => {
-        cameraModule.setCameraZoom(scene.editorSceneCameraContext, zoom);
+      get configContext() {
+        return scene.editorSceneConfigContext;
       },
       setCurrentCursor: () => {
         scene.setCurrentCursor();
-      },
-      isInBounds: (x, y) => renderModule.isInBounds(scene, x, y),
-      deleteSelectedObject: () => {
-        configModule.deleteSelectedObject(scene.editorSceneConfigContext);
       },
     };
   }

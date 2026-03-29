@@ -1,5 +1,8 @@
 import Phaser from "phaser";
 
+import * as cameraModule from "./editor-scene-camera";
+import * as configModule from "./editor-scene-config";
+import * as selectionModule from "./editor-scene-selection";
 import {
   panCameraByScreenDelta,
   screenToWorld,
@@ -7,6 +10,7 @@ import {
   type EditorCameraState,
 } from "../../editor/editor-camera";
 import type { EditorSelection } from "../../editor/level-editor-utils";
+import type { FloorConfig, PlayerSpawn, StationConfig } from "../../types/level-config";
 
 // 负责平移、缩放和对象编辑相关的指针/键盘状态切换。
 export interface EditorSceneInputContext {
@@ -17,6 +21,8 @@ export interface EditorSceneInputContext {
   suppressCanvasPlacement: boolean;
   tileSize: number;
   panThreshold: number;
+  gridWidth: number;
+  gridHeight: number;
   isPanning: boolean;
   isZoomDragging: boolean;
   isDraggingObject: boolean;
@@ -28,14 +34,10 @@ export interface EditorSceneInputContext {
   objectDragSelection: EditorSelection | null;
   selectedObject: EditorSelection | null;
   cameraState: EditorCameraState;
-  clearSelection: () => void;
-  placeObjectAt: (x: number, y: number) => void;
-  updateSelectedObject: (patch: Record<string, unknown>) => void;
-  setCameraCenter: (centerX: number, centerY: number) => void;
-  setCameraZoom: (zoom: number) => void;
+  cameraContext: cameraModule.EditorSceneCameraContext;
+  selectionContext: selectionModule.EditorSceneSelectionContext;
+  configContext: configModule.EditorSceneConfigContext;
   setCurrentCursor: () => void;
-  isInBounds: (x: number, y: number) => boolean;
-  deleteSelectedObject: () => void;
 }
 
 /**
@@ -50,7 +52,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
     const worldPoint = screenToWorld(scene.cameraState, { x: pointer.x, y: pointer.y });
     if (!worldPoint.insideCanvas) {
       if (scene.selectedTool === null) {
-        scene.clearSelection();
+        selectionModule.clearSelection(scene.selectionContext);
       }
       return;
     }
@@ -73,8 +75,8 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
     const gridX = Math.floor((worldPoint.x ?? 0) / scene.tileSize);
     const gridY = Math.floor((worldPoint.y ?? 0) / scene.tileSize);
 
-    if (!scene.isInBounds(gridX, gridY)) {
-      scene.clearSelection();
+    if (!isInBounds(scene, gridX, gridY)) {
+      selectionModule.clearSelection(scene.selectionContext);
       return;
     }
 
@@ -83,7 +85,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
       return;
     }
 
-    scene.placeObjectAt(gridX, gridY);
+    configModule.placeObjectAt(scene.configContext, gridX, gridY);
   });
 
   scene.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
@@ -105,7 +107,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
       deltaY: pointer.y - scene.panStartPointer.y,
     });
 
-    scene.setCameraCenter(nextState.centerX, nextState.centerY);
+    cameraModule.setCameraCenter(scene.cameraContext, nextState.centerX, nextState.centerY);
   });
 
   scene.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -114,7 +116,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
     }
 
     if (scene.pendingPanStart && !scene.isPanning && scene.selectedTool === null) {
-      scene.clearSelection();
+      selectionModule.clearSelection(scene.selectionContext);
     }
 
     scene.pendingPanStart = null;
@@ -139,7 +141,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
         return;
       }
 
-      scene.setCameraZoom(scene.cameraState.zoom * (deltaY > 0 ? 0.9 : 1.1));
+      cameraModule.setCameraZoom(scene.cameraContext, scene.cameraState.zoom * (deltaY > 0 ? 0.9 : 1.1));
     },
   );
 
@@ -159,12 +161,12 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
 
   scene.input.keyboard?.on("keydown-DELETE", () => {
     if (!scene.interactionBlocked) {
-      scene.deleteSelectedObject();
+      configModule.deleteSelectedObject(scene.configContext);
     }
   });
   scene.input.keyboard?.on("keydown-BACKSPACE", () => {
     if (!scene.interactionBlocked) {
-      scene.deleteSelectedObject();
+      configModule.deleteSelectedObject(scene.configContext);
     }
   });
 }
@@ -247,7 +249,7 @@ export function beginZoomDrag(scene: EditorSceneInputContext, pointer: Phaser.In
 export function updateZoomDrag(scene: EditorSceneInputContext, pointer: Phaser.Input.Pointer) {
   const delta = (scene.zoomDragOriginY - pointer.y) / 240;
   const nextState = updateCameraZoom(scene.cameraState, scene.zoomDragStartZoom + delta);
-  scene.setCameraZoom(nextState.zoom);
+  cameraModule.setCameraZoom(scene.cameraContext, nextState.zoom);
 }
 
 /**
@@ -271,12 +273,12 @@ export function finishObjectDrag(scene: EditorSceneInputContext, pointer: Phaser
   const gridX = Math.floor((worldPoint.x ?? 0) / scene.tileSize);
   const gridY = Math.floor((worldPoint.y ?? 0) / scene.tileSize);
 
-  if (!scene.isInBounds(gridX, gridY)) {
+  if (!isInBounds(scene, gridX, gridY)) {
     return;
   }
 
   if (scene.selectedObject?.kind === "player") {
-    scene.updateSelectedObject({ x: gridX, y: gridY });
+    configModule.updateSelectedObject(scene.configContext, { x: gridX, y: gridY });
     return;
   }
 
@@ -290,7 +292,7 @@ export function finishObjectDrag(scene: EditorSceneInputContext, pointer: Phaser
     return;
   }
 
-  scene.updateSelectedObject({ x: gridX, y: gridY });
+  configModule.updateSelectedObject(scene.configContext, { x: gridX, y: gridY });
 }
 
 /**
@@ -301,13 +303,9 @@ export function handleObjectPointerDown(
   pointer: Phaser.Input.Pointer,
   selection: EditorSelection,
   object: FloorConfig | StationConfig | PlayerSpawn,
-  selectObject: (
-    selection: EditorSelection,
-    object: FloorConfig | StationConfig | PlayerSpawn,
-  ) => void,
 ) {
   scene.suppressCanvasPlacement = true;
-  selectObject(selection, object);
+  selectionModule.selectObject(scene.selectionContext, selection, object);
 
   if (scene.selectedTool === "move-tool") {
     scene.objectDragSelection = selection;
@@ -318,4 +316,8 @@ export function handleObjectPointerDown(
   if (scene.selectedTool === "hand-tool") {
     beginCameraPan(scene, pointer);
   }
+}
+
+function isInBounds(scene: Pick<EditorSceneInputContext, "gridWidth" | "gridHeight">, x: number, y: number) {
+  return x >= 0 && y >= 0 && x < scene.gridWidth && y < scene.gridHeight;
 }
