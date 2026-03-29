@@ -94,6 +94,7 @@ class MockSprite {
   x: number;
   y: number;
   texture: { key: string };
+  setData: any = vi.fn();
   body: any = null;
   depth: number = 0;
   heldBy: any = null;
