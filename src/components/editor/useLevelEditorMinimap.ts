@@ -2,9 +2,8 @@ import { computed, onMounted, onUnmounted, reactive, type Ref, type ShallowRef }
 
 import {
   computeMinimapViewportRect,
-  computeScrollRange,
   normalizeZoomPercent,
-  computeViewportCenterFromMinimap,
+  viewportCenterFromMinimap,
 } from "@/game/editor/editor-camera";
 import type { EditorCameraState, LevelEditorScene } from "@/game/scenes/editor/level-editor-scene";
 type SceneRef<T> = Ref<T> | ShallowRef<T>;
@@ -17,7 +16,6 @@ export function createLevelEditorMinimapController(input: {
   sceneRef: SceneRef<LevelEditorScene | {
     setInteractionBlocked?: (blocked: boolean) => void;
     setCameraCenter?: (x: number, y: number) => void;
-    setCameraScroll?: (x: number, y: number) => void;
     setCameraZoom?: (zoom: number) => void;
   } | null>;
   cameraState: EditorCameraState;
@@ -33,12 +31,12 @@ export function createLevelEditorMinimapController(input: {
 
   const minimapViewportStyle = computed(() => {
     const rect = computeMinimapViewportRect({
-      worldWidth: input.cameraState.worldWidth,
-      worldHeight: input.cameraState.worldHeight,
-      visibleWidth: input.cameraState.visibleWidth,
-      visibleHeight: input.cameraState.visibleHeight,
-      scrollX: Math.max(0, input.cameraState.scrollX),
-      scrollY: Math.max(0, input.cameraState.scrollY),
+      sceneWidth: input.cameraState.sceneWidth,
+      sceneHeight: input.cameraState.sceneHeight,
+      viewportLeft: input.cameraState.viewportLeft,
+      viewportTop: input.cameraState.viewportTop,
+      viewportWidth: input.cameraState.viewportWidth,
+      viewportHeight: input.cameraState.viewportHeight,
       minimapWidth: input.minimapWidth,
       minimapHeight: input.minimapHeight,
     });
@@ -78,11 +76,11 @@ export function createLevelEditorMinimapController(input: {
     const pointerX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
     const pointerY = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
     // 小地图拖拽始终转换为“视口中心点”变化，避免和滚动条逻辑分叉。
-    const nextCenter = computeViewportCenterFromMinimap({
+    const nextCenter = viewportCenterFromMinimap({
       pointerX,
       pointerY,
-      worldWidth: input.cameraState.worldWidth,
-      worldHeight: input.cameraState.worldHeight,
+      sceneWidth: input.cameraState.sceneWidth,
+      sceneHeight: input.cameraState.sceneHeight,
       minimapWidth: rect.width,
       minimapHeight: rect.height,
     });

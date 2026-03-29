@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, type Ref, type ShallowRef } from "vue";
 
 import { createCenteredCameraState } from "@/game/editor/editor-camera";
 import type { FloorToolOptions } from "@/game/editor/level-editor-utils";
-import { LevelEditorScene, type EditorCameraState, type MapViewMode } from "@/game/scenes/editor/level-editor-scene";
+import { LevelEditorScene, type EditorCameraState } from "@/game/scenes/editor/level-editor-scene";
 type SceneRef<T> = Ref<T> | ShallowRef<T>;
 
 // 负责把 Vue 生命周期和 Phaser 场景生命周期桥接起来，并同步场景事件。
@@ -16,11 +16,9 @@ export function useLevelEditorPhaserBridge(input: {
   sceneRef: SceneRef<LevelEditorScene | null>;
   viewport: { width: number; height: number };
   cameraState: EditorCameraState;
-  mapViewMode: Ref<MapViewMode>;
   toolOptions: FloorToolOptions;
   onSceneConfigChanged: (payload: any) => void;
   onSceneSelectionChanged: (payload: any) => void;
-  onSceneViewModeChanged: (mode: MapViewMode) => void;
   onSceneCameraChanged: (payload: EditorCameraState) => void;
   normalizePanelsForViewport: () => void;
 }) {
@@ -46,7 +44,7 @@ export function useLevelEditorPhaserBridge(input: {
       input.viewport.width = Math.max(320, Math.floor(rect?.width ?? window.innerWidth));
       input.viewport.height = Math.max(240, Math.floor(rect?.height ?? window.innerHeight));
       gameInstance?.scale.resize(input.viewport.width, input.viewport.height);
-      input.sceneRef.value?.setViewportSize(input.viewport.width, input.viewport.height);
+      input.sceneRef.value?.setCanvasSize(input.viewport.width, input.viewport.height);
       input.normalizePanelsForViewport();
     };
 
@@ -91,12 +89,10 @@ export function useLevelEditorPhaserBridge(input: {
     detachSceneEvents();
     input.sceneRef.value = scene;
     scene.setToolOptions({ ...input.toolOptions });
-    scene.setViewportSize(input.viewport.width, input.viewport.height);
-    scene.setMapViewMode(input.mapViewMode.value);
-    scene.resetCameraView();
+    scene.setCanvasSize(input.viewport.width, input.viewport.height);
+    scene.resetCamera();
     scene.events.on("config-changed", input.onSceneConfigChanged);
     scene.events.on("object-selected", input.onSceneSelectionChanged);
-    scene.events.on("view-mode-changed", input.onSceneViewModeChanged);
     scene.events.on("camera-changed", input.onSceneCameraChanged);
     input.onSceneCameraChanged(scene.getCameraState());
   }
@@ -107,7 +103,6 @@ export function useLevelEditorPhaserBridge(input: {
   function detachSceneEvents() {
     input.sceneRef.value?.events.off("config-changed", input.onSceneConfigChanged);
     input.sceneRef.value?.events.off("object-selected", input.onSceneSelectionChanged);
-    input.sceneRef.value?.events.off("view-mode-changed", input.onSceneViewModeChanged);
     input.sceneRef.value?.events.off("camera-changed", input.onSceneCameraChanged);
   }
 

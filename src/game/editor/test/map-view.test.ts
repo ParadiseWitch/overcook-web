@@ -1,149 +1,171 @@
 /**
- * 测试对象：map-view 辅助函数。
- * 测试用例：适配缩放、浏览缩放钳制、滚动钳制、基于视口中心的缩放和视口尺寸解析。
- * 测试目标：保护驱动适配视图、浏览视图和 resize 行为的编辑器相机计算。
- * 期望：相机计算能保持预期世界中心，并始终落在支持范围内。
+ * 测试对象：新的编辑器相机几何模型。
+ * 测试目标：保证 Scene -> Camera -> Viewport -> Canvas 的单一数学模型稳定。
  */
 import {
-  clampSceneZoom,
-  clampCameraScroll,
-  computeCameraCenterWorldPoint,
-  resolveViewportSize,
-  computeScrollForViewportCenter,
-  computeFitView,
-  computeZoomScrollFromViewportCenter,
-  normalizeZoom,
-} from "../map-view";
+  clampCameraCenter,
+  clampZoom,
+  createEditorCameraState,
+  panCameraByScreenDelta,
+  screenToWorld,
+  setCameraCenter,
+  setCameraZoom,
+  worldToScreen,
+} from "../editor-camera";
 
-describe("map-view", () => {
-  it("computes a centered fit zoom and fills at least one viewport dimension", () => {
-    const fit = computeFitView({
-      viewportWidth: 1280,
-      viewportHeight: 720,
-      worldWidth: 17 * 48,
-      worldHeight: 13 * 48,
-      padding: 0,
+describe("editor-camera model", () => {
+  it("covers the whole scene when zoom is 1", () => {
+    const state = createEditorCameraState({
+      sceneWidth: 816,
+      sceneHeight: 624,
+      containerWidth: 1280,
+      containerHeight: 720,
+      zoom: 1,
     });
 
-    expect(fit.zoom).toBeGreaterThan(1);
-    expect(fit.centerX).toBeCloseTo((17 * 48) / 2);
-    expect(fit.centerY).toBeCloseTo((13 * 48) / 2);
-    expect(
-      Math.max(
-        fit.zoom * 17 * 48 / 1280,
-        fit.zoom * 13 * 48 / 720,
-      ),
-    ).toBeCloseTo(1);
+    expect(state.viewportWidth).toBe(816);
+    expect(state.viewportHeight).toBe(624);
+    expect(state.viewportLeft).toBe(0);
+    expect(state.viewportTop).toBe(0);
+    expect(state.centerX).toBe(408);
+    expect(state.centerY).toBe(312);
   });
 
-  it("clamps zoom into the supported browse range", () => {
-    expect(normalizeZoom(0.1)).toBe(0.5);
-    expect(normalizeZoom(5)).toBe(2.5);
-  });
-
-  it("does not allow zooming out beyond the whole scene fit zoom", () => {
-    expect(
-      clampSceneZoom({
-        zoom: 0.2,
-        viewportWidth: 1280,
-        viewportHeight: 720,
-        worldWidth: 17 * 48,
-        worldHeight: 13 * 48,
-      }),
-    ).toBeCloseTo(1.1538461538461537);
-  });
-
-  it("keeps camera scroll inside world bounds", () => {
-    expect(
-      clampCameraScroll({
-        scrollX: -100,
-        scrollY: 1200,
-        viewportWidth: 800,
-        viewportHeight: 600,
-        zoom: 1,
-        worldWidth: 1200,
-        worldHeight: 900,
-      }),
-    ).toEqual({
-      scrollX: 0,
-      scrollY: 300,
+  it("shows half of the scene when zoom is 2", () => {
+    const state = createEditorCameraState({
+      sceneWidth: 816,
+      sceneHeight: 624,
+      containerWidth: 1280,
+      containerHeight: 720,
+      zoom: 2,
     });
+
+    expect(state.viewportWidth).toBe(408);
+    expect(state.viewportHeight).toBe(312);
+    expect(state.viewportLeft).toBe(204);
+    expect(state.viewportTop).toBe(156);
   });
 
-  it("centers the map when the visible area is larger than the world", () => {
-    expect(
-      clampCameraScroll({
-        scrollX: 0,
-        scrollY: 0,
-        viewportWidth: 1280,
-        viewportHeight: 720,
-        zoom: 0.75,
-        worldWidth: 17 * 48,
-        worldHeight: 13 * 48,
+  it("keeps the camera inside scene bounds after moving the center", () => {
+    const state = setCameraCenter(
+      createEditorCameraState({
+        sceneWidth: 816,
+        sceneHeight: 624,
+        containerWidth: 1280,
+        containerHeight: 720,
+        zoom: 2,
       }),
-    ).toEqual({
-      scrollX: -445.33333333333337,
-      scrollY: -168,
+      -100,
+      9999,
+    );
+
+    expect(state.centerX).toBe(204);
+    expect(state.centerY).toBe(468);
+    expect(state.viewportLeft).toBe(0);
+    expect(state.viewportTop).toBe(312);
+  });
+
+  it("computes a centered canvas rect that preserves the scene ratio", () => {
+    const state = createEditorCameraState({
+      sceneWidth: 816,
+      sceneHeight: 624,
+      containerWidth: 1600,
+      containerHeight: 720,
+      zoom: 1,
     });
+
+    expect(state.canvasWidth).toBeCloseTo(941.5384615384615);
+    expect(state.canvasHeight).toBe(720);
+    expect(state.canvasLeft).toBeCloseTo(329.2307692307693);
+    expect(state.canvasTop).toBe(0);
   });
 
-  it("zooms around the viewport center instead of the pointer position", () => {
-    expect(
-      computeZoomScrollFromViewportCenter({
-        scrollX: 120,
-        scrollY: 80,
-        viewportWidth: 800,
-        viewportHeight: 600,
-        currentZoom: 1,
-        nextZoom: 1.25,
-      }),
-    ).toEqual({
-      scrollX: 200,
-      scrollY: 140,
+  it("maps world and screen coordinates through the active canvas rect", () => {
+    const state = createEditorCameraState({
+      sceneWidth: 816,
+      sceneHeight: 624,
+      containerWidth: 1600,
+      containerHeight: 720,
+      zoom: 2,
     });
-  });
 
-  it("uses the camera's actual size when preserving the zoom center", () => {
-    expect(
-      computeCameraCenterWorldPoint({
-        scrollX: 120,
-        scrollY: 80,
-        cameraWidth: 800,
-        cameraHeight: 600,
-        zoom: 1.25,
-      }),
-    ).toEqual({
-      centerX: 440,
-      centerY: 320,
+    const screen = worldToScreen(state, { x: 408, y: 312 });
+    const world = screenToWorld(state, screen);
+
+    expect(screen.x).toBeCloseTo(800);
+    expect(screen.y).toBeCloseTo(360);
+    expect(world).toEqual({
+      x: 408,
+      y: 312,
+      insideCanvas: true,
     });
   });
 
-  it("prefers actual camera size over fallback viewport defaults", () => {
-    expect(
-      resolveViewportSize({
-        cameraWidth: 960,
-        cameraHeight: 540,
-        fallbackWidth: 1280,
-        fallbackHeight: 720,
-      }),
-    ).toEqual({
-      width: 960,
-      height: 540,
+  it("rejects screen points that fall inside letterboxed margins", () => {
+    const state = createEditorCameraState({
+      sceneWidth: 816,
+      sceneHeight: 624,
+      containerWidth: 1600,
+      containerHeight: 720,
+      zoom: 1,
+    });
+
+    expect(screenToWorld(state, { x: 20, y: 100 })).toEqual({
+      x: null,
+      y: null,
+      insideCanvas: false,
     });
   });
 
-  it("keeps the same world center when the viewport size changes", () => {
+  it("keeps camera center stable while changing zoom", () => {
+    const initial = createEditorCameraState({
+      sceneWidth: 816,
+      sceneHeight: 624,
+      containerWidth: 1280,
+      containerHeight: 720,
+      zoom: 1,
+    });
+
+    const zoomed = setCameraZoom(initial, 1.8);
+
+    expect(zoomed.centerX).toBe(initial.centerX);
+    expect(zoomed.centerY).toBe(initial.centerY);
+    expect(zoomed.viewportWidth).toBeCloseTo(453.3333333333333);
+    expect(zoomed.viewportHeight).toBeCloseTo(346.6666666666667);
+  });
+
+  it("pans camera opposite to the drag direction", () => {
+    const initial = createEditorCameraState({
+      sceneWidth: 816,
+      sceneHeight: 624,
+      containerWidth: 1280,
+      containerHeight: 720,
+      zoom: 2,
+    });
+
+    const moved = panCameraByScreenDelta(initial, { deltaX: 120, deltaY: -60 });
+
+    expect(moved.centerX).toBeCloseTo(356);
+    expect(moved.centerY).toBeCloseTo(338);
+  });
+
+  it("clamps zoom into the supported range", () => {
+    expect(clampZoom(0.4)).toBe(1);
+    expect(clampZoom(3)).toBe(2);
+  });
+
+  it("clamps raw center coordinates using the current viewport size", () => {
     expect(
-      computeScrollForViewportCenter({
-        centerX: 520,
-        centerY: 380,
-        viewportWidth: 1200,
-        viewportHeight: 900,
-        zoom: 1.25,
+      clampCameraCenter({
+        sceneWidth: 816,
+        sceneHeight: 624,
+        centerX: 999,
+        centerY: -100,
+        zoom: 2,
       }),
     ).toEqual({
-      scrollX: 40,
-      scrollY: 20,
+      centerX: 612,
+      centerY: 156,
     });
   });
 });

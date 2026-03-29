@@ -11,10 +11,7 @@
       </div>
 
       <div class="toolbar-group">
-        <button type="button" :class="{ active: mapViewMode === 'fit' }" @click="setMapViewMode('fit')">适配视图</button>
-        <button type="button" :class="{ active: mapViewMode === 'browse' }"
-          @click="setMapViewMode('browse')">浏览视图</button>
-        <button type="button" @click="resetCameraView">重置视角</button>
+        <button type="button" @click="resetCamera">重置视角</button>
       </div>
     </div>
 
@@ -60,10 +57,10 @@
 
         <div class="zoom-controls">
           <button type="button" @click="changeZoomBy(-0.1)">-</button>
-          <input class="zoom-slider" type="range" min="50" max="250" step="1" :value="zoomPercent"
+          <input class="zoom-slider" type="range" min="100" max="200" step="1" :value="zoomPercent"
             @input="updateZoomSlider">
           <button type="button" @click="changeZoomBy(0.1)">+</button>
-          <input class="zoom-input" type="number" min="50" max="250" step="1" :value="zoomPercent"
+          <input class="zoom-input" type="number" min="100" max="200" step="1" :value="zoomPercent"
             @change="updateZoomInput">
           <span class="zoom-unit">%</span>
         </div>
@@ -95,7 +92,7 @@ import {
   useLevelEditorState,
   type EditableField,
 } from "@/components/editor/useLevelEditorState";
-import { LevelEditorScene, type EditorCameraState, type MapViewMode } from "@/game/scenes/editor/level-editor-scene";
+import { LevelEditorScene, type EditorCameraState } from "@/game/scenes/editor/level-editor-scene";
 import { getDefaultLevelConfig } from "@/game/types/level-config";
 
 const floorTools = [
@@ -136,7 +133,6 @@ const fileInput = ref<HTMLInputElement | null>(null);
 // Phaser 场景实例需要保持类实例语义，避免被 Vue 的 ref 展开后丢失精确类型。
 const sceneRef = shallowRef<LevelEditorScene | null>(null);
 const viewport = reactive({ width: window.innerWidth, height: window.innerHeight });
-const mapViewMode = ref<MapViewMode>("fit");
 const cameraState = reactive<EditorCameraState>(createCenteredCameraState({
   worldWidth: getDefaultLevelConfig().map.width * 48,
   worldHeight: getDefaultLevelConfig().map.height * 48,
@@ -185,13 +181,6 @@ const {
 });
 
 /**
- * 同步场景侧视图模式变更到 Vue 状态，保证工具栏按钮高亮正确。
- */
-function onSceneViewModeChanged(mode: MapViewMode) {
-  mapViewMode.value = mode;
-}
-
-/**
  * 用场景最新的相机状态覆盖本地响应式对象，驱动 HUD 与小地图更新。
  */
 function onSceneCameraChanged(payload: EditorCameraState) {
@@ -232,28 +221,18 @@ useLevelEditorPhaserBridge({
   sceneRef,
   viewport,
   cameraState,
-  mapViewMode,
   toolOptions,
   onSceneConfigChanged,
   onSceneSelectionChanged,
-  onSceneViewModeChanged,
   onSceneCameraChanged,
   normalizePanelsForViewport,
 });
 
 /**
- * 切换相机视图模式，并把当前选择同步给场景。
+ * 请求场景恢复默认相机位置和缩放。
  */
-function setMapViewMode(mode: MapViewMode) {
-  mapViewMode.value = mode;
-  sceneRef.value?.setMapViewMode(mode);
-}
-
-/**
- * 请求场景恢复当前视图模式下的默认相机位置和缩放。
- */
-function resetCameraView() {
-  sceneRef.value?.resetCameraView();
+function resetCamera() {
+  sceneRef.value?.resetCamera();
 }
 </script>
 

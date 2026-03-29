@@ -1,41 +1,41 @@
 import Phaser from "phaser";
 
-import { clampSceneZoom, computeCameraCenterWorldPoint, computeScrollForViewportCenter } from "../../editor/map-view";
+import {
+  panCameraByScreenDelta,
+  screenToWorld,
+  setCameraZoom as updateCameraZoom,
+  type EditorCameraState,
+} from "../../editor/editor-camera";
 import type { EditorSelection } from "../../editor/level-editor-utils";
 import type { FloorConfig, PlayerSpawn, StationConfig } from "../../types/level-config";
 
 // 负责平移、缩放和对象编辑相关的指针/键盘状态切换。
 export interface EditorSceneInputContext {
   input: Phaser.Input.InputPlugin;
-  cameras: { main: Phaser.Cameras.Scene2D.Camera };
   selectedTool: string | null;
   interactionBlocked: boolean;
   spacePressed: boolean;
   suppressCanvasPlacement: boolean;
   tileSize: number;
   panThreshold: number;
-  fitPadding: number;
-  viewportWidth: number;
-  viewportHeight: number;
-  gridWidth: number;
-  gridHeight: number;
   isPanning: boolean;
   isZoomDragging: boolean;
   isDraggingObject: boolean;
   panStartPointer: { x: number; y: number } | null;
-  panStartScroll: { x: number; y: number } | null;
+  panStartCenter: { x: number; y: number } | null;
   pendingPanStart: { x: number; y: number } | null;
   zoomDragOriginY: number;
   zoomDragStartZoom: number;
   objectDragSelection: EditorSelection | null;
   selectedObject: EditorSelection | null;
-  clampCameraPosition: () => void;
+  cameraState: EditorCameraState;
   emitCameraChanged: () => void;
   clearSelection: () => void;
   placeObjectAt: (x: number, y: number) => void;
   updateSelectedObject: (patch: Record<string, unknown>) => void;
-  ensureBrowseMode: () => void;
-  emitViewModeChanged: () => void;
+  setCameraCenter: (centerX: number, centerY: number) => void;
+  setCameraZoom: (zoom: number) => void;
+  clampCameraPosition: () => void;
   setCurrentCursor: () => void;
   isInBounds: (x: number, y: number) => boolean;
   handleObjectPointerDown: (
@@ -55,6 +55,14 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
       return;
     }
 
+    const worldPoint = screenToWorld(scene.cameraState, { x: pointer.x, y: pointer.y });
+    if (!worldPoint.insideCanvas) {
+      if (scene.selectedTool === null) {
+        scene.clearSelection();
+      }
+      return;
+    }
+
     if (scene.selectedTool === "hand-tool" || scene.spacePressed) {
       beginCameraPan(scene, pointer);
       return;
@@ -70,8 +78,8 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
       return;
     }
 
-    const gridX = Math.floor(pointer.worldX / scene.tileSize);
-    const gridY = Math.floor(pointer.worldY / scene.tileSize);
+    const gridX = Math.floor((worldPoint.x ?? 0) / scene.tileSize);
+    const gridY = Math.floor((worldPoint.y ?? 0) / scene.tileSize);
 
     if (!scene.isInBounds(gridX, gridY)) {
       scene.clearSelection();
@@ -93,20 +101,19 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
 
     promotePendingPan(scene, pointer);
 
-    if (!scene.isPanning || !scene.panStartPointer || !scene.panStartScroll) {
+    if (!scene.isPanning || !scene.panStartPointer || !scene.panStartCenter) {
       if (scene.isZoomDragging) {
         updateZoomDrag(scene, pointer);
       }
       return;
     }
 
-    const camera = scene.cameras.main;
-    camera.setScroll(
-      scene.panStartScroll.x - (pointer.x - scene.panStartPointer.x) / camera.zoom,
-      scene.panStartScroll.y - (pointer.y - scene.panStartPointer.y) / camera.zoom,
-    );
-    scene.clampCameraPosition();
-    scene.emitCameraChanged();
+    const nextState = panCameraByScreenDelta(scene.cameraState, {
+      deltaX: pointer.x - scene.panStartPointer.x,
+      deltaY: pointer.y - scene.panStartPointer.y,
+    });
+
+    scene.setCameraCenter(nextState.centerX, nextState.centerY);
   });
 
   scene.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -126,7 +133,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
   scene.input.on(
     "wheel",
     (
-      _pointer: Phaser.Input.Pointer,
+      pointer: Phaser.Input.Pointer,
       _gameObjects: Phaser.GameObjects.GameObject[],
       _deltaX: number,
       deltaY: number,
@@ -135,34 +142,12 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
         return;
       }
 
-      scene.ensureBrowseMode();
-      const camera = scene.cameras.main;
-      const nextZoom = clampSceneZoom({
-        zoom: camera.zoom * (deltaY > 0 ? 0.9 : 1.1),
-        viewportWidth: scene.viewportWidth,
-        viewportHeight: scene.viewportHeight,
-        worldWidth: scene.gridWidth * scene.tileSize,
-        worldHeight: scene.gridHeight * scene.tileSize,
-        padding: scene.fitPadding,
-      });
-      const center = computeCameraCenterWorldPoint({
-        scrollX: camera.scrollX,
-        scrollY: camera.scrollY,
-        cameraWidth: camera.width,
-        cameraHeight: camera.height,
-        zoom: camera.zoom,
-      });
-      camera.setZoom(nextZoom);
-      const nextScroll = computeScrollForViewportCenter({
-        centerX: center.centerX,
-        centerY: center.centerY,
-        viewportWidth: camera.width,
-        viewportHeight: camera.height,
-        zoom: nextZoom,
-      });
-      camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
-      scene.clampCameraPosition();
-      scene.emitCameraChanged();
+      const worldPoint = screenToWorld(scene.cameraState, { x: pointer.x, y: pointer.y });
+      if (!worldPoint.insideCanvas) {
+        return;
+      }
+
+      scene.setCameraZoom(scene.cameraState.zoom * (deltaY > 0 ? 0.9 : 1.1));
     },
   );
 
@@ -198,7 +183,7 @@ export function setupInputEvents(scene: EditorSceneInputContext) {
 export function stopPanning(scene: EditorSceneInputContext) {
   scene.isPanning = false;
   scene.panStartPointer = null;
-  scene.panStartScroll = null;
+  scene.panStartCenter = null;
   scene.pendingPanStart = null;
   scene.setCurrentCursor();
 }
@@ -215,9 +200,9 @@ export function stopZoomDrag(scene: EditorSceneInputContext) {
  */
 export function beginPotentialPan(scene: EditorSceneInputContext, pointer: Phaser.Input.Pointer) {
   scene.pendingPanStart = { x: pointer.x, y: pointer.y };
-  scene.panStartScroll = {
-    x: scene.cameras.main.scrollX,
-    y: scene.cameras.main.scrollY,
+  scene.panStartCenter = {
+    x: scene.cameraState.centerX,
+    y: scene.cameraState.centerY,
   };
 }
 
@@ -225,7 +210,7 @@ export function beginPotentialPan(scene: EditorSceneInputContext, pointer: Phase
  * 在位移超过阈值后把待定平移升级为真正的平移动作。
  */
 export function promotePendingPan(scene: EditorSceneInputContext, pointer: Phaser.Input.Pointer) {
-  if (!scene.pendingPanStart || scene.isPanning || !scene.panStartScroll) {
+  if (!scene.pendingPanStart || scene.isPanning || !scene.panStartCenter) {
     return;
   }
 
@@ -235,8 +220,6 @@ export function promotePendingPan(scene: EditorSceneInputContext, pointer: Phase
     return;
   }
 
-  // 超过阈值后才提升为真正的平移，避免普通点击误触发拖动画布。
-  scene.ensureBrowseMode();
   scene.isPanning = true;
   scene.panStartPointer = { ...scene.pendingPanStart };
   scene.input.setDefaultCursor("grabbing");
@@ -246,13 +229,12 @@ export function promotePendingPan(scene: EditorSceneInputContext, pointer: Phase
  * 立刻进入相机平移状态，供手形工具和空格拖拽复用。
  */
 export function beginCameraPan(scene: EditorSceneInputContext, pointer: Phaser.Input.Pointer) {
-  scene.ensureBrowseMode();
   scene.isPanning = true;
   scene.pendingPanStart = null;
   scene.panStartPointer = { x: pointer.x, y: pointer.y };
-  scene.panStartScroll = {
-    x: scene.cameras.main.scrollX,
-    y: scene.cameras.main.scrollY,
+  scene.panStartCenter = {
+    x: scene.cameraState.centerX,
+    y: scene.cameraState.centerY,
   };
   scene.input.setDefaultCursor("grabbing");
 }
@@ -261,10 +243,9 @@ export function beginCameraPan(scene: EditorSceneInputContext, pointer: Phaser.I
  * 开始一次基于垂直拖拽的缩放操作。
  */
 export function beginZoomDrag(scene: EditorSceneInputContext, pointer: Phaser.Input.Pointer) {
-  scene.ensureBrowseMode();
   scene.isZoomDragging = true;
   scene.zoomDragOriginY = pointer.y;
-  scene.zoomDragStartZoom = scene.cameras.main.zoom;
+  scene.zoomDragStartZoom = scene.cameraState.zoom;
   scene.input.setDefaultCursor("ns-resize");
 }
 
@@ -273,33 +254,8 @@ export function beginZoomDrag(scene: EditorSceneInputContext, pointer: Phaser.In
  */
 export function updateZoomDrag(scene: EditorSceneInputContext, pointer: Phaser.Input.Pointer) {
   const delta = (scene.zoomDragOriginY - pointer.y) / 240;
-  const camera = scene.cameras.main;
-  const nextZoom = clampSceneZoom({
-    zoom: scene.zoomDragStartZoom + delta,
-    viewportWidth: scene.viewportWidth,
-    viewportHeight: scene.viewportHeight,
-    worldWidth: scene.gridWidth * scene.tileSize,
-    worldHeight: scene.gridHeight * scene.tileSize,
-    padding: scene.fitPadding,
-  });
-  const center = computeCameraCenterWorldPoint({
-    scrollX: camera.scrollX,
-    scrollY: camera.scrollY,
-    cameraWidth: camera.width,
-    cameraHeight: camera.height,
-    zoom: camera.zoom,
-  });
-  camera.setZoom(nextZoom);
-  const nextScroll = computeScrollForViewportCenter({
-    centerX: center.centerX,
-    centerY: center.centerY,
-    viewportWidth: camera.width,
-    viewportHeight: camera.height,
-    zoom: nextZoom,
-  });
-  camera.setScroll(nextScroll.scrollX, nextScroll.scrollY);
-  scene.clampCameraPosition();
-  scene.emitCameraChanged();
+  const nextState = updateCameraZoom(scene.cameraState, scene.zoomDragStartZoom + delta);
+  scene.setCameraZoom(nextState.zoom);
 }
 
 /**
@@ -310,12 +266,18 @@ export function finishObjectDrag(scene: EditorSceneInputContext, pointer: Phaser
     return;
   }
 
-  const gridX = Math.floor(pointer.worldX / scene.tileSize);
-  const gridY = Math.floor(pointer.worldY / scene.tileSize);
+  const worldPoint = screenToWorld(scene.cameraState, { x: pointer.x, y: pointer.y });
 
   scene.isDraggingObject = false;
   scene.objectDragSelection = null;
   scene.setCurrentCursor();
+
+  if (!worldPoint.insideCanvas) {
+    return;
+  }
+
+  const gridX = Math.floor((worldPoint.x ?? 0) / scene.tileSize);
+  const gridY = Math.floor((worldPoint.y ?? 0) / scene.tileSize);
 
   if (!scene.isInBounds(gridX, gridY)) {
     return;

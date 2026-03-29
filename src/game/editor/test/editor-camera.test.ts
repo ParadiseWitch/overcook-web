@@ -1,76 +1,62 @@
 /**
- * 测试对象：editor-camera 辅助函数。
- * 测试用例：中心相机状态、小地图视口映射、滚动范围、视口中心换算和缩放归一化。
- * 测试目标：保护关卡编辑器相机 HUD 依赖的几何计算。
- * 期望：在代表性视口和世界尺寸下，各辅助函数输出保持稳定。
+ * 测试对象：编辑器相机 HUD 与小地图辅助函数。
+ * 测试目标：确保 HUD 直接消费新的 viewport/canvas 数据而不是旧 scroll 语义。
  */
 import {
   computeMinimapViewportRect,
-  computeScrollRange,
-  createCenteredCameraState,
-  computeViewportCenterFromMinimap,
+  createEditorCameraState,
   normalizeZoomPercent,
-  viewportCenterToScroll,
+  viewportCenterFromMinimap,
 } from "../editor-camera";
 
-describe("editor-camera", () => {
-  it("computes scroll ranges from world and visible size", () => {
-    expect(
-      computeScrollRange({
-        worldWidth: 1200,
-        worldHeight: 900,
-        visibleWidth: 800,
-        visibleHeight: 600,
-      }),
-    ).toEqual({
-      maxScrollX: 400,
-      maxScrollY: 300,
+describe("editor-camera HUD helpers", () => {
+  it("computes minimap viewport rectangle from viewport bounds", () => {
+    const state = createEditorCameraState({
+      sceneWidth: 1200,
+      sceneHeight: 900,
+      containerWidth: 1280,
+      containerHeight: 720,
+      zoom: 2,
+      centerX: 600,
+      centerY: 450,
     });
-  });
 
-  it("maps viewport center back to scroll offsets", () => {
-    expect(
-      viewportCenterToScroll({
-        centerX: 600,
-        centerY: 450,
-        visibleWidth: 800,
-        visibleHeight: 600,
-      }),
-    ).toEqual({
-      scrollX: 200,
-      scrollY: 150,
-    });
-  });
-
-  it("computes minimap viewport rectangle in minimap space", () => {
     expect(
       computeMinimapViewportRect({
-        worldWidth: 1200,
-        worldHeight: 900,
-        visibleWidth: 400,
-        visibleHeight: 300,
-        scrollX: 200,
-        scrollY: 150,
+        sceneWidth: state.sceneWidth,
+        sceneHeight: state.sceneHeight,
+        viewportLeft: state.viewportLeft,
+        viewportTop: state.viewportTop,
+        viewportWidth: state.viewportWidth,
+        viewportHeight: state.viewportHeight,
         minimapWidth: 180,
         minimapHeight: 120,
       }),
     ).toEqual({
-      x: 30,
-      y: 20,
-      width: 60,
-      height: 40,
+      x: 45,
+      y: 30,
+      width: 90,
+      height: 60,
     });
   });
 
-  it("clamps the minimap viewport rectangle when the visible area exceeds the world", () => {
+  it("clamps minimap viewport when the viewport covers the whole scene", () => {
+    const state = createEditorCameraState({
+      sceneWidth: 1200,
+      sceneHeight: 900,
+      containerWidth: 1280,
+      containerHeight: 720,
+      zoom: 1,
+    });
+
     expect(
       computeMinimapViewportRect({
-        worldWidth: 1200,
-        worldHeight: 900,
-        visibleWidth: 1500,
-        visibleHeight: 1200,
-        scrollX: -100,
-        scrollY: -40,
+        sceneWidth: state.sceneWidth,
+        sceneHeight: state.sceneHeight,
+        viewportLeft: state.viewportLeft,
+        viewportTop: state.viewportTop,
+        viewportWidth: state.viewportWidth,
+        viewportHeight: state.viewportHeight,
         minimapWidth: 180,
         minimapHeight: 120,
       }),
@@ -82,13 +68,13 @@ describe("editor-camera", () => {
     });
   });
 
-  it("converts minimap pointer positions to viewport centers", () => {
+  it("converts a minimap pointer position into a camera center", () => {
     expect(
-      computeViewportCenterFromMinimap({
+      viewportCenterFromMinimap({
         pointerX: 90,
         pointerY: 60,
-        worldWidth: 1200,
-        worldHeight: 900,
+        sceneWidth: 1200,
+        sceneHeight: 900,
         minimapWidth: 180,
         minimapHeight: 120,
       }),
@@ -98,31 +84,9 @@ describe("editor-camera", () => {
     });
   });
 
-  it("normalizes zoom percentage input into zoom value", () => {
+  it("normalizes zoom percentage input into the supported zoom range", () => {
+    expect(normalizeZoomPercent(100)).toBe(1);
     expect(normalizeZoomPercent(135)).toBe(1.35);
-    expect(normalizeZoomPercent(10)).toBe(0.5);
-    expect(normalizeZoomPercent(400)).toBe(2.5);
-  });
-
-  it("creates a default camera state centered on the whole scene", () => {
-    expect(
-      createCenteredCameraState({
-        worldWidth: 816,
-        worldHeight: 624,
-        viewportWidth: 1280,
-        viewportHeight: 720,
-        zoom: 1,
-      }),
-    ).toEqual({
-      scrollX: -232,
-      scrollY: -48,
-      centerX: 408,
-      centerY: 312,
-      visibleWidth: 1280,
-      visibleHeight: 720,
-      worldWidth: 816,
-      worldHeight: 624,
-      zoom: 1,
-    });
+    expect(normalizeZoomPercent(250)).toBe(2);
   });
 });

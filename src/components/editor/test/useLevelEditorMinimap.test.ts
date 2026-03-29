@@ -14,15 +14,19 @@ import type { EditorCameraState } from "@/game/scenes/editor/level-editor-scene"
  */
 function createCameraState(): EditorCameraState {
   return {
-    scrollX: 120,
-    scrollY: 80,
     zoom: 1.25,
-    visibleWidth: 640,
-    visibleHeight: 480,
-    worldWidth: 1600,
-    worldHeight: 1200,
     centerX: 440,
     centerY: 320,
+    sceneWidth: 1600,
+    sceneHeight: 1200,
+    canvasLeft: 20,
+    canvasTop: 10,
+    canvasWidth: 960,
+    canvasHeight: 720,
+    viewportLeft: 0,
+    viewportTop: 0,
+    viewportWidth: 1280,
+    viewportHeight: 960,
   };
 }
 

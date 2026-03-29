@@ -1,6 +1,10 @@
 import Phaser from "phaser";
 
 import {
+  createCenteredCameraState,
+  type EditorCameraState,
+} from "../../editor/editor-camera";
+import {
   type EditorSelection,
   type FloorToolOptions,
 } from "../../editor/level-editor-utils";
@@ -14,19 +18,6 @@ import * as selectionModule from "./editor-scene-selection";
 import * as configModule from "./editor-scene-config";
 import * as inputModule from "./editor-scene-input";
 
-export type MapViewMode = "fit" | "browse";
-export interface EditorCameraState {
-  scrollX: number;
-  scrollY: number;
-  zoom: number;
-  visibleWidth: number;
-  visibleHeight: number;
-  worldWidth: number;
-  worldHeight: number;
-  centerX: number;
-  centerY: number;
-}
-
 // 作为编辑器场景的编排层，保留对 Vue 壳层稳定的公共 API。
 export class LevelEditorScene extends Phaser.Scene {
   public levelConfigManager = new LevelConfigManager(getDefaultLevelConfig());
@@ -38,19 +29,23 @@ export class LevelEditorScene extends Phaser.Scene {
   public gridWidth = 17;
   public gridHeight = 13;
   public readonly tileSize = 48;
-  public readonly fitPadding = 0;
-  public readonly browseZoomDefault = 1;
   public readonly panThreshold = 6;
-  public viewportWidth = 1280;
-  public viewportHeight = 720;
-  public mapViewMode: MapViewMode = "fit";
+  public canvasContainerWidth = 1280;
+  public canvasContainerHeight = 720;
+  public cameraState = createCenteredCameraState({
+    worldWidth: this.gridWidth * this.tileSize,
+    worldHeight: this.gridHeight * this.tileSize,
+    viewportWidth: this.canvasContainerWidth,
+    viewportHeight: this.canvasContainerHeight,
+    zoom: 1,
+  });
   public interactionBlocked = false;
   public isPanning = false;
   public isZoomDragging = false;
   public isDraggingObject = false;
   public spacePressed = false;
   public panStartPointer: { x: number; y: number } | null = null;
-  public panStartScroll: { x: number; y: number } | null = null;
+  public panStartCenter: { x: number; y: number } | null = null;
   public pendingPanStart: { x: number; y: number } | null = null;
   public zoomDragOriginY = 0;
   public zoomDragStartZoom = 1;
@@ -72,6 +67,13 @@ export class LevelEditorScene extends Phaser.Scene {
     const initialConfig = data?.levelConfig ?? getDefaultLevelConfig();
     this.levelConfigManager = new LevelConfigManager(initialConfig);
     this.syncGridSize();
+    this.cameraState = createCenteredCameraState({
+      worldWidth: this.gridWidth * this.tileSize,
+      worldHeight: this.gridHeight * this.tileSize,
+      viewportWidth: this.canvasContainerWidth,
+      viewportHeight: this.canvasContainerHeight,
+      zoom: 1,
+    });
   }
 
   /**
@@ -81,7 +83,6 @@ export class LevelEditorScene extends Phaser.Scene {
     ensureEditorPreviewTextures(this);
     this.gridGroup = this.add.group();
     this.objectGroup = this.add.group();
-    // 先初始化相机视口，再生成网格和对象，避免首帧继续使用默认尺寸。
     cameraModule.initializeCameraViewport(this as unknown as cameraModule.EditorSceneCameraContext);
     this.updateWorldBounds();
     this.createGrid();
@@ -114,24 +115,17 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   /**
-   * 更新编辑器视口尺寸。
+   * 更新编辑器容器尺寸。
    */
-  public setViewportSize(width: number, height: number) {
-    cameraModule.setViewportSize(this as unknown as cameraModule.EditorSceneCameraContext, width, height);
+  public setCanvasSize(width: number, height: number) {
+    cameraModule.setCanvasSize(this as unknown as cameraModule.EditorSceneCameraContext, width, height);
   }
 
   /**
-   * 切换编辑器视图模式。
+   * 重置相机到默认中心和缩放。
    */
-  public setMapViewMode(mode: MapViewMode) {
-    cameraModule.setMapViewMode(this as unknown as cameraModule.EditorSceneCameraContext, mode);
-  }
-
-  /**
-   * 按当前模式重置相机视图。
-   */
-  public resetCameraView() {
-    cameraModule.resetCameraView(this as unknown as cameraModule.EditorSceneCameraContext);
+  public resetCamera() {
+    cameraModule.resetCamera(this as unknown as cameraModule.EditorSceneCameraContext);
   }
 
   /**
@@ -139,13 +133,6 @@ export class LevelEditorScene extends Phaser.Scene {
    */
   public getCameraState(): EditorCameraState {
     return cameraModule.getCameraState(this as unknown as cameraModule.EditorSceneCameraContext);
-  }
-
-  /**
-   * 直接设置相机滚动值。
-   */
-  public setCameraScroll(scrollX: number, scrollY: number) {
-    cameraModule.setCameraScroll(this as unknown as cameraModule.EditorSceneCameraContext, scrollX, scrollY);
   }
 
   /**
@@ -159,11 +146,7 @@ export class LevelEditorScene extends Phaser.Scene {
    * 直接设置相机缩放值。
    */
   public setCameraZoom(zoom: number) {
-    cameraModule.setCameraZoom(
-      this as unknown as cameraModule.EditorSceneCameraContext,
-      zoom,
-      () => this.ensureBrowseMode(),
-    );
+    cameraModule.setCameraZoom(this as unknown as cameraModule.EditorSceneCameraContext, zoom);
   }
 
   /**
@@ -176,7 +159,7 @@ export class LevelEditorScene extends Phaser.Scene {
       this.isZoomDragging = false;
       this.isDraggingObject = false;
       this.panStartPointer = null;
-      this.panStartScroll = null;
+      this.panStartCenter = null;
       this.pendingPanStart = null;
       this.objectDragSelection = null;
       return;
@@ -265,13 +248,6 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   /**
-   * 获取当前完整关卡配置。
-   */
-  public getLevelConfig(): LevelConfig {
-    return configModule.getLevelConfig(this as unknown as configModule.EditorSceneConfigContext);
-  }
-
-  /**
    * 用指定配置替换当前场景内容。
    */
   public setLevelConfig(config: LevelConfig) {
@@ -335,20 +311,6 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   /**
-   * 应用适配视图模式。
-   */
-  public applyFitView() {
-    cameraModule.applyFitView(this as unknown as cameraModule.EditorSceneCameraContext);
-  }
-
-  /**
-   * 把相机移动到地图中心。
-   */
-  public centerCamera() {
-    cameraModule.centerCamera(this as unknown as cameraModule.EditorSceneCameraContext);
-  }
-
-  /**
    * 钳制相机位置，避免越出合法边界。
    */
   public clampCameraPosition() {
@@ -367,27 +329,6 @@ export class LevelEditorScene extends Phaser.Scene {
    */
   public renderLevelObjects() {
     renderModule.renderLevelObjects(this as unknown as renderModule.EditorSceneRenderContext);
-  }
-
-  /**
-   * 渲染单个地板对象。
-   */
-  public renderFloor(floor: FloorConfig) {
-    renderModule.renderFloor(this as unknown as renderModule.EditorSceneRenderContext, floor);
-  }
-
-  /**
-   * 渲染单个工作站对象。
-   */
-  public renderStation(station: StationConfig) {
-    renderModule.renderStation(this as unknown as renderModule.EditorSceneRenderContext, station);
-  }
-
-  /**
-   * 渲染单个玩家出生点。
-   */
-  public renderPlayer(player: PlayerSpawn) {
-    renderModule.renderPlayer(this as unknown as renderModule.EditorSceneRenderContext, player);
   }
 
   /**
@@ -461,13 +402,6 @@ export class LevelEditorScene extends Phaser.Scene {
    */
   public getSelectedConfigObject(): FloorConfig | StationConfig | PlayerSpawn | null {
     return selectionModule.getSelectedConfigObject(this as unknown as selectionModule.EditorSceneSelectionContext);
-  }
-
-  /**
-   * 获取当前选中对象用于绘制选中框的目标坐标。
-   */
-  public getSelectionTarget() {
-    return selectionModule.getSelectionTarget(this as unknown as selectionModule.EditorSceneSelectionContext);
   }
 
   /**
@@ -551,25 +485,6 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   /**
-   * 如有需要，把编辑器从适配视图切换到浏览视图。
-   */
-  public ensureBrowseMode() {
-    if (this.mapViewMode === "browse") {
-      return;
-    }
-
-    this.mapViewMode = "browse";
-    this.emitViewModeChanged();
-  }
-
-  /**
-   * 对外发出视图模式变更事件。
-   */
-  public emitViewModeChanged() {
-    this.events.emit("view-mode-changed", this.mapViewMode);
-  }
-
-  /**
    * 对外发出相机状态变更事件。
    */
   public emitCameraChanged() {
@@ -590,5 +505,6 @@ export class LevelEditorScene extends Phaser.Scene {
             : "default",
     );
   }
-
 }
+
+export type { EditorCameraState };
