@@ -6,7 +6,6 @@ import { Pot } from "../item/container/pot";
 import { Tomato } from "../item/ingredient/tomato";
 import { Lettuce } from "../item/ingredient/lettuce";
 import { Egg } from "../item/ingredient/egg";
-import { Flour } from "../item/ingredient/flour";
 import { Rice } from "../item/ingredient/rice";
 import { Fish } from "../item/ingredient/fish";
 import { Seaweed } from "../item/ingredient/seaweed";

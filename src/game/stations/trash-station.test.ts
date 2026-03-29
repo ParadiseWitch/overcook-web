@@ -6,7 +6,6 @@ vi.mock("../config", () => ({
 }));
 
 import { TrashStation } from "./trash-station";
-import { Container } from "../item/container/container";
 import { Plate } from "../item/container/plate";
 
 const createMockItem = () => {

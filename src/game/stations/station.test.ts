@@ -130,7 +130,7 @@ describe("Station", () => {
 
       station.placeItem(item);
 
-      expect(item.body.enable).toBe(false);
+      expect(item.body!.enable).toBe(false);
     });
 
     it("should not place item if station already has item", () => {

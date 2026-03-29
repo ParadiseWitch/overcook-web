@@ -8,7 +8,6 @@ vi.mock("../config", () => ({
 import { interact } from "./interact-helper";
 import { Player } from "../player";
 import { Station } from "../stations/station";
-import { Item } from "../item";
 import { Plate } from "../item/container/plate";
 import { Ingredient } from "../item/ingredient/ingredient";
 
@@ -18,7 +17,7 @@ class TestStation extends Station {
   }
 }
 
-const createMockPlayer = (mockScene: any, heldItem: any = null) => {
+const createMockPlayer = (heldItem: any = null) => {
   const player = {
     heldItem,
     putDownToFloor: vi.fn(),
@@ -40,7 +39,7 @@ describe("interact-helper", () => {
 
   describe("interact with null target", () => {
     it("should do nothing when target is null and player has no item", () => {
-      const player = createMockPlayer(mockScene);
+      const player = createMockPlayer();
 
       interact(player, null);
 
@@ -49,7 +48,7 @@ describe("interact-helper", () => {
 
     it("should put down item when target is null and player has item", () => {
       const ingredient = new Ingredient(mockScene as any, 0, 0, "tomato", "tomato");
-      const player = createMockPlayer(mockScene, ingredient);
+      const player = createMockPlayer(ingredient);
 
       interact(player, null);
 
@@ -60,7 +59,7 @@ describe("interact-helper", () => {
   describe("interact with Station", () => {
     it("should place held item on empty station", () => {
       const ingredient = new Ingredient(mockScene as any, 0, 0, "tomato", "tomato");
-      const player = createMockPlayer(mockScene, ingredient);
+      const player = createMockPlayer(ingredient);
       const station = new TestStation(mockScene as any, 100, 100);
       const placeItemSpy = vi.spyOn(station, "placeItem");
 
@@ -71,7 +70,7 @@ describe("interact-helper", () => {
 
     it("should interact with station item when station has item", () => {
       const stationItem = new Ingredient(mockScene as any, 0, 0, "tomato", "tomato");
-      const player = createMockPlayer(mockScene);
+      const player = createMockPlayer();
       const station = new TestStation(mockScene as any, 100, 100);
       station.item = stationItem;
 
@@ -83,7 +82,7 @@ describe("interact-helper", () => {
 
   describe("interact with Container", () => {
     it("should pick up container when player has no held item", () => {
-      const player = createMockPlayer(mockScene);
+      const player = createMockPlayer();
       const container = new Plate(mockScene as any, 100, 100);
 
       interact(player, container);
@@ -94,7 +93,7 @@ describe("interact-helper", () => {
     it("should add ingredient to container when player holds ingredient", () => {
       const ingredient = new Ingredient(mockScene as any, 0, 0, "tomato", "tomato");
       ingredient.addCookstate("cut");
-      const player = createMockPlayer(mockScene, ingredient);
+      const player = createMockPlayer(ingredient);
       const container = new Plate(mockScene as any, 100, 100);
       const addIngredientSpy = vi.spyOn(container, "addIngredient");
 
@@ -105,7 +104,7 @@ describe("interact-helper", () => {
 
     it("should transfer from non-empty container to held empty container", () => {
       const heldContainer = new Plate(mockScene as any, 0, 0);
-      const player = createMockPlayer(mockScene, heldContainer);
+      const player = createMockPlayer(heldContainer);
       const targetContainer = new Plate(mockScene as any, 100, 100);
       const ingredient = new Ingredient(mockScene as any, 0, 0, "tomato", "tomato");
       ingredient.addCookstate("cut");
@@ -122,7 +121,7 @@ describe("interact-helper", () => {
       ingredient.addCookstate("cut");
       const heldContainer = new Plate(mockScene as any, 0, 0);
       heldContainer.addIngredient(ingredient);
-      const player = createMockPlayer(mockScene, heldContainer);
+      const player = createMockPlayer(heldContainer);
       const targetContainer = new Plate(mockScene as any, 100, 100);
       const transferToSpy = vi.spyOn(heldContainer, "transferTo");
 
@@ -134,7 +133,7 @@ describe("interact-helper", () => {
 
   describe("interact with Ingredient", () => {
     it("should pick up ingredient when player has no held item", () => {
-      const player = createMockPlayer(mockScene);
+      const player = createMockPlayer();
       const ingredient = new Ingredient(mockScene as any, 0, 0, "tomato", "tomato");
 
       interact(player, ingredient);
@@ -144,7 +143,7 @@ describe("interact-helper", () => {
 
     it("should add ingredient to held container", () => {
       const container = new Plate(mockScene as any, 0, 0);
-      const player = createMockPlayer(mockScene, container);
+      const player = createMockPlayer(container);
       const ingredient = new Ingredient(mockScene as any, 0, 0, "tomato", "tomato");
       ingredient.addCookstate("cut");
       const addIngredientSpy = vi.spyOn(container, "addIngredient");
