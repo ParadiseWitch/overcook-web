@@ -53,6 +53,9 @@ const STATION_TOOL_MAP: Record<string, StationConfig["type"]> = {
   mixer: "mixer",
 };
 
+/**
+ * 深拷贝一份关卡配置，避免编辑器直接修改原对象引用。
+ */
 export function cloneLevelConfig(config: LevelConfig): LevelConfig {
   if (typeof structuredClone === "function") {
     return structuredClone(config);
@@ -61,6 +64,9 @@ export function cloneLevelConfig(config: LevelConfig): LevelConfig {
   return JSON.parse(JSON.stringify(config)) as LevelConfig;
 }
 
+/**
+ * 为订单池面板生成全部可选配方列表。
+ */
 export function getAllRecipeOptions(): RecipeOption[] {
   return ALL_RECIPES.map((recipe) => ({
     id: recipe.id,
@@ -68,6 +74,9 @@ export function getAllRecipeOptions(): RecipeOption[] {
   }));
 }
 
+/**
+ * 根据当前工具和工具选项构建默认地板配置。
+ */
 export function buildDefaultFloorForTool(
   tool: string,
   x: number,
@@ -92,6 +101,9 @@ export function buildDefaultFloorForTool(
   }
 }
 
+/**
+ * 根据当前工具构建默认工作站配置。
+ */
 export function buildDefaultStationForTool(
   tool: string,
   x: number,
@@ -115,6 +127,9 @@ export function buildDefaultStationForTool(
   return { type: stationType, x, y } as StationConfig;
 }
 
+/**
+ * 根据当前工具构建默认玩家出生点配置。
+ */
 export function buildDefaultPlayerForTool(
   tool: string,
   x: number,
@@ -130,6 +145,9 @@ export function buildDefaultPlayerForTool(
   }
 }
 
+/**
+ * 以不可变方式更新当前选中对象，并返回新的关卡配置。
+ */
 export function updateSelectedObject(
   config: LevelConfig,
   selection: EditorSelection,
@@ -174,6 +192,9 @@ export function updateSelectedObject(
   return nextConfig;
 }
 
+/**
+ * 校验关卡配置是否满足编辑器和玩法的基础约束。
+ */
 export function validateLevelConfig(config: LevelConfig): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -244,6 +265,9 @@ export function validateLevelConfig(config: LevelConfig): ValidationResult {
   };
 }
 
+/**
+ * 把地图内所有对象钳制到合法坐标范围，避免越界配置残留。
+ */
 export function clampMapObjects(config: LevelConfig): LevelConfig {
   const nextConfig = cloneLevelConfig(config);
   const isInBounds = (x: number, y: number) =>
@@ -265,6 +289,9 @@ export function clampMapObjects(config: LevelConfig): LevelConfig {
   return nextConfig;
 }
 
+/**
+ * 递归收集一道食物定义依赖的全部基础食材类型。
+ */
 function collectRequiredIngredientTypes(definition: FoodDef | IngredientDef): string[] {
   if (isIngredientDef(definition)) {
     return [definition.type];

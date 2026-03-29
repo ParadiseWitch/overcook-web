@@ -1,3 +1,6 @@
+/**
+ * 计算当前视口在世界中的可滚动范围。
+ */
 export function computeScrollRange(input: {
   worldWidth: number;
   worldHeight: number;
@@ -10,6 +13,9 @@ export function computeScrollRange(input: {
   };
 }
 
+/**
+ * 根据视口中心点和可视区域尺寸反推出相机 scroll。
+ */
 export function viewportCenterToScroll(input: {
   centerX: number;
   centerY: number;
@@ -22,6 +28,9 @@ export function viewportCenterToScroll(input: {
   };
 }
 
+/**
+ * 计算小地图中表示当前视口的矩形区域。
+ */
 export function computeMinimapViewportRect(input: {
   worldWidth: number;
   worldHeight: number;
@@ -43,6 +52,9 @@ export function computeMinimapViewportRect(input: {
   };
 }
 
+/**
+ * 根据小地图上的指针位置换算出世界中的视口中心点。
+ */
 export function computeViewportCenterFromMinimap(input: {
   pointerX: number;
   pointerY: number;
@@ -57,10 +69,16 @@ export function computeViewportCenterFromMinimap(input: {
   };
 }
 
+/**
+ * 把百分比形式的缩放值转换成编辑器内部使用的 zoom。
+ */
 export function normalizeZoomPercent(percent: number) {
   return Math.min(2.5, Math.max(0.5, percent / 100));
 }
 
+/**
+ * 为编辑器初始化一份以世界中心为基准的相机状态。
+ */
 export function createCenteredCameraState(input: {
   worldWidth: number;
   worldHeight: number;
@@ -92,6 +110,9 @@ export function createCenteredCameraState(input: {
   };
 }
 
+/**
+ * 把数值限制在给定区间内。
+ */
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }

@@ -12,6 +12,9 @@ export interface FloorRenderSpec {
   depth: number;
 }
 
+/**
+ * 根据地图尺寸和覆盖配置生成完整的可渲染地板列表。
+ */
 export function buildRenderableFloors(config: LevelConfig): FloorConfig[] {
   const overrides = new Map(
     config.map.floors.map((floor) => [`${floor.x},${floor.y}`, floor] as const),
@@ -27,6 +30,9 @@ export function buildRenderableFloors(config: LevelConfig): FloorConfig[] {
   return floors;
 }
 
+/**
+ * 把地板配置转换成编辑器预览所需的贴图和角度信息。
+ */
 export function getFloorRenderSpec(floor: FloorConfig): FloorRenderSpec {
   switch (floor.type) {
     case "wall":
@@ -50,6 +56,9 @@ export function getFloorRenderSpec(floor: FloorConfig): FloorRenderSpec {
   }
 }
 
+/**
+ * 根据工作站类型返回编辑器预览使用的贴图 key。
+ */
 export function getStationTextureKey(station: StationConfig) {
   switch (station.type) {
     case "counter":
@@ -76,6 +85,9 @@ export function getStationTextureKey(station: StationConfig) {
   }
 }
 
+/**
+ * 把食材类型转换成小型文字标签，便于编辑器里快速辨认。
+ */
 export function getIngredientLabel(ingredientType: IngredientType) {
   const labelMap: Record<IngredientType, string> = {
     tomato: "番茄",
@@ -97,6 +109,9 @@ export function getIngredientLabel(ingredientType: IngredientType) {
   return labelMap[ingredientType];
 }
 
+/**
+ * 计算传送带地板在编辑器中的旋转角度。
+ */
 function getConveyorAngle(floor: ConveyorFloor) {
   switch (floor.direction) {
     case "up":

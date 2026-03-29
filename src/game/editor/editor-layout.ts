@@ -69,6 +69,9 @@ export const DEFAULT_PANEL_SPECS: Record<
 
 const PANEL_IDS = Object.keys(DEFAULT_PANEL_SPECS) as EditorPanelId[];
 
+/**
+ * 创建编辑器面板的默认布局配置。
+ */
 export function createDefaultEditorLayout(): EditorLayoutState {
   return PANEL_IDS.reduce(
     (layout, id, index) => {
@@ -87,6 +90,9 @@ export function createDefaultEditorLayout(): EditorLayoutState {
   );
 }
 
+/**
+ * 合并持久化布局和默认布局，过滤无效面板数据。
+ */
 export function restoreEditorLayout(
   rawLayout: unknown,
   fallback = createDefaultEditorLayout(),
@@ -118,6 +124,9 @@ export function restoreEditorLayout(
   return restored;
 }
 
+/**
+ * 生成某个面板吸附到指定边缘后的布局状态。
+ */
 export function dockPanel(
   layout: EditorLayoutState,
   id: EditorPanelId,
@@ -135,6 +144,9 @@ export function dockPanel(
   };
 }
 
+/**
+ * 按吸附顺序返回指定边缘上的所有面板 id。
+ */
 export function getDockedPanelIds(
   layout: EditorLayoutState,
   edge: Exclude<DockedEdge, null>,
@@ -144,6 +156,9 @@ export function getDockedPanelIds(
     .sort((a, b) => layout[a].dockOrder - layout[b].dockOrder);
 }
 
+/**
+ * 计算某个面板吸附到指定边缘时应该分配的顺序值。
+ */
 export function getNextDockOrder(
   layout: EditorLayoutState,
   id: EditorPanelId,
@@ -157,6 +172,9 @@ export function getNextDockOrder(
   return getDockedPanelIds(layout, edge).filter((panelId) => panelId !== id).length;
 }
 
+/**
+ * 找出当前布局里唯一保持展开的吸附面板。
+ */
 export function getExpandedDockPanel(
   layout: EditorLayoutState,
 ): EditorPanelId | null {
@@ -167,6 +185,9 @@ export function getExpandedDockPanel(
   );
 }
 
+/**
+ * 把浮动面板位置限制在视口可见范围内。
+ */
 export function clampFloatingPosition(
   position: PanelPosition,
   size: PanelSize,
@@ -178,6 +199,9 @@ export function clampFloatingPosition(
   };
 }
 
+/**
+ * 判断输入值是否为合法的吸附边枚举。
+ */
 function isDockedEdge(value: unknown): value is DockedEdge {
   return (
     value === "left" ||
@@ -188,6 +212,9 @@ function isDockedEdge(value: unknown): value is DockedEdge {
   );
 }
 
+/**
+ * 判断输入值是否为合法的面板尺寸对象。
+ */
 function isPanelSize(value: unknown): value is PanelSize {
   return (
     !!value &&
@@ -197,6 +224,9 @@ function isPanelSize(value: unknown): value is PanelSize {
   );
 }
 
+/**
+ * 判断输入值是否为合法的面板位置对象。
+ */
 function isPanelPosition(value: unknown): value is PanelPosition {
   return (
     !!value &&

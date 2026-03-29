@@ -71,6 +71,9 @@ const emit = defineEmits<{
   (e: "delete-selection"): void;
 }>();
 
+/**
+ * 读取属性字段的展示值，并对颜色和空值场景做显示层转换。
+ */
 function readField(key: string) {
   const value = props.selectedObject?.object[key];
   if (key === "color") {

@@ -19,13 +19,17 @@ const REQUIRED_TEXTURES = [
   "item_fire_extinguisher",
 ] as const;
 
+/**
+ * 确保编辑器预览依赖的基础贴图存在，不依赖正式游戏资源加载顺序。
+ */
 export function ensureEditorPreviewTextures(scene: Phaser.Scene) {
   const missing = REQUIRED_TEXTURES.some((key) => !scene.textures.exists(key));
   if (!missing) {
     return;
   }
 
-  const graphics = scene.make.graphics({ x: 0, y: 0, add: false });
+  const graphics = scene.add.graphics({ x: 0, y: 0 });
+  graphics.setVisible(false);
 
   const drawBlock = (
     key: string,
@@ -158,6 +162,9 @@ export function ensureEditorPreviewTextures(scene: Phaser.Scene) {
   graphics.destroy();
 }
 
+/**
+ * 在 Graphics 上绘制虚线圆弧，用于锅等预览纹理的装饰元素。
+ */
 function drawDashedCircle(
   graphics: Phaser.GameObjects.Graphics,
   centerX: number,
