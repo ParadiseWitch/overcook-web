@@ -59,13 +59,6 @@ export function setCanvasSize(scene: EditorSceneCameraContext, width: number, he
 }
 
 /**
- * 读取当前相机状态，供 Vue HUD 和小地图消费。
- */
-export function getCameraState(scene: EditorSceneCameraContext): EditorCameraState {
-  return scene.cameraState;
-}
-
-/**
  * 把相机移动到指定世界中心点。
  */
 export function setCameraCenter(scene: EditorSceneCameraContext, centerX: number, centerY: number) {

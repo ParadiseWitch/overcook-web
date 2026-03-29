@@ -7,7 +7,6 @@ import {
   type EditorCameraState,
 } from "../../editor/editor-camera";
 import type { EditorSelection } from "../../editor/level-editor-utils";
-import type { FloorConfig, PlayerSpawn, StationConfig } from "../../types/level-config";
 
 // 负责平移、缩放和对象编辑相关的指针/键盘状态切换。
 export interface EditorSceneInputContext {
@@ -29,20 +28,13 @@ export interface EditorSceneInputContext {
   objectDragSelection: EditorSelection | null;
   selectedObject: EditorSelection | null;
   cameraState: EditorCameraState;
-  emitCameraChanged: () => void;
   clearSelection: () => void;
   placeObjectAt: (x: number, y: number) => void;
   updateSelectedObject: (patch: Record<string, unknown>) => void;
   setCameraCenter: (centerX: number, centerY: number) => void;
   setCameraZoom: (zoom: number) => void;
-  clampCameraPosition: () => void;
   setCurrentCursor: () => void;
   isInBounds: (x: number, y: number) => boolean;
-  handleObjectPointerDown: (
-    pointer: Phaser.Input.Pointer,
-    selection: EditorSelection,
-    object: FloorConfig | StationConfig | PlayerSpawn,
-  ) => void;
   deleteSelectedObject: () => void;
 }
 

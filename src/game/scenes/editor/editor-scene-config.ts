@@ -20,12 +20,9 @@ export interface EditorSceneConfigContext {
     validate: () => unknown;
   };
   selectedObject: EditorSelection | null;
-  mapViewMode: "fit" | "browse";
+  selectedTool: string | null;
   toolOptions: { conveyorDirection: "up" | "down" | "left" | "right"; conveyorSpeed: number };
   emitConfigChanged: () => void;
-  emitSelectionChanged: () => void;
-  emitCameraChanged: () => void;
-  emitViewModeChanged: () => void;
   refreshScene: () => void;
 }
 
@@ -181,16 +178,7 @@ export function deleteSelectedObject(scene: EditorSceneConfigContext) {
  */
 export function createNewLevel(scene: EditorSceneConfigContext) {
   scene.selectedObject = null;
-  scene.mapViewMode = "fit";
   scene.refreshScene();
-  scene.emitViewModeChanged();
-}
-
-/**
- * 读取当前关卡配置。
- */
-export function getLevelConfig(scene: EditorSceneConfigContext) {
-  return scene.levelConfigManager.getConfig();
 }
 
 /**
@@ -199,9 +187,7 @@ export function getLevelConfig(scene: EditorSceneConfigContext) {
 export function setLevelConfig(scene: EditorSceneConfigContext, config: LevelConfig) {
   void config;
   scene.selectedObject = null;
-  scene.mapViewMode = "fit";
   scene.refreshScene();
-  scene.emitViewModeChanged();
 }
 
 /**
@@ -224,9 +210,7 @@ export function importLevelConfig(scene: EditorSceneConfigContext, jsonString: s
   }
 
   scene.selectedObject = null;
-  scene.mapViewMode = "fit";
   scene.refreshScene();
-  scene.emitViewModeChanged();
   return { success: true };
 }
 
@@ -234,9 +218,10 @@ export function importLevelConfig(scene: EditorSceneConfigContext, jsonString: s
  * 根据当前激活工具在指定网格位置放置对象。
  */
 export function placeObjectAt(
-  scene: Pick<EditorSceneConfigContext, "levelConfigManager" | "selectedObject" | "toolOptions" | "refreshScene"> & {
-    selectedTool: string | null;
-  },
+  scene: Pick<
+    EditorSceneConfigContext,
+    "levelConfigManager" | "selectedObject" | "selectedTool" | "toolOptions" | "refreshScene"
+  >,
   x: number,
   y: number,
 ) {
