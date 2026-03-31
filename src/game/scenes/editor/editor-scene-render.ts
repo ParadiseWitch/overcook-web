@@ -2,32 +2,27 @@ import Phaser from "phaser";
 
 import * as inputModule from "./editor-scene-input";
 import { cloneLevelConfig } from "../../editor/level-editor-utils";
-import {
-  buildRenderableFloors,
-  getFloorRenderSpec,
-  getIngredientLabel,
-  getStationTextureKey as resolveStationTextureKey,
-} from "../../editor/editor-render";
 import type {
   ConveyorFloor,
   FloorConfig,
+  IngredientType,
+  LevelConfig,
   PlayerSpawn,
   StationConfig,
 } from "../../types/level-config";
 import { getDefaultLevelConfig } from "../../types/level-config";
 
 // 负责渲染编辑器中的网格内容和可交互对象。
-export interface EditorSceneRenderContext extends inputModule.EditorSceneInputContext {
+interface EditorSceneRenderContext extends inputModule.EditorSceneInputContext {
   add: Phaser.GameObjects.GameObjectFactory;
   gridGroup: Phaser.GameObjects.Group;
   objectGroup: Phaser.GameObjects.Group;
 }
 
-/**
- * 重建编辑器网格层。
- */
-export function createGrid(scene: EditorSceneRenderContext) {
-  scene.gridGroup.clear(true, true);
+interface FloorRenderSpec {
+  textureKey: string;
+  angle: number;
+  depth: number;
 }
 
 /**
@@ -35,17 +30,35 @@ export function createGrid(scene: EditorSceneRenderContext) {
  */
 export function renderLevelObjects(scene: EditorSceneRenderContext) {
   scene.objectGroup.clear(true, true);
+  renderFloors(scene);
+  renderStations(scene);
+  renderPlayers(scene);
+}
 
+/**
+ * 渲染地板
+ */
+function renderFloors(scene: EditorSceneRenderContext) {
   const config = scene.levelConfigManager.getConfig();
-  buildRenderableFloors(config).forEach((floor) => renderFloor(scene, floor));
-  config.stations.forEach((station) => renderStation(scene, station));
-  config.players.forEach((player) => renderPlayer(scene, player));
+  const overrides = new Map(
+    config.map.floors.map((floor) => [`${floor.x},${floor.y}`, floor] as const),
+  );
+
+  const floors: FloorConfig[] = [];
+  for (let y = 0; y < config.map.height; y += 1) {
+    for (let x = 0; x < config.map.width; x += 1) {
+      const defaultFloorConfig: FloorConfig = { type: "normal", x, y };
+      const floorConfig = overrides.get(`${x},${y}`) ?? defaultFloorConfig;
+      renderFloor(scene, floorConfig)
+    }
+  }
+  return floors;
 }
 
 /**
  * 渲染单个地板对象，并在需要时附加额外标记。
  */
-export function renderFloor(scene: EditorSceneRenderContext, floor: FloorConfig) {
+function renderFloor(scene: EditorSceneRenderContext, floor: FloorConfig) {
   const { centerX, centerY } = toWorldPosition(scene, floor.x, floor.y);
   const renderSpec = getFloorRenderSpec(floor);
   const tile = scene.add.image(centerX, centerY, renderSpec.textureKey);
@@ -92,10 +105,59 @@ export function renderFloor(scene: EditorSceneRenderContext, floor: FloorConfig)
   scene.objectGroup.add(label);
 }
 
+
+/**
+ * 把地板配置转换成编辑器预览所需的贴图和角度信息。
+ */
+export function getFloorRenderSpec(floor: FloorConfig): FloorRenderSpec {
+  switch (floor.type) {
+    case "wall":
+      return {
+        textureKey: floor.texture || "wall",
+        angle: 0,
+        depth: 0,
+      };
+    case "conveyor":
+      return {
+        textureKey: floor.texture || "conveyor",
+        angle: getConveyorAngle(floor),
+        depth: 0,
+      };
+    default:
+      return {
+        textureKey: floor.texture || "floor",
+        angle: 0,
+        depth: 0,
+      };
+  }
+}
+
+
+/**
+ * 计算传送带地板在编辑器中的旋转角度。
+ */
+function getConveyorAngle(floor: ConveyorFloor) {
+  switch (floor.direction) {
+    case "up":
+      return -90;
+    case "down":
+      return 90;
+    case "left":
+      return 180;
+    default:
+      return 0;
+  }
+}
+
+function renderStations(scene: EditorSceneRenderContext) {
+  const config = scene.levelConfigManager.getConfig();
+  config.stations.forEach((station) => renderStation(scene, station));
+}
+
 /**
  * 渲染单个工作站对象及其覆盖层信息。
  */
-export function renderStation(scene: EditorSceneRenderContext, station: StationConfig) {
+function renderStation(scene: EditorSceneRenderContext, station: StationConfig) {
   const { centerX, centerY } = toWorldPosition(scene, station.x, station.y);
   const textureKey = resolveStationTextureKey(station);
   const stationSprite = scene.add.image(centerX, centerY, textureKey);
@@ -116,14 +178,19 @@ export function renderStation(scene: EditorSceneRenderContext, station: StationC
     );
   });
   scene.objectGroup.add(stationSprite);
-
   renderStationOverlay(scene, station, centerX, centerY);
+}
+
+
+function renderPlayers(scene: EditorSceneRenderContext) {
+  const config = scene.levelConfigManager.getConfig();
+  config.players.forEach((player) => renderPlayer(scene, player));
 }
 
 /**
  * 渲染单个玩家出生点。
  */
-export function renderPlayer(scene: EditorSceneRenderContext, player: PlayerSpawn) {
+function renderPlayer(scene: EditorSceneRenderContext, player: PlayerSpawn) {
   const { centerX, centerY } = toWorldPosition(scene, player.x, player.y);
   const sprite = scene.add.image(centerX, centerY, "player");
   sprite.setDisplaySize(30, 30);
@@ -153,18 +220,11 @@ export function renderPlayer(scene: EditorSceneRenderContext, player: PlayerSpaw
 /**
  * 把网格坐标转换成世界空间中心点坐标。
  */
-export function toWorldPosition(scene: Pick<EditorSceneRenderContext, "tileSize">, x: number, y: number) {
+function toWorldPosition(scene: Pick<EditorSceneRenderContext, "tileSize">, x: number, y: number) {
   return {
     centerX: x * scene.tileSize + scene.tileSize / 2,
     centerY: y * scene.tileSize + scene.tileSize / 2,
   };
-}
-
-/**
- * 判断给定网格坐标是否仍在地图范围内。
- */
-export function isInBounds(scene: { gridWidth: number; gridHeight: number }, x: number, y: number) {
-  return x >= 0 && y >= 0 && x < scene.gridWidth && y < scene.gridHeight;
 }
 
 /**
@@ -240,4 +300,58 @@ function renderStationOverlay(scene: EditorSceneRenderContext, station: StationC
     badge.setDepth(12);
     scene.objectGroup.add(badge);
   }
+}
+
+
+/**
+ * 根据工作站类型返回编辑器预览使用的贴图 key。
+ */
+export function getStationTextureKey(station: StationConfig) {
+  switch (station.type) {
+    case "counter":
+    case "plate-counter":
+    case "fire-extinguisher":
+    case "mixer":
+      return "station_counter";
+    case "cut":
+      return "station_cut";
+    case "pot":
+      return "station_pot";
+    case "sink":
+      return "station_sink";
+    case "delivery":
+      return "station_delivery";
+    case "dirty-plate":
+      return "station_dirty_plate";
+    case "trash":
+      return "station_trash";
+    case "ingredient":
+      return "station_crate";
+    default:
+      return "station_counter";
+  }
+}
+
+/**
+ * 把食材类型转换成小型文字标签，便于编辑器里快速辨认。
+ */
+export function getIngredientLabel(ingredientType: IngredientType) {
+  const labelMap: Record<IngredientType, string> = {
+    tomato: "番茄",
+    lettuce: "生菜",
+    rice: "米",
+    fish: "鱼",
+    seaweed: "紫菜",
+    onion: "洋葱",
+    potato: "土豆",
+    carrot: "胡萝卜",
+    egg: "鸡蛋",
+    flour: "面粉",
+    meat: "肉",
+    cheese: "芝士",
+    chocolate: "巧克力",
+    "burger-bun": "面包胚",
+  };
+
+  return labelMap[ingredientType];
 }

@@ -7,12 +7,12 @@
 import type { LevelConfig } from "../../types/level-config";
 import type { ConveyorFloor } from "../../types/level-config";
 
-import { buildRenderableFloors, getFloorRenderSpec } from "../editor-render";
+import * as editorRender from "../editor-render";
 
 describe("editor-render", () => {
   it("renders wall tiles with the wall texture", () => {
     expect(
-      getFloorRenderSpec({
+      editorRender.getFloorRenderSpec({
         type: "wall",
         x: 1,
         y: 2,
@@ -26,7 +26,7 @@ describe("editor-render", () => {
 
   it("rotates conveyor tiles based on direction", () => {
     expect(
-      getFloorRenderSpec({
+      editorRender.getFloorRenderSpec({
         type: "conveyor",
         x: 0,
         y: 0,
@@ -37,31 +37,5 @@ describe("editor-render", () => {
       textureKey: "conveyor",
       angle: 180,
     });
-  });
-
-  it("renders a full floor grid even when config only stores overrides", () => {
-    const config = {
-      id: "test",
-      name: "test",
-      version: "1.0",
-      gameType: "local-coop",
-      duration: 300,
-      scoreTarget: { star1: 1, star2: 2, star3: 3 },
-      map: {
-        width: 2,
-        height: 2,
-        floors: [{ type: "wall", x: 1, y: 0 }],
-      },
-      players: [],
-      stations: [],
-      orderPool: { recipes: [], maxActiveOrders: 1, spawnInterval: 10 },
-    } satisfies LevelConfig;
-
-    expect(buildRenderableFloors(config)).toEqual([
-      { type: "normal", x: 0, y: 0 },
-      { type: "wall", x: 1, y: 0 },
-      { type: "normal", x: 0, y: 1 },
-      { type: "normal", x: 1, y: 1 },
-    ]);
   });
 });
