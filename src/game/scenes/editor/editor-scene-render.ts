@@ -6,7 +6,6 @@ import type {
   ConveyorFloor,
   FloorConfig,
   IngredientType,
-  LevelConfig,
   PlayerSpawn,
   StationConfig,
 } from "../../types/level-config";
@@ -31,8 +30,8 @@ interface FloorRenderSpec {
 export function renderLevelObjects(scene: EditorSceneRenderContext) {
   scene.objectGroup.clear(true, true);
   renderFloors(scene);
-  renderStations(scene);
-  renderPlayers(scene);
+  // renderStations(scene);
+  // renderPlayers(scene);
 }
 
 /**

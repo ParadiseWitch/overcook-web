@@ -65,8 +65,8 @@ export function useLevelEditorPhaserBridge(input: {
       },
       scene: [LevelEditorScene],
     });
-    resizeObserver = new ResizeObserver(updateViewport);
-    resizeObserver.observe(input.gameHost.value);
+    // resizeObserver = new ResizeObserver(updateViewport);
+    // resizeObserver.observe(input.gameHost.value);
     attachSceneWhenReady();
   }
 
@@ -86,15 +86,15 @@ export function useLevelEditorPhaserBridge(input: {
       return;
     }
 
-    detachSceneEvents();
-    input.sceneRef.value = scene;
-    scene.setToolOptions({ ...input.toolOptions });
-    scene.setCanvasSize(input.viewport.width, input.viewport.height);
-    scene.resetCamera();
-    scene.events.on("config-changed", input.onSceneConfigChanged);
-    scene.events.on("object-selected", input.onSceneSelectionChanged);
-    scene.events.on("camera-changed", input.onSceneCameraChanged);
-    input.onSceneCameraChanged(scene.getCameraState());
+    // detachSceneEvents();
+    // input.sceneRef.value = scene;
+    // scene.setToolOptions({ ...input.toolOptions });
+    // scene.setCanvasSize(input.viewport.width, input.viewport.height);
+    // scene.resetCamera();
+    // scene.events.on("config-changed", input.onSceneConfigChanged);
+    // scene.events.on("object-selected", input.onSceneSelectionChanged);
+    // scene.events.on("camera-changed", input.onSceneCameraChanged);
+    // input.onSceneCameraChanged(scene.getCameraState());
   }
 
   /**

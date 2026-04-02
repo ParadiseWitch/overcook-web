@@ -17,9 +17,11 @@ import * as renderModule from "./editor-scene-render";
 import * as selectionModule from "./editor-scene-selection";
 import * as configModule from "./editor-scene-config";
 import * as inputModule from "./editor-scene-input";
+import { useCoordinateSystem } from "@/game/helper/use-coordinate-system";
 
 // 作为编辑器场景的编排层，保留对 Vue 壳层稳定的公共 API。
 export class LevelEditorScene extends Phaser.Scene {
+  public coord: ReturnType<useCoordinateSystem>
   public levelConfigManager = new LevelConfigManager(getDefaultLevelConfig());
   public selectedTool: string | null = null;
   public toolOptions: FloorToolOptions = {
@@ -67,30 +69,37 @@ export class LevelEditorScene extends Phaser.Scene {
     const initialConfig = data?.levelConfig ?? getDefaultLevelConfig();
     this.levelConfigManager = new LevelConfigManager(initialConfig);
     this.syncGridSizeFromConfig();
-    this.cameraState = createCenteredCameraState({
-      worldWidth: this.gridWidth * this.tileSize,
-      worldHeight: this.gridHeight * this.tileSize,
-      viewportWidth: this.canvasContainerWidth,
-      viewportHeight: this.canvasContainerHeight,
-      zoom: 1,
-    });
+    // this.cameraState = createCenteredCameraState({
+    // worldWidth: this.gridWidth * this.tileSize,
+    // worldHeight: this.gridHeight * this.tileSize,
+    // viewportWidth: this.canvasContainerWidth,
+    // viewportHeight: this.canvasContainerHeight,
+    // zoom: 1,
+    // });
   }
 
   /**
    * 创建编辑器场景的显示对象、输入和首帧相机状态。
    */
   create() {
+    // 坐标系
+    this.coord = useCoordinateSystem(this, {
+      originX: 0,
+      originY: 0,
+      gridSize: 48,
+      fixedToCamera: true
+    });
+    this.coord.show();
     ensureEditorPreviewTextures(this);
     this.gridGroup = this.add.group();
     this.objectGroup = this.add.group();
-    cameraModule.initializeCameraViewport(this);
+    // cameraModule.initializeCameraViewport(this);
     this.updateWorldBoundsFromGrid();
-    renderModule.createGrid(this);
     renderModule.renderLevelObjects(this);
-    inputModule.setupInputEvents(this);
-    cameraModule.refreshCameraView(this);
-    this.emitConfigChangedEvent();
-    selectionModule.emitSelectionChanged(this);
+    // inputModule.setupInputEvents(this);
+    // cameraModule.refreshCameraView(this);
+    // this.emitConfigChangedEvent();
+    // selectionModule.emitSelectionChanged(this);
   }
 
   /**
@@ -305,7 +314,8 @@ export class LevelEditorScene extends Phaser.Scene {
   private refreshSceneComposition() {
     this.syncGridSizeFromConfig();
     this.updateWorldBoundsFromGrid();
-    renderModule.createGrid(this);
+    this.gridGroup.clear(true, true);
+    // renderModule.createGrid(this);
     renderModule.renderLevelObjects(this);
     selectionModule.refreshSelectionMarker(this);
     cameraModule.refreshCameraView(this);
