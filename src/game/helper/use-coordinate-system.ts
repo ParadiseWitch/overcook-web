@@ -13,7 +13,6 @@ export interface CoordinateSystemOptions {
   fontSize?: string;
   showLabels?: boolean;
   fixedToCamera?: boolean;
-
   /** 层级 */
   depth?: number;
 }

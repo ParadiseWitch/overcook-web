@@ -1,10 +1,6 @@
 import Phaser from "phaser";
 
 import {
-  createCenteredCameraState,
-  type EditorCameraState,
-} from "../../editor/editor-camera";
-import {
   type EditorSelection,
   type FloorToolOptions,
 } from "../../editor/level-editor-utils";
@@ -12,7 +8,6 @@ import { ensureEditorPreviewTextures } from "../../editor/editor-preview-texture
 import { LevelConfigManager } from "../../manager/level-config-manager";
 import type { LevelConfig } from "../../types/level-config";
 import { getDefaultLevelConfig } from "../../types/level-config";
-import * as cameraModule from "./editor-scene-camera";
 import * as renderModule from "./editor-scene-render";
 import * as selectionModule from "./editor-scene-selection";
 import * as configModule from "./editor-scene-config";
@@ -21,7 +16,7 @@ import { useCoordinateSystem } from "@/game/helper/use-coordinate-system";
 
 // 作为编辑器场景的编排层，保留对 Vue 壳层稳定的公共 API。
 export class LevelEditorScene extends Phaser.Scene {
-  public coord: ReturnType<useCoordinateSystem>
+  public coord: ReturnType<typeof useCoordinateSystem>
   public levelConfigManager = new LevelConfigManager(getDefaultLevelConfig());
   public selectedTool: string | null = null;
   public toolOptions: FloorToolOptions = {
@@ -34,13 +29,13 @@ export class LevelEditorScene extends Phaser.Scene {
   public readonly panThreshold = 6;
   public canvasContainerWidth = 1280;
   public canvasContainerHeight = 720;
-  public cameraState = createCenteredCameraState({
-    worldWidth: this.gridWidth * this.tileSize,
-    worldHeight: this.gridHeight * this.tileSize,
-    viewportWidth: this.canvasContainerWidth,
-    viewportHeight: this.canvasContainerHeight,
-    zoom: 1,
-  });
+  // public cameraState = createCenteredCameraState({
+  //   worldWidth: this.gridWidth * this.tileSize,
+  //   worldHeight: this.gridHeight * this.tileSize,
+  //   viewportWidth: this.canvasContainerWidth,
+  //   viewportHeight: this.canvasContainerHeight,
+  //   zoom: 1,
+  // });
   public interactionBlocked = false;
   public isPanning = false;
   public isZoomDragging = false;
@@ -87,19 +82,38 @@ export class LevelEditorScene extends Phaser.Scene {
       originX: 0,
       originY: 0,
       gridSize: 48,
-      fixedToCamera: true
+      fixedToCamera: false
     });
     this.coord.show();
     ensureEditorPreviewTextures(this);
     this.gridGroup = this.add.group();
     this.objectGroup = this.add.group();
     // cameraModule.initializeCameraViewport(this);
+    // 测试相机
+    const camera = this.cameras.main;
+    const gridCenter = this.getGridCenter();
+    camera.centerOn(gridCenter[0], gridCenter[1]);
+    camera.setZoom(1.1)
+    camera.setBackgroundColor(0x20242b);
     this.updateWorldBoundsFromGrid();
     renderModule.renderLevelObjects(this);
     // inputModule.setupInputEvents(this);
-    // cameraModule.refreshCameraView(this);
     // this.emitConfigChangedEvent();
     // selectionModule.emitSelectionChanged(this);
+  }
+
+  /**
+   * 重置相机到默认中心和缩放。
+   */
+  resetCamera() {
+    const camera = this.cameras.main;
+    const gridCenter = this.getGridCenter();
+    camera.centerOn(gridCenter[0], gridCenter[1]);
+    camera.setZoom(1.1)
+  }
+
+  getGridCenter(): number[] {
+    return [this.gridWidth * this.tileSize / 2, this.gridHeight * this.tileSize / 2];
   }
 
   /**
@@ -126,35 +140,7 @@ export class LevelEditorScene extends Phaser.Scene {
    * 更新编辑器容器尺寸。
    */
   public setCanvasSize(width: number, height: number) {
-    cameraModule.setCanvasSize(this, width, height);
-  }
-
-  /**
-   * 重置相机到默认中心和缩放。
-   */
-  public resetCamera() {
-    cameraModule.resetCamera(this);
-  }
-
-  /**
-   * 获取当前相机状态快照。
-   */
-  public getCameraState(): EditorCameraState {
-    return this.cameraState;
-  }
-
-  /**
-   * 直接设置相机中心点。
-   */
-  public setCameraCenter(centerX: number, centerY: number) {
-    cameraModule.setCameraCenter(this, centerX, centerY);
-  }
-
-  /**
-   * 直接设置相机缩放值。
-   */
-  public setCameraZoom(zoom: number) {
-    cameraModule.setCameraZoom(this, zoom);
+    // cameraModule.setCanvasSize(this, width, height);
   }
 
   /**

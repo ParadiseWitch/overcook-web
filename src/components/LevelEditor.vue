@@ -2,51 +2,51 @@
   <div ref="mapStage" class="editor-root">
     <div ref="gameHost" class="game-host" />
 
-    <div class="top-toolbar">
-      <div class="toolbar-group">
-        <button type="button" @click="createNewLevel">新建</button>
-        <button type="button" @click="downloadJson">保存</button>
-        <button type="button" @click="openImportDialog">导入</button>
-        <button type="button" @click="copyJson">导出</button>
-      </div>
-
-      <div class="toolbar-group">
-        <button type="button" @click="resetCamera">重置视角</button>
-      </div>
-    </div>
+    <!-- <div class="top-toolbar"> -->
+    <!--   <div class="toolbar-group"> -->
+    <!--     <button type="button" @click="createNewLevel">新建</button> -->
+    <!--     <button type="button" @click="downloadJson">保存</button> -->
+    <!--     <button type="button" @click="openImportDialog">导入</button> -->
+    <!--     <button type="button" @click="copyJson">导出</button> -->
+    <!--   </div> -->
+    <!---->
+    <!--   <div class="toolbar-group"> -->
+    <!--     <button type="button" @click="resetCamera">重置视角</button> -->
+    <!--   </div> -->
+    <!-- </div> -->
 
     <p v-if="status.message" :class="['status-banner', status.tone]">{{ status.message }}</p>
 
-    <div class="panel-layer">
-      <EditorFloatingPanel v-for="panel in panelEntries" :key="panel.id" :title="panel.title"
-        :state="panelLayouts[panel.id]" :style-object="getPanelStyle(panel.id)"
-        :minimized="panelLayouts[panel.id].minimized" :dragging="draggingPanelId === panel.id"
-        @drag-start="startPanelDrag(panel.id, $event)" @toggle-minimize="togglePanelMinimize(panel.id)">
-        <BasicSettingsPanel v-if="panel.id === 'basic-settings'" :form="form" @update:name="updateName"
-          @update:description="updateDescription" @update:game-type="updateGameType" @update:duration="updateDuration"
-          @update:width="updateMapWidth" @update:height="updateMapHeight" />
-
-        <ScoreTargetPanel v-else-if="panel.id === 'score-target'" :scores="form.scoreTarget"
-          @update:score="updateScore" />
-
-        <ToolboxPanel v-else-if="panel.id === 'toolbox'" :active-tool="activeTool"
-          :conveyor-direction="toolOptions.conveyorDirection" :conveyor-speed="toolOptions.conveyorSpeed"
-          :canvas-tools="canvasTools" :floor-tools="floorTools" :station-tools="stationTools"
-          :player-tools="playerTools" @toggle-tool="toggleTool" @update:direction="updateConveyorDirection"
-          @update:speed="updateConveyorSpeed" />
-
-        <OrderPoolPanel v-else-if="panel.id === 'order-pool'" :recipe-options="recipeOptions"
-          :recipes="form.orderPool.recipes" :max-active-orders="form.orderPool.maxActiveOrders"
-          :spawn-interval="form.orderPool.spawnInterval" @toggle-recipe="toggleRecipe"
-          @update:max-active="updateMaxActiveOrders" @update:spawn-interval="updateSpawnInterval" />
-
-        <ValidationPanel v-else-if="panel.id === 'validation'" :validation="validation" />
-
-        <PropertiesPanel v-else-if="panel.id === 'properties'" :selected-object="selectedObject"
-          :selected-title="selectedTitle" :selected-fields="selectedFields" @patch="patchSelected"
-          @delete-selection="deleteSelection" />
-      </EditorFloatingPanel>
-    </div>
+    <!-- <div class="panel-layer"> -->
+    <!--   <EditorFloatingPanel v-for="panel in panelEntries" :key="panel.id" :title="panel.title" -->
+    <!--     :state="panelLayouts[panel.id]" :style-object="getPanelStyle(panel.id)" -->
+    <!--     :minimized="panelLayouts[panel.id].minimized" :dragging="draggingPanelId === panel.id" -->
+    <!--     @drag-start="startPanelDrag(panel.id, $event)" @toggle-minimize="togglePanelMinimize(panel.id)"> -->
+    <!--     <BasicSettingsPanel v-if="panel.id === 'basic-settings'" :form="form" @update:name="updateName" -->
+    <!--       @update:description="updateDescription" @update:game-type="updateGameType" @update:duration="updateDuration" -->
+    <!--       @update:width="updateMapWidth" @update:height="updateMapHeight" /> -->
+    <!---->
+    <!--     <ScoreTargetPanel v-else-if="panel.id === 'score-target'" :scores="form.scoreTarget" -->
+    <!--       @update:score="updateScore" /> -->
+    <!---->
+    <!--     <ToolboxPanel v-else-if="panel.id === 'toolbox'" :active-tool="activeTool" -->
+    <!--       :conveyor-direction="toolOptions.conveyorDirection" :conveyor-speed="toolOptions.conveyorSpeed" -->
+    <!--       :canvas-tools="canvasTools" :floor-tools="floorTools" :station-tools="stationTools" -->
+    <!--       :player-tools="playerTools" @toggle-tool="toggleTool" @update:direction="updateConveyorDirection" -->
+    <!--       @update:speed="updateConveyorSpeed" /> -->
+    <!---->
+    <!--     <OrderPoolPanel v-else-if="panel.id === 'order-pool'" :recipe-options="recipeOptions" -->
+    <!--       :recipes="form.orderPool.recipes" :max-active-orders="form.orderPool.maxActiveOrders" -->
+    <!--       :spawn-interval="form.orderPool.spawnInterval" @toggle-recipe="toggleRecipe" -->
+    <!--       @update:max-active="updateMaxActiveOrders" @update:spawn-interval="updateSpawnInterval" /> -->
+    <!---->
+    <!--     <ValidationPanel v-else-if="panel.id === 'validation'" :validation="validation" /> -->
+    <!---->
+    <!--     <PropertiesPanel v-else-if="panel.id === 'properties'" :selected-object="selectedObject" -->
+    <!--       :selected-title="selectedTitle" :selected-fields="selectedFields" @patch="patchSelected" -->
+    <!--       @delete-selection="deleteSelection" /> -->
+    <!--   </EditorFloatingPanel> -->
+    <!-- </div> -->
 
     <div class="viewport-hud">
       <section class="minimap-panel">
@@ -81,7 +81,7 @@ import PropertiesPanel from "@/components/editor/PropertiesPanel.vue";
 import ScoreTargetPanel from "@/components/editor/ScoreTargetPanel.vue";
 import ToolboxPanel from "@/components/editor/ToolboxPanel.vue";
 import ValidationPanel from "@/components/editor/ValidationPanel.vue";
-import { createCenteredCameraState } from "@/game/editor/editor-camera";
+// import { createCenteredCameraState } from "@/game/editor/editor-camera";
 import {
   type EditorPanelId,
 } from "@/game/editor/editor-layout";
@@ -133,13 +133,13 @@ const fileInput = ref<HTMLInputElement | null>(null);
 // Phaser 场景实例需要保持类实例语义，避免被 Vue 的 ref 展开后丢失精确类型。
 const sceneRef = shallowRef<LevelEditorScene | null>(null);
 const viewport = reactive({ width: window.innerWidth, height: window.innerHeight });
-const cameraState = reactive<EditorCameraState>(createCenteredCameraState({
-  worldWidth: getDefaultLevelConfig().map.width * 48,
-  worldHeight: getDefaultLevelConfig().map.height * 48,
-  viewportWidth: viewport.width,
-  viewportHeight: viewport.height,
-  zoom: 1,
-}));
+// const cameraState = reactive<EditorCameraState>(createCenteredCameraState({
+//   worldWidth: getDefaultLevelConfig().map.width * 48,
+//   worldHeight: getDefaultLevelConfig().map.height * 48,
+//   viewportWidth: viewport.width,
+//   viewportHeight: viewport.height,
+//   zoom: 1,
+// }));
 const MINIMAP_WIDTH = 180;
 const MINIMAP_HEIGHT = 120;
 
