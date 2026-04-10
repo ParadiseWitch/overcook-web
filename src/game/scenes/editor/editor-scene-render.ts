@@ -10,13 +10,9 @@ import type {
   StationConfig,
 } from "../../types/level-config";
 import { getDefaultLevelConfig } from "../../types/level-config";
+import { LevelEditorScene } from "./level-editor-scene";
 
 // 负责渲染编辑器中的网格内容和可交互对象。
-interface EditorSceneRenderContext extends inputModule.EditorSceneInputContext {
-  add: Phaser.GameObjects.GameObjectFactory;
-  gridGroup: Phaser.GameObjects.Group;
-  objectGroup: Phaser.GameObjects.Group;
-}
 
 interface FloorRenderSpec {
   textureKey: string;
@@ -27,7 +23,7 @@ interface FloorRenderSpec {
 /**
  * 按当前关卡配置重绘所有地板、工作站和玩家出生点。
  */
-export function renderLevelObjects(scene: EditorSceneRenderContext) {
+export function renderLevelObjects(scene: LevelEditorScene) {
   scene.objectGroup.clear(true, true);
   renderFloors(scene);
   // renderStations(scene);
@@ -37,7 +33,7 @@ export function renderLevelObjects(scene: EditorSceneRenderContext) {
 /**
  * 渲染地板
  */
-function renderFloors(scene: EditorSceneRenderContext) {
+function renderFloors(scene: LevelEditorScene) {
   const config = scene.levelConfigManager.getConfig();
   const overrides = new Map(
     config.map.floors.map((floor) => [`${floor.x},${floor.y}`, floor] as const),
@@ -57,7 +53,7 @@ function renderFloors(scene: EditorSceneRenderContext) {
 /**
  * 渲染单个地板对象，并在需要时附加额外标记。
  */
-function renderFloor(scene: EditorSceneRenderContext, floor: FloorConfig) {
+function renderFloor(scene: LevelEditorScene, floor: FloorConfig) {
   const { centerX, centerY } = toWorldPosition(scene, floor.x, floor.y);
   const renderSpec = getFloorRenderSpec(floor);
   const tile = scene.add.image(centerX, centerY, renderSpec.textureKey);
@@ -148,7 +144,7 @@ function getConveyorAngle(floor: ConveyorFloor) {
   }
 }
 
-function renderStations(scene: EditorSceneRenderContext) {
+function renderStations(scene: LevelEditorScene) {
   const config = scene.levelConfigManager.getConfig();
   config.stations.forEach((station) => renderStation(scene, station));
 }
@@ -156,7 +152,7 @@ function renderStations(scene: EditorSceneRenderContext) {
 /**
  * 渲染单个工作站对象及其覆盖层信息。
  */
-function renderStation(scene: EditorSceneRenderContext, station: StationConfig) {
+function renderStation(scene: LevelEditorScene, station: StationConfig) {
   const { centerX, centerY } = toWorldPosition(scene, station.x, station.y);
   const textureKey = resolveStationTextureKey(station);
   const stationSprite = scene.add.image(centerX, centerY, textureKey);
@@ -181,7 +177,7 @@ function renderStation(scene: EditorSceneRenderContext, station: StationConfig) 
 }
 
 
-function renderPlayers(scene: EditorSceneRenderContext) {
+function renderPlayers(scene: LevelEditorScene) {
   const config = scene.levelConfigManager.getConfig();
   config.players.forEach((player) => renderPlayer(scene, player));
 }
@@ -189,7 +185,7 @@ function renderPlayers(scene: EditorSceneRenderContext) {
 /**
  * 渲染单个玩家出生点。
  */
-function renderPlayer(scene: EditorSceneRenderContext, player: PlayerSpawn) {
+function renderPlayer(scene: LevelEditorScene, player: PlayerSpawn) {
   const { centerX, centerY } = toWorldPosition(scene, player.x, player.y);
   const sprite = scene.add.image(centerX, centerY, "player");
   sprite.setDisplaySize(30, 30);
@@ -219,7 +215,7 @@ function renderPlayer(scene: EditorSceneRenderContext, player: PlayerSpawn) {
 /**
  * 把网格坐标转换成世界空间中心点坐标。
  */
-function toWorldPosition(scene: Pick<EditorSceneRenderContext, "tileSize">, x: number, y: number) {
+function toWorldPosition(scene: Pick<LevelEditorScene, "tileSize">, x: number, y: number) {
   return {
     centerX: x * scene.tileSize + scene.tileSize / 2,
     centerY: y * scene.tileSize + scene.tileSize / 2,
@@ -245,7 +241,7 @@ function getDirectionGlyph(direction: ConveyorFloor["direction"]) {
 /**
  * 为部分工作站渲染附加图标或文字徽标。
  */
-function renderStationOverlay(scene: EditorSceneRenderContext, station: StationConfig, centerX: number, centerY: number) {
+function renderStationOverlay(scene: LevelEditorScene, station: StationConfig, centerX: number, centerY: number) {
   if (station.type === "plate-counter") {
     const plate = scene.add.image(centerX, centerY, "item_plate");
     plate.setDisplaySize(28, 28);

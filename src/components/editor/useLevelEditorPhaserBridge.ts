@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import { onMounted, onUnmounted, type Ref, type ShallowRef } from "vue";
 
-import { createCenteredCameraState } from "@/game/editor/editor-camera";
 import type { FloorToolOptions } from "@/game/editor/level-editor-utils";
 import { LevelEditorScene, type EditorCameraState } from "@/game/scenes/editor/level-editor-scene";
 type SceneRef<T> = Ref<T> | ShallowRef<T>;
@@ -107,17 +106,5 @@ export function useLevelEditorPhaserBridge(input: {
   }
 
   return {
-    /**
-     * 根据当前视口创建一个居中的初始相机状态对象。
-     */
-    createInitialCameraState(worldWidth: number, worldHeight: number) {
-      return createCenteredCameraState({
-        worldWidth,
-        worldHeight,
-        viewportWidth: input.viewport.width,
-        viewportHeight: input.viewport.height,
-        zoom: 1,
-      });
-    },
   };
 }

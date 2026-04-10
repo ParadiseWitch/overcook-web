@@ -81,12 +81,11 @@ import PropertiesPanel from "@/components/editor/PropertiesPanel.vue";
 import ScoreTargetPanel from "@/components/editor/ScoreTargetPanel.vue";
 import ToolboxPanel from "@/components/editor/ToolboxPanel.vue";
 import ValidationPanel from "@/components/editor/ValidationPanel.vue";
-// import { createCenteredCameraState } from "@/game/editor/editor-camera";
 import {
   type EditorPanelId,
 } from "@/game/editor/editor-layout";
 import { useEditorPanelLayout } from "@/components/editor/useEditorPanelLayout";
-import { useLevelEditorMinimap } from "@/components/editor/useLevelEditorMinimap";
+// import { useLevelEditorMinimap } from "@/components/editor/useLevelEditorMinimap";
 import { useLevelEditorPhaserBridge } from "@/components/editor/useLevelEditorPhaserBridge";
 import {
   useLevelEditorState,
@@ -199,22 +198,22 @@ const {
   viewport,
   sceneRef,
 });
-
-const {
-  zoomPercent,
-  minimapViewportStyle,
-  startMinimapDrag,
-  changeZoomBy,
-  updateZoomSlider,
-  updateZoomInput,
-} = useLevelEditorMinimap({
-  sceneRef,
-  cameraState,
-  minimapSurface,
-  minimapWidth: MINIMAP_WIDTH,
-  minimapHeight: MINIMAP_HEIGHT,
-});
-
+//
+// const {
+//   zoomPercent,
+//   minimapViewportStyle,
+//   startMinimapDrag,
+//   changeZoomBy,
+//   updateZoomSlider,
+//   updateZoomInput,
+// } = useLevelEditorMinimap({
+//   sceneRef,
+//   cameraState,
+//   minimapSurface,
+//   minimapWidth: MINIMAP_WIDTH,
+//   minimapHeight: MINIMAP_HEIGHT,
+// });
+//
 useLevelEditorPhaserBridge({
   mapStage,
   gameHost,

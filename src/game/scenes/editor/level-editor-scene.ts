@@ -11,7 +11,6 @@ import { getDefaultLevelConfig } from "../../types/level-config";
 import * as renderModule from "./editor-scene-render";
 import * as selectionModule from "./editor-scene-selection";
 import * as configModule from "./editor-scene-config";
-import * as inputModule from "./editor-scene-input";
 import { useCoordinateSystem } from "@/game/helper/use-coordinate-system";
 
 // 作为编辑器场景的编排层，保留对 Vue 壳层稳定的公共 API。
