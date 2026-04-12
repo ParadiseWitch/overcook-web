@@ -22,7 +22,7 @@ export interface BaseFloorConfig {
 }
 
 // 地板类型
-export type FloorType = 
+export type FloorType =
   | 'normal'                     // 普通地板
   | 'wall'                       // 墙壁（不可通行）
   | 'conveyor';                  // 传送带
@@ -33,13 +33,13 @@ export type FloorConfig = NormalFloor | WallFloor | ConveyorFloor;
 // 普通地板
 export interface NormalFloor extends BaseFloorConfig {
   type: 'normal';
-  texture?: string;              // 自定义纹理key（可选）
+  texture: string;              // 自定义纹理key（可选）
 }
 
 // 墙壁
 export interface WallFloor extends BaseFloorConfig {
   type: 'wall';
-  texture?: string;              // 自定义纹理key（可选）
+  texture: string;              // 自定义纹理key（可选）
 }
 
 // 传送带地板
@@ -47,7 +47,7 @@ export interface ConveyorFloor extends BaseFloorConfig {
   type: 'conveyor';
   direction: 'up' | 'down' | 'left' | 'right';  // 传送方向
   speed: number;                 // 传送速度（像素/秒）
-  texture?: string;              // 自定义纹理key（可选）
+  texture: string;              // 自定义纹理key（可选）
 }
 
 // ==================== 工作站配置 ====================
@@ -61,7 +61,7 @@ export interface BaseStationConfig {
 }
 
 // 工作站类型枚举
-export type StationType = 
+export type StationType =
   | 'counter'                    // 空柜台
   | 'plate-counter'              // 带盘子的柜台
   | 'cut'                        // 切菜板
@@ -75,7 +75,7 @@ export type StationType =
   | 'ingredient';                // 食材箱
 
 // 联合类型：所有工作站配置
-export type StationConfig = 
+export type StationConfig =
   | CounterStation
   | PlateCounterStation
   | CutStation
@@ -160,7 +160,7 @@ export interface IngredientStation extends BaseStationConfig {
 }
 
 // 食材类型
-export type IngredientType = 
+export type IngredientType =
   | 'tomato'                     // 番茄
   | 'lettuce'                    // 生菜
   | 'rice'                       // 米
@@ -184,11 +184,11 @@ export interface LevelConfig {
   name: string;                  // 关卡名称
   description?: string;          // 关卡描述
   version: string;               // 数据结构版本号（用于未来兼容）
-  
+
   // 游戏设置
   gameType: 'local-coop' | 'local-versus' | 'online-coop' | 'online-versus';
   duration: number;              // 游戏时长（秒）
-  
+
   // 目标分数（星级）
   scoreTarget: {
     star1: number;               // 1星分数
@@ -196,20 +196,21 @@ export interface LevelConfig {
     star3: number;               // 3星分数
     star4?: number;              // 4星分数（可选）
   };
-  
+
   // 地图配置
   map: {
     width: number;               // 地图宽度（格子数）
     height: number;              // 地图高度（格子数）
+    tileSize: number;
     floors: FloorConfig[];       // 地板配置列表
   };
-  
+
   // 玩家配置
   players: PlayerSpawn[];
-  
+
   // 工作站配置
   stations: StationConfig[];
-  
+
   // 订单池配置
   orderPool: {
     recipes: string[];           // 可用菜谱ID列表
@@ -233,6 +234,7 @@ export const getDefaultLevelConfig = (): LevelConfig => ({
   map: {
     width: 17,
     height: 13,
+    tileSize: 48,
     floors: [],
   },
   players: [],

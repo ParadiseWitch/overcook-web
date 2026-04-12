@@ -3,6 +3,10 @@ export interface CoordinateSystemOptions {
   originY?: number;
   width?: number;
   height?: number;
+  minX?: number;
+  maxX?: number;
+  minY?: number;
+  maxY?: number;
   gridSize?: number;
   gridColor?: number;
   xAxisColor?: number;
@@ -29,12 +33,28 @@ export function useCoordinateSystem(
 
   let visible = false;
 
+  function alignToGridStart(min: number, origin: number, gridSize: number) {
+    return origin + Math.ceil((min - origin) / gridSize) * gridSize;
+  }
+
+  function formatAxisValue(value: number) {
+    if (Math.abs(value) < 1e-9) {
+      return "0";
+    }
+    const rounded = Math.round(value * 1000) / 1000;
+    return Number.isInteger(rounded) ? `${rounded}` : rounded.toFixed(3).replace(/\.?0+$/, "");
+  }
+
   function draw() {
     const {
       originX = 0,
       originY = 0,
       width = scene.scale.width,
       height = scene.scale.height,
+      minX = 0,
+      maxX = width,
+      minY = 0,
+      maxY = height,
       gridSize = 50,
       gridColor = 0x444444,
       xAxisColor = 0xff0000,
@@ -57,21 +77,23 @@ export function useCoordinateSystem(
     container.add(graphics);
 
     const g = graphics;
+    const startX = alignToGridStart(minX, originX, gridSize);
+    const startY = alignToGridStart(minY, originY, gridSize);
 
     // ===== 网格 =====
     g.lineStyle(1, gridColor, lineAlpha);
 
-    for (let x = 0; x <= width; x += gridSize) {
+    for (let x = startX; x <= maxX; x += gridSize) {
       g.beginPath();
-      g.moveTo(x, 0);
-      g.lineTo(x, height);
+      g.moveTo(x, minY);
+      g.lineTo(x, maxY);
       g.strokePath();
     }
 
-    for (let y = 0; y <= height; y += gridSize) {
+    for (let y = startY; y <= maxY; y += gridSize) {
       g.beginPath();
-      g.moveTo(0, y);
-      g.lineTo(width, y);
+      g.moveTo(minX, y);
+      g.lineTo(maxX, y);
       g.strokePath();
     }
 
@@ -79,14 +101,14 @@ export function useCoordinateSystem(
     g.lineStyle(2, xAxisColor, axisAlpha);
 
     g.beginPath();
-    g.moveTo(0, originY);
-    g.lineTo(width, originY);
+    g.moveTo(minX, originY);
+    g.lineTo(maxX, originY);
     g.strokePath();
 
     g.lineStyle(2, yAxisColor, axisAlpha);
     g.beginPath();
-    g.moveTo(originX, 0);
-    g.lineTo(originX, height);
+    g.moveTo(originX, minY);
+    g.lineTo(originX, maxY);
     g.strokePath();
 
     // 原点
@@ -96,14 +118,14 @@ export function useCoordinateSystem(
     // ===== 刻度 =====
     if (showLabels) {
       // X轴
-      for (let x = 0; x <= width; x += gridSize) {
+      for (let x = startX; x <= maxX; x += gridSize) {
         g.lineStyle(1, xAxisColor, axisAlpha);
         g.beginPath();
         g.moveTo(x, originY - 5);
         g.lineTo(x, originY + 5);
         g.strokePath();
 
-        const t = scene.add.text(x + 2, originY + 6, `${x}`, {
+        const t = scene.add.text(x + 2, originY + 6, formatAxisValue(x), {
           fontSize,
           color: textColor
         });
@@ -113,14 +135,14 @@ export function useCoordinateSystem(
       }
 
       // Y轴
-      for (let y = 0; y <= height; y += gridSize) {
+      for (let y = startY; y <= maxY; y += gridSize) {
         g.lineStyle(1, yAxisColor, axisAlpha);
         g.beginPath();
         g.moveTo(originX - 5, y);
         g.lineTo(originX + 5, y);
         g.strokePath();
 
-        const t = scene.add.text(originX + 6, y + 2, `${y}`, {
+        const t = scene.add.text(originX + 6, y + 2, formatAxisValue(y), {
           fontSize,
           color: textColor
         });
