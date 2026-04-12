@@ -1,4 +1,4 @@
-import { FloorConfig, FloorType, LevelConfig } from "@/game/types/level-config";
+import type { FloorConfig, LevelConfig } from "@/game/types/level-config";
 
 
 

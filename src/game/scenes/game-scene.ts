@@ -12,6 +12,7 @@ import { createMap } from "../manager/map-manager";
 import { ALL_PLAYERS, updatePlayers } from "../manager/player-manager";
 import { ALL_STATIONS, updateStations } from "../manager/station-manager";
 import { handleCollision, handleThrow } from "../physics/collision-handler";
+import { preloadTextures } from "../textures";
 import {
   initFireHelper,
   updateFireHelper,
@@ -43,6 +44,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(data?: { skipInitialMenu?: boolean }) {
+    preloadTextures(this);
+
     // 场景每次创建（包括重新开始）时，清空全局管理数组，避免旧角色 / 工作站残留
     ALL_PLAYERS.length = 0;
     ALL_ITEMS.length = 0;

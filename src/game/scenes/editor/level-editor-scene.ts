@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-import { ensureEditorPreviewTextures } from "../../editor/editor-preview-textures";
+import { preloadTextures } from "../../textures";
 import { LevelConfigManager } from "../../manager/level-config-manager";
 import type { LevelConfig } from "../../types/level-config";
 import { getDefaultLevelConfig } from "../../types/level-config";
@@ -56,8 +56,7 @@ export class LevelEditorScene extends Phaser.Scene {
     });
     this.debugCoord.show();
     this.resetCamera();
-    // TODO:贴图?
-    ensureEditorPreviewTextures(this);
+    preloadTextures(this);
     // 物理世界
     this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     // 渲染

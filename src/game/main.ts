@@ -1,6 +1,5 @@
 import { AUTO, Game, Scale, Types } from "phaser";
 import { TILE_SIZE, WORLD_W, WORLD_H } from "./config";
-import { BootScene } from "./scenes/boot-scene";
 import { GameScene } from "./scenes/game-scene";
 
 // Find out more information about the Game Config at:
@@ -24,7 +23,7 @@ const baseConfig: Types.Core.GameConfig = {
   // scene: [
   //   MainGame
   // ]
-  scene: [BootScene, GameScene],
+  scene: [GameScene],
   input: {
     keyboard: true,
     mouse: true,

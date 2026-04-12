@@ -4,7 +4,7 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('../components/PhaserGame.vue')
+    component: () => import('../components/Game.vue')
   },
   {
     path: '/editor',
