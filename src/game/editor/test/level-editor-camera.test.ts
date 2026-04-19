@@ -1,10 +1,15 @@
 /**
- * 测试对象：level-editor-camera 与 level-editor-camera-pan 辅助函数。
- * 测试用例：相机边界钳制、小地图居中与拖拽位移换算。
- * 测试目标：保护编辑器画布移动的核心规则，避免输入接线后回归。
- * 期望：相机目标点会被稳定钳制，拖拽位移会按缩放值正确换算。
+ * Targets the level editor camera helpers and pan math.
+ * Covers camera clamping, zoom steps, zoom limits, and drag delta conversion.
+ * Protects the editor canvas navigation rules from regressions.
  */
-import { clampCameraCenter } from "../level-editor-camera";
+import {
+  clampCameraCenter,
+  getCameraViewportSize,
+  getMinZoomForBounds,
+  getNextZoomLevel,
+  LEVEL_EDITOR_ZOOM,
+} from "../level-editor-camera";
 import { getPanCameraCenter } from "../level-editor-camera-pan";
 
 describe("level-editor-camera", () => {
@@ -39,6 +44,43 @@ describe("level-editor-camera", () => {
     ).toEqual({
       x: 120,
       y: 80,
+    });
+  });
+
+  it("raises zoom level by a fixed step and clamps it to the configured maximum", () => {
+    expect(
+      getNextZoomLevel(LEVEL_EDITOR_ZOOM.max - 0.05, -120),
+    ).toBe(LEVEL_EDITOR_ZOOM.max);
+  });
+
+  it("lowers zoom level by a fixed step and clamps it to the configured minimum", () => {
+    expect(
+      getNextZoomLevel(LEVEL_EDITOR_ZOOM.min + 0.05, 120),
+    ).toBe(LEVEL_EDITOR_ZOOM.min);
+  });
+
+  it("does not allow zooming out beyond the world bounds", () => {
+    const minZoom = getMinZoomForBounds(
+      { worldWidth: 816, worldHeight: 624 },
+      { width: 960, height: 540 },
+    );
+
+    expect(minZoom).toBeCloseTo(1.1764705882, 5);
+    expect(
+      getNextZoomLevel(minZoom + 0.05, 120, minZoom),
+    ).toBeCloseTo(minZoom, 5);
+  });
+
+  it("derives the visible world span from viewport size and zoom", () => {
+    expect(
+      getCameraViewportSize({
+        width: 960,
+        height: 540,
+        zoom: 1.5,
+      }),
+    ).toEqual({
+      viewportWidth: 640,
+      viewportHeight: 360,
     });
   });
 });

@@ -8,6 +8,7 @@ import {
   clampSceneCamera,
   getGridCenter,
   resetLevelEditorCamera,
+  zoomSceneCamera,
 } from "./level-editor-camera";
 import {
   createEditorCameraPanSession,
@@ -66,6 +67,7 @@ export class LevelEditorScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     this.resetCamera();
     this.registerPanControls();
+    this.registerZoomControls();
 
     this.clear();
     this.render();
@@ -132,6 +134,20 @@ export class LevelEditorScene extends Phaser.Scene {
       this.panSession.pointerDown = false;
       this.stopPanGesture();
     });
+  }
+
+  private registerZoomControls() {
+    this.input.on(
+      "wheel",
+      (
+        _pointer: Phaser.Input.Pointer,
+        _gameObjects: Phaser.GameObjects.GameObject[],
+        _deltaX: number,
+        deltaY: number,
+      ) => {
+        zoomSceneCamera(this, deltaY);
+      },
+    );
   }
 
   private isPanGestureActive() {
