@@ -11,6 +11,8 @@ export interface EditorCameraPanSession {
   spaceDown: boolean;
 }
 
+export type PanCursor = "default" | "grab" | "grabbing";
+
 export function createEditorCameraPanSession(): EditorCameraPanSession {
   return {
     active: false,
@@ -30,4 +32,16 @@ export function getPanCameraCenter(
     x: center.x - delta.x / scale,
     y: center.y - delta.y / scale,
   };
+}
+
+export function getPanCursor(session: EditorCameraPanSession): PanCursor {
+  if (!session.spaceDown) {
+    return "default";
+  }
+
+  if (session.active && session.pointerDown) {
+    return "grabbing";
+  }
+
+  return "grab";
 }

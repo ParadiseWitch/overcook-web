@@ -1,16 +1,21 @@
 /**
  * Targets the level editor camera helpers and pan math.
- * Covers camera clamping, zoom steps, zoom limits, and drag delta conversion.
+ * Covers camera clamping, fit-to-canvas zoom, zoom step bounds, and drag delta conversion.
  * Protects the editor canvas navigation rules from regressions.
  */
 import {
   clampCameraCenter,
+  createCanvasBoundsFromView,
   getCameraViewportSize,
+  getFitZoomForBounds,
   getMinZoomForBounds,
   getNextZoomLevel,
   LEVEL_EDITOR_ZOOM,
 } from "../level-editor-camera";
-import { getPanCameraCenter } from "../level-editor-camera-pan";
+import {
+  getPanCameraCenter,
+  getPanCursor,
+} from "../level-editor-camera-pan";
 
 describe("level-editor-camera", () => {
   it("clamps camera center inside world bounds when the world is larger than the viewport", () => {
@@ -59,13 +64,15 @@ describe("level-editor-camera", () => {
     ).toBe(LEVEL_EDITOR_ZOOM.min);
   });
 
-  it("does not allow zooming out beyond the world bounds", () => {
-    const minZoom = getMinZoomForBounds(
-      { worldWidth: 816, worldHeight: 624 },
+  it("does not allow zooming out beyond the initial canvas bounds", () => {
+    const bounds = createCanvasBoundsFromView(
+      { x: 408, y: 312 },
       { width: 960, height: 540 },
+      0.8,
     );
+    const minZoom = getMinZoomForBounds(bounds, { width: 960, height: 540 });
 
-    expect(minZoom).toBeCloseTo(1.1764705882, 5);
+    expect(minZoom).toBeCloseTo(0.8, 5);
     expect(
       getNextZoomLevel(minZoom + 0.05, 120, minZoom),
     ).toBeCloseTo(minZoom, 5);
@@ -83,6 +90,42 @@ describe("level-editor-camera", () => {
       viewportHeight: 360,
     });
   });
+
+  it("freezes canvas bounds from the actual initial camera view", () => {
+    const bounds = createCanvasBoundsFromView(
+      { x: 408, y: 312 },
+      { width: 960, height: 540 },
+      LEVEL_EDITOR_ZOOM.default,
+    );
+
+    expect(getFitZoomForBounds(bounds, { width: 960, height: 540 })).toBeCloseTo(
+      LEVEL_EDITOR_ZOOM.default,
+      5,
+    );
+    expect(bounds.left).toBeCloseTo(-28.363636363636374, 5);
+    expect(bounds.top).toBeCloseTo(66.54545454545453, 5);
+    expect(bounds.right).toBeCloseTo(844.3636363636364, 5);
+    expect(bounds.bottom).toBeCloseTo(557.4545454545455, 5);
+  });
+
+  it("clamps camera center against editor navigation bounds instead of bare map bounds", () => {
+    expect(
+      clampCameraCenter(
+        { x: -900, y: -520 },
+        {
+          left: -960,
+          top: -540,
+          right: 1776,
+          bottom: 1164,
+          viewportWidth: 640,
+          viewportHeight: 360,
+        },
+      ),
+    ).toEqual({
+      x: -640,
+      y: -360,
+    });
+  });
 });
 
 describe("level-editor-camera-pan", () => {
@@ -97,5 +140,35 @@ describe("level-editor-camera-pan", () => {
       x: 270,
       y: 255,
     });
+  });
+
+  it("uses a grab cursor while space is held without dragging", () => {
+    expect(
+      getPanCursor({
+        spaceDown: true,
+        pointerDown: false,
+        active: false,
+      }),
+    ).toBe("grab");
+  });
+
+  it("uses a grabbing cursor while the pan gesture is active", () => {
+    expect(
+      getPanCursor({
+        spaceDown: true,
+        pointerDown: true,
+        active: true,
+      }),
+    ).toBe("grabbing");
+  });
+
+  it("returns to the default cursor when space is not held", () => {
+    expect(
+      getPanCursor({
+        spaceDown: false,
+        pointerDown: false,
+        active: false,
+      }),
+    ).toBe("default");
   });
 });

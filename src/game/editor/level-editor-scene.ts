@@ -5,14 +5,18 @@ import { LevelConfigManager } from "@/game/manager/level-config-manager";
 import { preloadTextures } from "@/game/textures";
 import { getDefaultLevelConfig, type LevelConfig } from "@/game/types/level-config";
 import {
+  createCanvasBoundsFromView,
   clampSceneCamera,
   getGridCenter,
+  type CanvasBounds,
+  LEVEL_EDITOR_ZOOM,
   resetLevelEditorCamera,
   zoomSceneCamera,
 } from "./level-editor-camera";
 import {
   createEditorCameraPanSession,
   getPanCameraCenter,
+  getPanCursor,
 } from "./level-editor-camera-pan";
 import { createLevelEditorRenderer } from "./level-editor-renderer";
 
@@ -27,6 +31,7 @@ export class LevelEditorScene extends Phaser.Scene {
   private clear: () => void = () => {};
   private panSession = createEditorCameraPanSession();
   private lastPointerPosition: { x: number; y: number } | null = null;
+  private canvasBounds: CanvasBounds | null = null;
 
   constructor() {
     super({ key: "LevelEditorScene" });
@@ -50,14 +55,27 @@ export class LevelEditorScene extends Phaser.Scene {
   create() {
     const worldWidth = this.gridWidth * this.tileSize;
     const worldHeight = this.gridHeight * this.tileSize;
+    const initialCenter = getGridCenter(this.gridWidth, this.gridHeight, this.tileSize);
+    const initialZoom = LEVEL_EDITOR_ZOOM.default;
+
+    this.cameras.main.setZoom(initialZoom);
+    this.cameras.main.centerOn(initialCenter.x, initialCenter.y);
+    this.canvasBounds = createCanvasBoundsFromView(
+      initialCenter,
+      {
+        width: this.scale.width,
+        height: this.scale.height,
+      },
+      initialZoom,
+    );
 
     this.debugCoord = useCoordinateSystem(this, {
       originX: 0,
       originY: 0,
-      minX: -this.scale.width,
-      maxX: worldWidth + this.scale.width,
-      minY: -this.scale.height,
-      maxY: worldHeight + this.scale.height,
+      minX: this.canvasBounds.left,
+      maxX: this.canvasBounds.right,
+      minY: this.canvasBounds.top,
+      maxY: this.canvasBounds.bottom,
       gridSize: 48,
       fixedToCamera: false,
     });
@@ -74,7 +92,11 @@ export class LevelEditorScene extends Phaser.Scene {
   }
 
   resetCamera() {
-    resetLevelEditorCamera(this, this.gridWidth, this.gridHeight, this.tileSize);
+    if (!this.canvasBounds) {
+      return;
+    }
+
+    resetLevelEditorCamera(this, this.canvasBounds);
   }
 
   getGridCenter(): number[] {
@@ -87,20 +109,28 @@ export class LevelEditorScene extends Phaser.Scene {
     if (keyboard) {
       keyboard.on("keydown-SPACE", () => {
         this.panSession.spaceDown = true;
+        this.updateCanvasCursor();
       });
       keyboard.on("keyup-SPACE", () => {
         this.panSession.spaceDown = false;
         this.stopPanGesture();
+        this.updateCanvasCursor();
       });
     }
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (!this.isPrimaryPointer(pointer)) {
+        return;
+      }
+
       this.panSession.pointerDown = true;
       this.lastPointerPosition = { x: pointer.x, y: pointer.y };
 
       if (this.panSession.spaceDown) {
         this.panSession.active = true;
       }
+
+      this.updateCanvasCursor();
     });
 
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
@@ -121,18 +151,24 @@ export class LevelEditorScene extends Phaser.Scene {
         this.cameras.main.zoom,
       );
 
-      clampSceneCamera(this, nextCenter);
+      if (!this.canvasBounds) {
+        return;
+      }
+
+      clampSceneCamera(this, nextCenter, this.canvasBounds);
       this.lastPointerPosition = { x: pointer.x, y: pointer.y };
     });
 
     this.input.on("pointerup", () => {
       this.panSession.pointerDown = false;
       this.stopPanGesture();
+      this.updateCanvasCursor();
     });
 
     this.input.on("pointerupoutside", () => {
       this.panSession.pointerDown = false;
       this.stopPanGesture();
+      this.updateCanvasCursor();
     });
   }
 
@@ -145,7 +181,11 @@ export class LevelEditorScene extends Phaser.Scene {
         _deltaX: number,
         deltaY: number,
       ) => {
-        zoomSceneCamera(this, deltaY);
+        if (!this.canvasBounds) {
+          return;
+        }
+
+        zoomSceneCamera(this, deltaY, this.canvasBounds);
       },
     );
   }
@@ -157,5 +197,22 @@ export class LevelEditorScene extends Phaser.Scene {
   private stopPanGesture() {
     this.panSession.active = false;
     this.lastPointerPosition = null;
+  }
+
+  private updateCanvasCursor() {
+    const canvas = this.game.canvas as HTMLCanvasElement | undefined;
+    if (!canvas) {
+      return;
+    }
+
+    canvas.style.cursor = getPanCursor(this.panSession);
+  }
+
+  private isPrimaryPointer(pointer: Phaser.Input.Pointer) {
+    if (typeof pointer.button === "number") {
+      return pointer.button === 0;
+    }
+
+    return true;
   }
 }
