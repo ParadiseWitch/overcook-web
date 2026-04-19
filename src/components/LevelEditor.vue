@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import Phaser from "phaser";
-import { LevelEditorScene } from "@/game/scenes/editor/level-editor-scene";
+import { LevelEditorScene } from "@/game/editor/level-editor-scene";
 import { ref, reactive, onMounted, onUnmounted } from "vue";
 const editorRoot = ref<HTMLElement | null>(null);
 const canvasContainer = ref<HTMLElement | null>(null);

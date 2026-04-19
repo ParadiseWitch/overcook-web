@@ -33,13 +33,13 @@ export type FloorConfig = NormalFloor | WallFloor | ConveyorFloor;
 // 普通地板
 export interface NormalFloor extends BaseFloorConfig {
   type: 'normal';
-  texture: string;              // 自定义纹理key（可选）
+  texture?: string;             // 自定义纹理key（可选）
 }
 
 // 墙壁
 export interface WallFloor extends BaseFloorConfig {
   type: 'wall';
-  texture: string;              // 自定义纹理key（可选）
+  texture?: string;             // 自定义纹理key（可选）
 }
 
 // 传送带地板
@@ -47,7 +47,7 @@ export interface ConveyorFloor extends BaseFloorConfig {
   type: 'conveyor';
   direction: 'up' | 'down' | 'left' | 'right';  // 传送方向
   speed: number;                 // 传送速度（像素/秒）
-  texture: string;              // 自定义纹理key（可选）
+  texture?: string;             // 自定义纹理key（可选）
 }
 
 // ==================== 工作站配置 ====================
