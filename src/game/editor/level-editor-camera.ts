@@ -27,6 +27,11 @@ export interface ViewportSize {
   height: number;
 }
 
+export interface CameraResizeState {
+  center: CameraCenter;
+  zoom: number;
+}
+
 export interface CanvasBounds {
   left: number;
   top: number;
@@ -153,6 +158,32 @@ export function getCameraBounds(scene: Phaser.Scene, canvasBounds: CanvasBounds)
     bottom: canvasBounds.bottom,
     viewportWidth: viewport.viewportWidth,
     viewportHeight: viewport.viewportHeight,
+  };
+}
+
+export function getCameraStateAfterViewportResize(
+  current: CameraResizeState,
+  canvasBounds: CanvasBounds,
+  viewport: ViewportSize,
+): CameraResizeState {
+  const minZoom = getMinZoomForBounds(canvasBounds, viewport);
+  const zoom = clamp(current.zoom, minZoom, LEVEL_EDITOR_ZOOM.max);
+  const visible = getCameraViewportSize({
+    width: viewport.width,
+    height: viewport.height,
+    zoom,
+  });
+
+  return {
+    center: clampCameraCenter(current.center, {
+      left: canvasBounds.left,
+      top: canvasBounds.top,
+      right: canvasBounds.right,
+      bottom: canvasBounds.bottom,
+      viewportWidth: visible.viewportWidth,
+      viewportHeight: visible.viewportHeight,
+    }),
+    zoom,
   };
 }
 

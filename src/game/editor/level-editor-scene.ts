@@ -8,9 +8,11 @@ import {
   createCanvasBoundsFromView,
   clampSceneCamera,
   getGridCenter,
+  getCameraStateAfterViewportResize,
   type CanvasBounds,
   LEVEL_EDITOR_ZOOM,
   resetLevelEditorCamera,
+  type ViewportSize,
   zoomSceneCamera,
 } from "./level-editor-camera";
 import {
@@ -97,6 +99,27 @@ export class LevelEditorScene extends Phaser.Scene {
     }
 
     resetLevelEditorCamera(this, this.canvasBounds);
+  }
+
+  resizeViewport(viewport: ViewportSize) {
+    if (viewport.width <= 0 || viewport.height <= 0 || !this.canvasBounds) {
+      return;
+    }
+
+    const camera = this.cameras.main;
+    const current = {
+      center: { x: camera.midPoint.x, y: camera.midPoint.y },
+      zoom: camera.zoom,
+    };
+    camera.setSize(viewport.width, viewport.height);
+    const next = getCameraStateAfterViewportResize(
+      current,
+      this.canvasBounds,
+      viewport,
+    );
+
+    camera.setZoom(next.zoom);
+    camera.centerOn(next.center.x, next.center.y);
   }
 
   getGridCenter(): number[] {

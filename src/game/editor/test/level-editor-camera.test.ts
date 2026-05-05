@@ -6,6 +6,7 @@
 import {
   clampCameraCenter,
   createCanvasBoundsFromView,
+  getCameraStateAfterViewportResize,
   getCameraViewportSize,
   getFitZoomForBounds,
   getMinZoomForBounds,
@@ -124,6 +125,67 @@ describe("level-editor-camera", () => {
     ).toEqual({
       x: -640,
       y: -360,
+    });
+  });
+
+  it("preserves camera center and zoom when resize keeps them valid", () => {
+    expect(
+      getCameraStateAfterViewportResize(
+        {
+          center: { x: 500, y: 400 },
+          zoom: 1,
+        },
+        {
+          left: 0,
+          top: 0,
+          right: 1000,
+          bottom: 800,
+        },
+        { width: 400, height: 300 },
+      ),
+    ).toEqual({
+      center: { x: 500, y: 400 },
+      zoom: 1,
+    });
+  });
+
+  it("raises zoom to the resized viewport minimum", () => {
+    const state = getCameraStateAfterViewportResize(
+      {
+        center: { x: 500, y: 400 },
+        zoom: 0.8,
+      },
+      {
+        left: 0,
+        top: 0,
+        right: 1000,
+        bottom: 800,
+      },
+      { width: 1200, height: 960 },
+    );
+
+    expect(state.zoom).toBeCloseTo(1.2, 5);
+    expect(state.center).toEqual({ x: 500, y: 400 });
+  });
+
+  it("clamps camera center using the resized visible span", () => {
+    expect(
+      getCameraStateAfterViewportResize(
+        {
+          center: { x: 900, y: 700 },
+          zoom: 1,
+        },
+        {
+          left: 0,
+          top: 0,
+          right: 1000,
+          bottom: 800,
+        },
+        { width: 600, height: 400 },
+      ),
+    ).toEqual({
+      center: { x: 700, y: 600 },
+      zoom: 1,
     });
   });
 });

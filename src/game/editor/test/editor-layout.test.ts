@@ -6,6 +6,7 @@
  */
 import {
   DEFAULT_PANEL_SPECS,
+  clampEditorLayoutToViewport,
   clampFloatingPosition,
   createDefaultEditorLayout,
   dockPanel,
@@ -97,5 +98,56 @@ describe("editor-layout", () => {
     layout.validation.zIndex = 99;
 
     expect(getExpandedDockPanel(layout)).toBe("validation");
+  });
+
+  it("clamps floating panels into a smaller viewport", () => {
+    const layout = createDefaultEditorLayout();
+    layout.toolbox = {
+      ...layout.toolbox,
+      dockedEdge: null,
+      position: { x: 900, y: 700 },
+      size: { width: 320, height: 420 },
+    };
+
+    const next = clampEditorLayoutToViewport(layout, { width: 640, height: 480 });
+
+    expect(next.toolbox.position).toEqual({ x: 320, y: 60 });
+  });
+
+  it("preserves docked panel state while clamping floating panels", () => {
+    const layout = createDefaultEditorLayout();
+    layout.properties.zIndex = 99;
+    layout.toolbox = {
+      ...layout.toolbox,
+      dockedEdge: null,
+      position: { x: -20, y: -10 },
+    };
+
+    const next = clampEditorLayoutToViewport(layout, { width: 640, height: 480 });
+
+    expect(next.properties).toMatchObject({
+      dockedEdge: "right",
+      zIndex: 99,
+    });
+    expect(next.toolbox.position).toEqual({ x: 0, y: 0 });
+  });
+
+  it("clamps restored floating panels when a viewport is provided", () => {
+    const restored = restoreEditorLayout(
+      {
+        toolbox: {
+          dockedEdge: null,
+          dockOrder: 2,
+          minimized: false,
+          position: { x: 900, y: 700 },
+          size: { width: 320, height: 420 },
+          zIndex: 30,
+        },
+      },
+      createDefaultEditorLayout(),
+      { width: 640, height: 480 },
+    );
+
+    expect(restored.toolbox.position).toEqual({ x: 320, y: 60 });
   });
 });

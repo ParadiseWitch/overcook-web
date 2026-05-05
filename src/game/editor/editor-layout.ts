@@ -96,9 +96,10 @@ export function createDefaultEditorLayout(): EditorLayoutState {
 export function restoreEditorLayout(
   rawLayout: unknown,
   fallback = createDefaultEditorLayout(),
+  viewport?: { width: number; height: number },
 ): EditorLayoutState {
   if (!rawLayout || typeof rawLayout !== "object") {
-    return fallback;
+    return viewport ? clampEditorLayoutToViewport(fallback, viewport) : fallback;
   }
 
   const restored = createDefaultEditorLayout();
@@ -121,7 +122,7 @@ export function restoreEditorLayout(
     };
   });
 
-  return restored;
+  return viewport ? clampEditorLayoutToViewport(restored, viewport) : restored;
 }
 
 /**
@@ -197,6 +198,29 @@ export function clampFloatingPosition(
     x: Math.min(Math.max(position.x, 0), Math.max(0, viewport.width - size.width)),
     y: Math.min(Math.max(position.y, 0), Math.max(0, viewport.height - size.height)),
   };
+}
+
+export function clampEditorLayoutToViewport(
+  layout: EditorLayoutState,
+  viewport: { width: number; height: number },
+): EditorLayoutState {
+  return PANEL_IDS.reduce(
+    (nextLayout, id) => {
+      const panel = layout[id];
+
+      if (panel.dockedEdge !== null || !panel.position) {
+        nextLayout[id] = panel;
+        return nextLayout;
+      }
+
+      nextLayout[id] = {
+        ...panel,
+        position: clampFloatingPosition(panel.position, panel.size, viewport),
+      };
+      return nextLayout;
+    },
+    {} as EditorLayoutState,
+  );
 }
 
 /**
